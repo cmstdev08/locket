@@ -24,7 +24,7 @@ var anhtuaan08 = {
       grace_period_expires_date: null,
       refunded_at: null,
       unsubscribe_detected_at: null,
-      original_purchase_date: "2026-05-25T10:10:15Z",
+      original_purchase_date: "2026-07-25T10:10:15Z",
       purchase_date: "2026-07-25T10:10:14Z",
       store: "app_store",
       store_transaction_id: "2000001108724193",
@@ -33,7 +33,7 @@ var anhtuaan08 = {
       grace_period_expires_date: null,
       purchase_date: "2026-07-25T10:10:14Z",
       product_identifier: "locket_1600_1y",
-      expires_date: "9999-05-025T10:10:14Z"
+      expires_date: "9999-07-025T10:10:14Z"
   };
 const match = Object.keys(mapping).find(e => ua.includes(e));
 if (match) {
