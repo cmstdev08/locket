@@ -3,10 +3,15 @@
   // ===== HARD-CODED CAPTIONS =====
   // Mỗi caption: { text, backgroundType:'image', imageUrl, textColor, colors:[c1,c2], captionMinChars? }
   var CUSTOM_CAPTIONS = [
-    // { text:"anhtu4n", backgroundType:"image",
-    //   imageUrl:"https://i.ibb.co/xxx/anhtu4n.png",
-    //   textColor:"#183153", colors:["#B8E7FF","#A8F5D0"], captionMinChars:16 },
-  ];
+  {
+    text: "Thảo có đáng iu hăm?",
+    backgroundType: "image",
+    imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+    textColor: "#db1db5",
+    colors: ["#ae14d8", "#9130e0"]
+    // captionMinChars: 16  // bỏ comment nếu muốn plate rộng
+  }
+];
 
   var useNativeImagePost = false;
   var recoverStandardCaption = false;
@@ -27,7 +32,7 @@
     var overlays = Array.isArray(payload.data.overlays) ? payload.data.overlays : [];
     var selected = overlays.filter(function(x){
       return x && typeof x.overlay_id === 'string'
-        && /^caption:anhtu4n_personal(?::[0-9]+)?$/.test(x.overlay_id)
+        && /^caption:anhtuaan08_personal(?::[0-9]+)?$/.test(x.overlay_id)
         && x.overlay_type === 'caption'
         && x.data && typeof x.data === 'object' && !Array.isArray(x.data);
     });
@@ -104,7 +109,7 @@
     }
 
     selected.forEach(function(overlay){
-      var suffix = overlay.overlay_id.slice('caption:anhtu4n_personal'.length);
+      var suffix = overlay.overlay_id.slice('caption:anhtuaan08_personal'.length);
       var idx = suffix ? (suffix[0] === ':' ? Number(suffix.slice(1)) : NaN) : 0;
       if (!Number.isSafeInteger(idx) || idx < 0 || idx >= available.length) return;
       var cap = available[idx];

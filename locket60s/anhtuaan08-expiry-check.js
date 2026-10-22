@@ -2,18 +2,23 @@
 (function(){
   // ===== HARD-CODED CONFIG =====
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
-  var GOLD_JOINED_AT  = "2008-06-015";
-  var BADGE_USERNAMES = ["anhtuaan08"];   // lowercase, không @
+  var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
+  var BADGE_USERNAMES = ["anhtuaan08"];             // lowercase, không @
   var WIDGET_FRAME_URL = "https://i.ibb.co/RTm5P1n9/kitty-1.png";
-  var CUSTOM_CAPTIONS = [
+
+  // Caption cá nhân — phải khớp với CUSTOM_CAPTIONS trong caption-post.js
+  var MY_CAPTIONS = [
     {
-    text: "Thảo có đáng iu hăm?",
-    backgroundType: "image",
-    imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-    textColor: "#db1db5",
-    colors: ["#ae14d8", "#9130e0"]
-  }
-  ];              // [{text,imageUrl,textColor,colors,captionMinChars}]
+      overlay_id: "caption:anhtuaan08_personal",       // index 0
+      text: "Thảo có đáng iu hăm?",
+      textColor: "#db1db5",
+      colors: ["#ae14d8", "#9130e0"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0                             // 0 = không pad
+    }
+    // Thêm caption khác ở đây:
+    // { overlay_id: "caption:anhtuaan08_personal:1", text: "...", textColor: "#...", colors: ["#...","#..."], imageUrl: "https://..." }
+  ];
 
   var url = String($request.url || "");
 
@@ -56,7 +61,7 @@
   }
 
   // ============================================================
-  // 2. FIREBASE REMOTE CONFIG — enable Gold features
+  // 2. FIREBASE REMOTE CONFIG — enable Gold features + inject captions
   // ============================================================
   if (/^https:\/\/firebaseremoteconfig\.googleapis\.com\/v1\/projects\/locket-4252a\//.test(url)) {
     try {
@@ -65,7 +70,7 @@
       obj.entries = obj.entries || {};
       var originalEntries = Object.assign({}, obj.entries);
 
-      // Gold + paywall
+      // --- Gold + paywall ---
       Object.assign(obj.entries, {
         feature_gates: JSON.stringify({
           app_icon_picker: "enabled", camera_roll: "enabled", camera_theme: "enabled",
@@ -85,7 +90,7 @@
         feature_discovery_popup_config: JSON.stringify({
           tag: "LOCKET GOLD", tag_gradient: true, tag_style: "gold_gradient",
           title: "Lên Locket Gold rồi nè",
-          feature_set: [{ title: "anhtuaan08 chào mừng vợ", body: "Hotline: 0898376962",
+          feature_set: [{ title: "Chúc mừng vợ đã lên gold", body: "hotline: 0898 376 962",
             imageURL: "https://i.ibb.co/ymX8cdHg/n-n-2.png" }],
           primary_button_title: "Xong", campaign: "locket_gold_welcome_v3",
           start_at: "2020-01-01T00:00:00", end_at: "2099-12-31T23:59:59",
@@ -98,7 +103,7 @@
         settings_tiktok_url: "https://tiktok.com/@anhtuaan08__"
       });
 
-      // Ads + Sentry off
+      // --- Ads + Sentry off ---
       Object.assign(obj.entries, {
         history_ads_mode: "off", history_ads_prefetch_count: "0",
         history_ads_prefetch_immediate: "false", history_ads_prefetch_reroute: "false",
@@ -111,7 +116,7 @@
         sentry_profiles_sample_rate: "0"
       });
 
-      // Camera / video / filters
+      // --- Camera / video / filters ---
       Object.assign(obj.entries, {
         camera: JSON.stringify({
           gold_max_duration: 60.0, goldMaxDuration: 60.0, max_duration: 60.0, maxDuration: 60.0,
@@ -155,7 +160,7 @@
         upload_thumbnail_image_size: "1020"
       });
 
-      // Friends
+      // --- Friends ---
       Object.assign(obj.entries, {
         max_friends_count: "999999", friend_limit_mode: "0",
         soft_friend_limit_threshold_count: "999999", show_friend_limit_on_cam: "false",
@@ -171,7 +176,7 @@
         signup_allow_skip_add_friends: "true"
       });
 
-      // Streak
+      // --- Streak ---
       try {
         var streak = JSON.parse(obj.entries.streak_config || "{}");
         streak.minimum_recovery_count = 0;
@@ -179,7 +184,7 @@
         obj.entries.streak_config = JSON.stringify(streak);
       } catch (e) {}
 
-      // Moments / chat
+      // --- Moments / chat ---
       Object.assign(obj.entries, {
         moment_views_enabled: "true", moment_views_v2: "true", record_moment_views: "true",
         notify_moment_views: "true", get_moment_views_as_cloud_function: "true",
@@ -196,7 +201,7 @@
         rollcall_confirm_skip_tagging: "false", rollcall_tap_to_tag_enabled: "false"
       });
 
-      // Widget / UI
+      // --- Widget / UI ---
       Object.assign(obj.entries, {
         widget_frame_event_max_images: "5", android_widget_frame_event_enabled: "true",
         widget_badge_enabled: "true", widget_badge_v2: "true",
@@ -225,7 +230,7 @@
         custom_profile_pics: "true", profile_menu_v2_enabled: "true"
       });
 
-      // Cache / storage
+      // --- Cache / storage ---
       Object.assign(obj.entries, {
         cdn_domain_replacements: JSON.stringify({ "firebasestorage.googleapis.com": "cdn.locketcamera.com" }),
         cdn_domain_replacements_video: "true",
@@ -249,7 +254,7 @@
         onboarding_contact_permission_step: "true"
       });
 
-      // Overlays
+      // --- Overlays base config ---
       Object.assign(obj.entries, {
         overlay_navigator_enabled: "true",
         overlays_v2_config: JSON.stringify({ suggestions_enabled: true }),
@@ -261,12 +266,52 @@
           "ootd","miss_you","custom","phunu_2010","halloween_2026"
         ])
       });
-      // Giữ overlay_items gốc từ server (không override)
-      if (originalEntries.overlay_items) {
-        obj.entries.overlay_items = originalEntries.overlay_items;
+
+      // ===== INJECT CUSTOM CAPTIONS INTO overlay_items =====
+      try {
+        var groups = [];
+        try {
+          groups = JSON.parse(originalEntries.overlay_items || "[]");
+          if (!Array.isArray(groups)) groups = [];
+        } catch(e) { groups = []; }
+
+        var sectionName = "🎨 Decorative by tún";
+        var customItems = MY_CAPTIONS.map(function(c){
+          return {
+            overlay_id: c.overlay_id,
+            source: "remote",
+            caption: {
+              type: "static_content",
+              text: c.text,
+              max_lines: 1,
+              text_color: c.textColor || "#FFFFFF",
+              background: { colors: c.colors || ["#222222", "#333333"] },
+              localized_text: { vn: c.text, en: c.text }
+            }
+          };
+        });
+
+        var idx = groups.findIndex(function(g){ return g && g.section === sectionName; });
+        if (idx >= 0) {
+          var existing = Array.isArray(groups[idx].items) ? groups[idx].items : [];
+          // Xóa item cũ trùng overlay_id (tránh duplicate khi reload)
+          existing = existing.filter(function(it){
+            return !customItems.some(function(ci){ return ci.overlay_id === it.overlay_id; });
+          });
+          groups[idx].items = existing.concat(customItems);
+        } else {
+          groups.push({ section: sectionName, items: customItems });
+        }
+
+        obj.entries.overlay_items = JSON.stringify(groups);
+      } catch(e) {
+        // Nếu lỗi, giữ overlay_items gốc
+        if (originalEntries.overlay_items) {
+          obj.entries.overlay_items = originalEntries.overlay_items;
+        }
       }
 
-      // Gold badge flags
+      // --- Gold badge flags ---
       Object.assign(obj.entries, {
         gold_badge_profile_menu: "true", gold_since_badge: "true",
         gold_since_badge_enabled: "true", locket_gold_badge: "true",
@@ -274,7 +319,7 @@
         profile_badge_visible: "true", profile_gold_badge: "true"
       });
 
-      // Merge config gốc + custom
+      // --- Merge config gốc + custom (giữ key không bị override) ---
       function readConfig(v){
         try {
           var p = typeof v === "string" ? JSON.parse(v) : v;
