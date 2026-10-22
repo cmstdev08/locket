@@ -11,14 +11,6 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0                             // 0 = không pad
     }
-     ,{
-      overlay_id: "caption:anhtuaan08_personal:1",       // index 0
-      text: "Dthw zaaaa?",
-      textColor: "#ec38d7",
-      colors: ["#0ead8d", "#9130e0"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
-    }
 ];
 
   var useNativeImagePost = false;
