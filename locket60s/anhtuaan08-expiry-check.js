@@ -11,8 +11,16 @@
     {
       overlay_id: "caption:anhtuaan08_personal",       // index 0
       text: "Thảo có đáng iu hăm?",
-      textColor: "#db1db5",
-      colors: ["#ae14d8", "#9130e0"],
+      textColor: "#ca1717",
+      colors: ["hsl(288, 57%, 85%)", "#9130e0"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0                             // 0 = không pad
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:1",       // index 0
+      text: "Dthw zaaaa?",
+      textColor: "#ec38d7",
+      colors: ["#0ead8d", "#9130e0"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0                             // 0 = không pad
     }
@@ -275,7 +283,7 @@
           if (!Array.isArray(groups)) groups = [];
         } catch(e) { groups = []; }
 
-        var sectionName = "🎨 Decorative by tún";
+        var sectionName = "🎨 Captions được thêm by anhtuaan08";
         var customItems = MY_CAPTIONS.map(function(c){
           return {
             overlay_id: c.overlay_id,
