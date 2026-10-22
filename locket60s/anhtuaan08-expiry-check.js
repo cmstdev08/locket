@@ -2,10 +2,18 @@
 (function(){
   // ===== HARD-CODED CONFIG =====
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
-  var GOLD_JOINED_AT  = "2024-01-01";
-  var BADGE_USERNAMES = ["_anhtu4n_"];   // lowercase, không @
+  var GOLD_JOINED_AT  = "2008-06-015";
+  var BADGE_USERNAMES = ["anhtuaan08"];   // lowercase, không @
   var WIDGET_FRAME_URL = "https://i.ibb.co/RTm5P1n9/kitty-1.png";
-  var CUSTOM_CAPTIONS = [];              // [{text,imageUrl,textColor,colors,captionMinChars}]
+  var CUSTOM_CAPTIONS = [
+    {
+    text: "Thảo có đáng iu hăm?",
+    backgroundType: "image",
+    imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+    textColor: "#db1db5",
+    colors: ["#ae14d8", "#9130e0"]
+  }
+  ];              // [{text,imageUrl,textColor,colors,captionMinChars}]
 
   var url = String($request.url || "");
 
