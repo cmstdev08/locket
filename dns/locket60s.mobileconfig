@@ -7,7 +7,7 @@
   <key>PayloadScope</key><string>System</string>
   <key>PayloadIdentifier</key><string>com.anhtuaan08.locket60s.profile</string>
   <key>PayloadUUID</key><string>A1B2C3D4-E5F6-7890-ABCD-EF1234567890</string>
-  <key>PayloadDisplayName</key><string>Locket 60s by anhtuaan08</string>
+  <key>PayloadDisplayName</key><string>Locket 60s</string>
   <key>PayloadDescription</key><string>🔐 CẤU HÌNH BẢO MẬT DNS (anhtuaan08)
 
 ✨ TÍNH NĂNG CHÍNH:
@@ -41,7 +41,7 @@
       <key>PayloadVersion</key><integer>1</integer>
       <key>PayloadIdentifier</key><string>io.anhtuaan08.dns.27e72a.settings</string>
       <key>PayloadUUID</key><string>2A94BAFC-7F33-5B59-A31D-86E654378409</string>
-      <key>PayloadDisplayName</key><string>Locket 60s by anhtuaan08</string>
+      <key>PayloadDisplayName</key><string>Locket 60s</string>
       <key>PayloadOrganization</key><string>anhtuaan08</string>
       <key>DNSSettings</key>
       <dict>
