@@ -20,7 +20,7 @@
       captionMinChars: 0                             // 0 = không pad
     }
     ,{
-      overlay_id: "caption:anhtuaan08_personal",       // index 0
+      overlay_id: "caption:anhtuaan08_personal:2",       // index 0
       text: "iu hămm",
       textColor: "#ca1717",
       colors: ["hsl(288, 57%, 85%)", "#9130e0"],

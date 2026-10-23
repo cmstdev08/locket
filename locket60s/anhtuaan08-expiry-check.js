@@ -4,7 +4,7 @@
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
   var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
   var BADGE_USERNAMES = ["anhtuaan08"];             // lowercase, không @
-  var WIDGET_FRAME_URL = "https://i.ibb.co/XkLRTLWL/dsts.png";
+  var WIDGET_FRAME_URL = "https://i.ibb.co/V86kLH8/dsts1.png";
 
   // Caption cá nhân — phải khớp với CUSTOM_CAPTIONS trong caption-post.js
   var MY_CAPTIONS = [
@@ -25,7 +25,7 @@
       captionMinChars: 0                             // 0 = không pad
     }
     ,{
-      overlay_id: "caption:anhtuaan08_personal",       // index 0
+      overlay_id: "caption:anhtuaan08_personal:2",       // index 0
       text: "iu hămm",
       textColor: "#ca1717",
       colors: ["hsl(288, 57%, 85%)", "#9130e0"],
