@@ -4,7 +4,7 @@
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
   var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
   var BADGE_USERNAMES = ["anhtuaan08"];             // lowercase, không @
-  var WIDGET_FRAME_URL = "https://i.ibb.co/QRNF8wD/1-3-1.png";
+  var WIDGET_FRAME_URL = "https://i.ibb.co/3YvYpD9f/Gemini-Generated-Image-q845tyq845tyq845-1.png";
 
   // Caption cá nhân — phải khớp với CUSTOM_CAPTIONS trong caption-post.js
   var MY_CAPTIONS = [
