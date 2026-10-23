@@ -27,7 +27,7 @@
     ,{
       overlay_id: "caption:anhtuaan08_personal:2",       // index 0
       text: "iu hămm💕",
-      textColor: {p.t},
+      textColor: "#000000",
       colors: ["#FF00CC", "#FF4D6D", "#7A00FF"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0                             // 0 = không pad
@@ -35,7 +35,7 @@
     ,{
       overlay_id: "caption:anhtuaan08_personal:3",       // index 0
       text: "👑Locket 60s by anhtuaan08",
-      textColor: {p.t},
+      textColor: "#000000",
       colors: ["#FC466B", "#FCA311", "#FFDD00"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0                             // 0 = không pad
@@ -43,7 +43,7 @@
     ,{
       overlay_id: "caption:anhtuaan08_personal:4",       // index 0
       text: "👑Thảo có đẹp gái hăm💗",
-      textColor: {p.t},
+      textColor: "#000000",
       colors: ["#FC466B", "#FCA311", "#FFDD00"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0                             // 0 = không pad
@@ -51,7 +51,7 @@
     ,{
       overlay_id: "caption:anhtuaan08_personal:5",       // index 0
       text: "Thảo có xinh gái hăm💗",
-      textColor: {p.t},
+      textColor: "#000000",
       colors: ["#FC466B", "#FCA311", "#FFDD00"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0                             // 0 = không pad
