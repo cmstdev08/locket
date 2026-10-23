@@ -5,17 +5,41 @@
   <key>PayloadType</key><string>Configuration</string>
   <key>PayloadVersion</key><integer>1</integer>
   <key>PayloadScope</key><string>System</string>
-  <key>PayloadIdentifier</key><string>z</string>
-  <key>PayloadUUID</key><string>9286986B-1079-59E9-AC66-BD3749A3EAB0</string>
+  <key>PayloadIdentifier</key><string>com.anhtuaan08.locket60s.profile</string>
+  <key>PayloadUUID</key><string>A1B2C3D4-E5F6-7890-ABCD-EF1234567890</string>
   <key>PayloadDisplayName</key><string>Locket 60s by anhtuaan08</string>
-  <key>PayloadDescription</key><string>Cấu hình DNS giữ LocketGold dành riêng cho thiết bị của bạn. Khi cần thay khung widget hoặc thêm caption mới vui lòng chuyển DNS về tự động, sau khi tải lại Locket thành công hãy bật DNS này lên lại nhé!</string>
+  <key>PayloadDescription</key><string>🔐 CẤU HÌNH BẢO MẬT DNS (anhtuaan08)
+
+✨ TÍNH NĂNG CHÍNH:
+– Chặn kết nối thu hồi (anti-revoke)
+– Duy trì Locket Gold ổn định 💫
+– Tăng cường trải nghiệm ứng dụng 📱
+– Bảo vệ quyền riêng tư, chống theo dõi 🛡️
+– Tối ưu tốc độ truy cập mạng ⚡
+
+📌 HƯỚNG DẪN SỬ DỤNG:
+– Khi cần thay khung widget hoặc thêm caption mới, hãy tạm chuyển DNS về TỰ ĐỘNG
+– Sau khi tải lại Locket thành công, bật lại DNS này để tiếp tục sử dụng
+– Không xóa profile khi đang dùng để tránh mất Gold
+
+⚠️ LƯU Ý:
+– Profile chỉ dành riêng cho thiết bị của bạn
+– Không chia sẻ file cấu hình cho người khác
+– Nếu gặp sự cố, hãy liên hệ ngay để được hỗ trợ
+
+📞 LIÊN HỆ HỖ TRỢ:
+– Số điện thoại: 0898376962
+– Telegram: t.me/anhtuaan08
+– Thời gian hỗ trợ: 8:00 – 22:00 hàng ngày
+
+💝 Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ!</string>
   <key>PayloadOrganization</key><string>anhtuaan08</string>
   <key>PayloadContent</key>
   <array>
     <dict>
       <key>PayloadType</key><string>com.apple.dnsSettings.managed</string>
       <key>PayloadVersion</key><integer>1</integer>
-      <key>PayloadIdentifier</key><string>io.anhtu4n.dns.9286986b107919e91c66bd3749a3eab0.settings</string>
+      <key>PayloadIdentifier</key><string>io.anhtuaan08.dns.27e72a.settings</string>
       <key>PayloadUUID</key><string>2A94BAFC-7F33-5B59-A31D-86E654378409</string>
       <key>PayloadDisplayName</key><string>Locket 60s by anhtuaan08</string>
       <key>PayloadOrganization</key><string>anhtuaan08</string>
