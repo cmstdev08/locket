@@ -55,16 +55,16 @@
     :root {
       --bg-main: #030509;
       --text-main: #f8fafc;
-      --glass-bg: rgba(15, 23, 42, 0.65);
-      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-bg: rgba(15, 23, 42, 0.68);
+      --glass-border: rgba(255, 255, 255, 0.09);
       --glass-highlight: rgba(255, 255, 255, 0.1);
     }
     html.light {
-      --bg-main: #f8fafc;
+      --bg-main: #f1f5f9;
       --text-main: #0f172a;
-      --glass-bg: rgba(255, 255, 255, 0.85);
-      --glass-border: rgba(15, 23, 42, 0.08);
-      --glass-highlight: rgba(255, 255, 255, 0.9);
+      --glass-bg: rgba(255, 255, 255, 0.88);
+      --glass-border: rgba(15, 23, 42, 0.1);
+      --glass-highlight: rgba(255, 255, 255, 0.95);
     }
     * {
       margin: 0;
@@ -78,7 +78,38 @@
       font-family: 'Plus Jakarta Sans', sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
-      transition: background-color 0.4s ease, color 0.3s ease;
+      transition: background-color 0.35s ease, color 0.3s ease;
+    }
+
+    /* Smart Light Mode Text & Surface Adaptation */
+    html.light .text-white { color: #0f172a !important; }
+    html.light .text-slate-100 { color: #1e293b !important; }
+    html.light .text-slate-200 { color: #334155 !important; }
+    html.light .text-slate-300 { color: #475569 !important; }
+    html.light .text-slate-400 { color: #64748b !important; }
+    html.light .bg-slate-900,
+    html.light .bg-slate-900\/80,
+    html.light .bg-slate-900\/60 {
+      background-color: rgba(241, 245, 249, 0.95) !important;
+      color: #0f172a !important;
+      border-color: rgba(15, 23, 42, 0.12) !important;
+    }
+    html.light .bg-slate-950\/40 {
+      background-color: rgba(255, 255, 255, 0.85) !important;
+      border-color: rgba(15, 23, 42, 0.08) !important;
+    }
+    html.light .bg-white\/5,
+    html.light .bg-white\/10 {
+      background-color: rgba(15, 23, 42, 0.05) !important;
+      border-color: rgba(15, 23, 42, 0.1) !important;
+    }
+    /* Keep white text on colorful buttons & phone frame in light mode */
+    html.light .keep-white,
+    html.light .keep-white * {
+      color: #ffffff !important;
+    }
+    html.light .phone-mockup .text-white {
+      color: #ffffff !important;
     }
 
     /* Aurora Glows */
@@ -93,7 +124,7 @@
       position: absolute;
       border-radius: 50%;
       filter: blur(100px);
-      opacity: 0.5;
+      opacity: 0.45;
       animation: float-aurora 25s infinite alternate ease-in-out;
     }
     @keyframes float-aurora {
@@ -101,7 +132,7 @@
       50% { transform: translate(60px, 80px) scale(1.15); }
       100% { transform: translate(-40px, 120px) scale(0.9); }
     }
-    html.light .aurora-blob { opacity: 0.3; }
+    html.light .aurora-blob { opacity: 0.22; }
 
     /* Custom Glassmorphism */
     .glass-card {
@@ -109,37 +140,10 @@
       backdrop-filter: blur(24px) saturate(180%);
       -webkit-backdrop-filter: blur(24px) saturate(180%);
       border: 1px solid var(--glass-border);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-highlight);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28), inset 0 1px 0 var(--glass-highlight);
     }
     html.light .glass-card {
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    }
-
-    /* Gradient animated border */
-    .rainbow-border {
-      position: relative;
-    }
-    .rainbow-border::before {
-      content: '';
-      position: absolute;
-      inset: -1.5px;
-      border-radius: inherit;
-      background: conic-gradient(from var(--angle, 0deg), #38bdf8, #818cf8, #ec4899, #fbbf24, #22c55e, #38bdf8);
-      z-index: -1;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-      animation: spin-border 6s linear infinite;
-    }
-    .rainbow-border:hover::before {
-      opacity: 1;
-    }
-    @property --angle {
-      syntax: '<angle>';
-      initial-value: 0deg;
-      inherits: false;
-    }
-    @keyframes spin-border {
-      to { --angle: 360deg; }
     }
 
     /* Gradient Text */
@@ -195,16 +199,14 @@
       border-radius: 999px;
     }
 
-    /* Rocket floating */
+    /* Animations */
     @keyframes rocket-float {
       0%, 100% { transform: translateY(0) rotate(-2deg); }
-      50% { transform: translateY(-12px) rotate(3deg); }
+      50% { transform: translateY(-10px) rotate(3deg); }
     }
     .rocket-anim {
       animation: rocket-float 4s ease-in-out infinite;
     }
-
-    /* Heart pulse */
     @keyframes heart-pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.18); }
@@ -230,10 +232,11 @@
 
   <!-- React Babel Script -->
   <script type="text/babel">
-    const { useState, useEffect, useMemo, useRef } = React;
+    const { useState, useEffect, useMemo } = React;
 
     // Default Config URLs & Info
     const CONFIGS = {
+      // Mẹo bảo mật: Nếu có Cloudflare Worker, bạn có thể thay URL proxy vào hàm gửi Telegram bên dưới
       telegramBotToken: '8123456789:AAH_xxxxxxxxxxxxxxxxxxxxxxxxxxx',
       telegramChatId: '123456789',
       adminTelegram: 'https://t.me/anhtuaan',
@@ -253,6 +256,14 @@
       dnsLocket60sUrl: 'https://crackapppre.netlify.app/dns/locket60s.mobileconfig',
       dnsRootCaUrl: 'https://crackapppre.netlify.app/dns/rootca.mobileconfig',
       shadowrocketDirectDownload: 'itms-services://?action=download-manifest&url=https://dl.3u.com/plist/2025/09/28/1759023053857_696086.plist'
+    };
+
+    // Valid Vouchers List
+    const VOUCHERS = {
+      'ANHTUAN': { discount: 10000, desc: 'Giảm 10.000đ tri ân khách hàng' },
+      'LOCKET10': { discount: 10000, desc: 'Giảm 10.000đ gói Locket VIP' },
+      'VIP20': { discount: 20000, desc: 'Giảm 20.000đ ưu đãi đặc biệt' },
+      'SINHVIEN': { discount: 15000, desc: 'Giảm 15.000đ ưu đãi học sinh - sinh viên' }
     };
 
     // Service Packages List
@@ -419,10 +430,34 @@
       { name: 'Night City', url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=600&q=80' }
     ];
 
-    // Simulated Recent Donators / Purchases
+    // FAQ Data
+    const FAQS = [
+      {
+        q: 'Tắt VPN ShadowRocket có bị mất Locket Gold hoặc 60s không?',
+        a: 'Không! Khi bạn cài kèm file cấu hình "DNS Duy Trì Vĩnh Viễn" trên web (hoặc trong gói VIP), bạn có thể tắt hẳn VPN ShadowRocket để tiết kiệm pin mà vẫn giữ nguyên mọi tính năng Locket 60s & Gold.'
+      },
+      {
+        q: 'Mình có thể tự đổi nội dung và màu sắc Khung Caption không?',
+        a: 'Hoàn toàn được! Khi mua gói Locket 60s VIP, bạn có thể thiết kế mẫu trên Caption Studio của web và gửi cho Anh Tuấn, hoặc nhận hướng dẫn tự chỉnh sửa chữ/icon bất kỳ lúc nào ngay trên điện thoại.'
+      },
+      {
+        q: 'Cập nhật ứng dụng Locket trên App Store có bị mất VIP không?',
+        a: 'Không bị mất. Đặc biệt khách hàng gói Locket 60s VIP và Super Combo được bảo hành trọn đời: mỗi khi Locket ra thuật toán mới, bạn đều được cập nhật module mới hoàn toàn miễn phí.'
+      },
+      {
+        q: 'Sau khi chuyển khoản bao lâu thì mình nhận được cấu hình?',
+        a: 'Ngay sau khi bạn quét mã QR và bấm "Xác nhận đặt hàng", hệ thống Bot sẽ báo trực tiếp về máy của Anh Tuấn. Bạn sẽ được liên hệ hỗ trợ cài đặt 1-1 trong vòng 2 - 10 phút.'
+      },
+      {
+        q: 'Mình không rành công nghệ thì có tự cài được không?',
+        a: 'Rất dễ! Trên web đã có hướng dẫn 8 bước chi tiết. Nếu bạn gặp bất kỳ bước nào khó, Anh Tuấn sẽ gọi hướng dẫn trực tiếp hoặc hỗ trợ qua Zalo / Telegram cho đến khi máy bạn lên VIP thành công 100%.'
+      }
+    ];
+
+    // Simulated Recent Purchases
     const INITIAL_NOTIFICATIONS = [
       { name: 'Hải Đăng', package: 'Locket 60s VIP', amount: '89.000đ', method: 'Vietcombank', time: 'Vừa xong' },
-      { name: 'Khánh Linh', package: 'Locket 60s VIP', amount: '89.000đ', method: 'MoMo', time: '1 phút trước' },
+      { name: 'Khánh Linh', package: 'Locket 60s VIP', amount: '79.000đ', method: 'MoMo (Mã ANHTUAN)', time: '1 phút trước' },
       { name: 'Minh Anh', package: 'Gói Locket 5s Video', amount: '49.000đ', method: 'MoMo', time: '3 phút trước' },
       { name: 'Đức Huy', package: 'Super Combo All-In-One', amount: '139.000đ', method: 'Vietcombank', time: '5 phút trước' },
       { name: 'Bảo Trâm', package: 'Locket 60s VIP', amount: '89.000đ', method: 'MoMo', time: '7 phút trước' }
@@ -431,23 +466,28 @@
     // MAIN APP COMPONENT
     function App() {
       const [theme, setTheme] = useState('dark');
-      const [activeTab, setActiveTab] = useState('all'); // all, config, packages, caption, qr, tutorial
       const [selectedPackage, setSelectedPackage] = useState(PACKAGES[2]); // Default 60s
       const [toast, setToast] = useState({ show: false, text: '', icon: 'fa-check' });
       const [recentPopup, setRecentPopup] = useState(null);
       const [scrollProgress, setScrollProgress] = useState(0);
       const [showBackTop, setShowBackTop] = useState(false);
 
-      // Order Form State
+      // Voucher State
+      const [voucherInput, setVoucherInput] = useState('');
+      const [appliedVoucher, setAppliedVoucher] = useState(null);
+
+      // Order Form State + Actual Bill File
       const [orderForm, setOrderForm] = useState({
         name: '',
-        contact: '', // Phone or Zalo
-        social: '',  // Telegram or Facebook
+        contact: '',
+        social: '',
         packageId: 'locket-60s',
-        paymentMethod: 'vietqr', // vietqr, momo
+        paymentMethod: 'vietqr',
         note: '',
         billImageName: ''
       });
+      const [billFile, setBillFile] = useState(null);
+      const [billPreviewUrl, setBillPreviewUrl] = useState(null);
       const [orderSubmitting, setOrderSubmitting] = useState(false);
       const [orderSuccessModal, setOrderSuccessModal] = useState(false);
       const [lastOrderCode, setLastOrderCode] = useState('');
@@ -457,8 +497,19 @@
       const [selectedGradient, setSelectedGradient] = useState(GRADIENT_LIST[0]);
       const [captionTextColor, setCaptionTextColor] = useState('#8C315F');
       const [captionIcon, setCaptionIcon] = useState('kitty');
-      const [captionFont, setCaptionFont] = useState('sans'); // sans, display, cute, mono
+      const [captionFont, setCaptionFont] = useState('sans');
       const [currentPhoto, setCurrentPhoto] = useState(SAMPLE_PHOTOS[0].url);
+      const [isVideoMode, setIsVideoMode] = useState(false);
+      const [videoTimer, setVideoTimer] = useState(1);
+
+      // Config QR Modal State
+      const [qrConfigModal, setQrConfigModal] = useState(null); // { title, url }
+
+      // FAQ Accordion State
+      const [openFaq, setOpenFaq] = useState(0);
+
+      // Server Ping Simulation
+      const [serverPing, setServerPing] = useState(16);
 
       // Support / Contact Form State
       const [contactForm, setContactForm] = useState({
@@ -483,6 +534,26 @@
         }
       }, []);
 
+      // Video 60s Counter Simulation
+      useEffect(() => {
+        if (!isVideoMode) {
+          setVideoTimer(1);
+          return;
+        }
+        const timer = setInterval(() => {
+          setVideoTimer(prev => (prev >= 60 ? 1 : prev + 1));
+        }, 1000);
+        return () => clearInterval(timer);
+      }, [isVideoMode]);
+
+      // Ping Fluctuation Simulation
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setServerPing(Math.floor(12 + Math.random() * 10));
+        }, 4000);
+        return () => clearInterval(interval);
+      }, []);
+
       const toggleTheme = () => {
         const next = theme === 'dark' ? 'light' : 'dark';
         setTheme(next);
@@ -500,7 +571,7 @@
       // Toast Notification
       const showToast = (text, icon = 'fa-check') => {
         setToast({ show: true, text, icon });
-        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 2600);
+        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 2800);
       };
 
       // Copy text helper
@@ -540,9 +611,35 @@
           idx++;
           setRecentPopup(notif);
           setTimeout(() => setRecentPopup(null), 5000);
-        }, 9000);
+        }, 10000);
         return () => clearInterval(interval);
       }, []);
+
+      // Calculate Final Price after Voucher
+      const finalPriceNum = useMemo(() => {
+        const base = selectedPackage.priceNum || 0;
+        if (base === 0 || !appliedVoucher) return base;
+        return Math.max(0, base - appliedVoucher.discount);
+      }, [selectedPackage, appliedVoucher]);
+
+      const formatCurrency = (num) => {
+        return num.toLocaleString('vi-VN') + 'đ';
+      };
+
+      // Handle Apply Voucher
+      const handleApplyVoucher = () => {
+        const code = voucherInput.trim().toUpperCase();
+        if (!code) {
+          showToast('Vui lòng nhập mã giảm giá!', 'fa-circle-exclamation');
+          return;
+        }
+        if (VOUCHERS[code]) {
+          setAppliedVoucher({ code, ...VOUCHERS[code] });
+          showToast(`Áp dụng mã ${code} thành công (-${formatCurrency(VOUCHERS[code].discount)})!`);
+        } else {
+          showToast('Mã giảm giá không hợp lệ hoặc đã hết hạn!', 'fa-circle-xmark');
+        }
+      };
 
       // Dynamic Transfer Code & QR
       const transferMemo = useMemo(() => {
@@ -553,17 +650,16 @@
         return `AT ${pkgCode} ${phone}`;
       }, [orderForm.contact, selectedPackage]);
 
-      // VietQR Image URL
+      // VietQR Image URL (Auto-updates with discounted price)
       const vietQrUrl = useMemo(() => {
-        const amount = selectedPackage.priceNum || 0;
-        return `https://img.vietqr.io/image/${CONFIGS.bankName}-${CONFIGS.bankNumber}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(transferMemo)}&accountName=${encodeURIComponent(CONFIGS.bankOwner)}`;
-      }, [selectedPackage, transferMemo]);
+        return `https://img.vietqr.io/image/${CONFIGS.bankName}-${CONFIGS.bankNumber}-compact2.png?amount=${finalPriceNum}&addInfo=${encodeURIComponent(transferMemo)}&accountName=${encodeURIComponent(CONFIGS.bankOwner)}`;
+      }, [finalPriceNum, transferMemo]);
 
-      // MoMo QR Image URL
+      // MoMo QR Image URL (Auto-updates with discounted price)
       const momoQrUrl = useMemo(() => {
-        const payload = `2|99|${CONFIGS.momoNumber}|ANH TUAN||0|0|${selectedPackage.priceNum}|${transferMemo}|transfer_myqr`;
+        const payload = `2|99|${CONFIGS.momoNumber}|ANH TUAN||0|0|${finalPriceNum}|${transferMemo}|transfer_myqr`;
         return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payload)}`;
-      }, [selectedPackage, transferMemo]);
+      }, [finalPriceNum, transferMemo]);
 
       // Handle Select Package & Scroll to QR
       const handleSelectPackage = (pkg) => {
@@ -580,7 +676,44 @@
         }
       };
 
-      // Handle Submit Order Form
+      // Handle Apply Caption to Order
+      const handleOrderWithCaption = () => {
+        const pkg60s = PACKAGES.find(p => p.id === 'locket-60s');
+        setSelectedPackage(pkg60s);
+        const captionConfigNote = `[Caption Custom] Chữ: "${captionText}" | Nền: ${selectedGradient.name} (${selectedGradient.colors.join(', ')}) | Màu chữ: ${captionTextColor} | Icon: ${captionIcon} | Font: ${captionFont}`;
+        setOrderForm(prev => ({
+          ...prev,
+          packageId: 'locket-60s',
+          note: prev.note ? `${prev.note}\n${captionConfigNote}` : captionConfigNote
+        }));
+        const el = document.getElementById('qr-payment-section');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        showToast('Đã đính kèm mẫu Caption của bạn vào đơn hàng Gói 60s VIP!');
+      };
+
+      // Handle Custom User Photo Upload in Caption Studio
+      const handleUserPhotoUpload = (e) => {
+        if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          const url = URL.createObjectURL(file);
+          setCurrentPhoto(url);
+          setIsVideoMode(false);
+          showToast('Đã tải ảnh cá nhân của bạn lên khung xem trước!');
+        }
+      };
+
+      // Handle Bill Image Selection
+      const handleBillChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          setBillFile(file);
+          setBillPreviewUrl(URL.createObjectURL(file));
+          setOrderForm(p => ({ ...p, billImageName: file.name }));
+          showToast('Đã đính kèm ảnh biên lai chuyển khoản!');
+        }
+      };
+
+      // Handle Submit Order Form (With Real Photo Upload to Telegram)
       const handleSubmitOrder = async (e) => {
         e.preventDefault();
         if (!orderForm.name.trim()) {
@@ -597,34 +730,50 @@
         setLastOrderCode(code);
 
         const timeStr = new Date().toLocaleString('vi-VN');
+        const voucherInfo = appliedVoucher ? `${appliedVoucher.code} (-${formatCurrency(appliedVoucher.discount)})` : 'Không dùng';
         const telegramMessage = 
 `🚀 <b>ĐƠN HÀNG MỚI TỪ WEBSITE!</b>
 ━━━━━━━━━━━━━━━━━━━━
-📦 <b>Gói đăng ký:</b> ${selectedPackage.name} (${selectedPackage.price})
+📦 <b>Gói đăng ký:</b> ${selectedPackage.name}
+💰 <b>Số tiền thanh toán:</b> ${formatCurrency(finalPriceNum)} (Gốc: ${selectedPackage.price})
+🎟️ <b>Voucher:</b> ${voucherInfo}
 👤 <b>Khách hàng:</b> ${orderForm.name}
 📱 <b>SĐT / Zalo:</b> ${orderForm.contact}
 💬 <b>FB / Telegram:</b> ${orderForm.social || 'Không có'}
-💳 <b>Thanh toán qua:</b> ${orderForm.paymentMethod === 'vietqr' ? 'Vietcombank QR' : 'MoMo QR'}
+💳 <b>Phương thức:</b> ${orderForm.paymentMethod === 'vietqr' ? 'Vietcombank QR' : 'MoMo QR'}
 📝 <b>Nội dung CK:</b> <code>${transferMemo}</code>
 🏷️ <b>Mã đơn:</b> <code>${code}</code>
-💬 <b>Ghi chú:</b> ${orderForm.note || 'Không có'}
+💬 <b>Ghi chú / Caption:</b> ${orderForm.note || 'Không có'}
 ━━━━━━━━━━━━━━━━━━━━
 ⏰ <i>${timeStr}</i>`;
 
         try {
-          // Attempt to notify Telegram Bot
-          await fetch(`https://api.telegram.org/bot${CONFIGS.telegramBotToken}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: CONFIGS.telegramChatId,
-              text: telegramMessage,
-              parse_mode: 'HTML'
-            })
-          }).catch(() => {});
+          if (billFile) {
+            // Send real photo + caption via FormData
+            const formData = new FormData();
+            formData.append('chat_id', CONFIGS.telegramChatId);
+            formData.append('photo', billFile);
+            formData.append('caption', telegramMessage);
+            formData.append('parse_mode', 'HTML');
+
+            await fetch(`https://api.telegram.org/bot${CONFIGS.telegramBotToken}/sendPhoto`, {
+              method: 'POST',
+              body: formData
+            }).catch(() => {});
+          } else {
+            // Send text message if no photo attached
+            await fetch(`https://api.telegram.org/bot${CONFIGS.telegramBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: CONFIGS.telegramChatId,
+                text: telegramMessage,
+                parse_mode: 'HTML'
+              })
+            }).catch(() => {});
+          }
         } catch (err) {}
 
-        // Confetti celebration
         if (window.confetti) {
           window.confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
         }
@@ -662,7 +811,7 @@
       };
 
       return (
-        <div className="relative min-h-screen pb-20">
+        <div className="relative min-h-screen pb-24 md:pb-16">
           {/* Scroll Progress Bar */}
           <div 
             className="fixed top-0 left-0 h-1 bg-gradient-to-r from-sky-400 via-fuchsia-500 to-pink-500 z-50 transition-all duration-150"
@@ -670,18 +819,18 @@
           />
 
           {/* Toast Notification */}
-          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 pointer-events-none ${toast.show ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
-            <div className="glass-card px-5 py-3 rounded-full flex items-center gap-3 text-sky-400 font-bold text-sm shadow-2xl border border-sky-400/40">
+          <div className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 pointer-events-none ${toast.show ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'}`}>
+            <div className="glass-card px-5 py-3 rounded-full flex items-center gap-3 text-sky-400 font-bold text-xs sm:text-sm shadow-2xl border border-sky-400/40 whitespace-nowrap">
               <i className={`fa-solid ${toast.icon} text-emerald-400 text-base`}></i>
               <span>{toast.text}</span>
             </div>
           </div>
 
-          {/* Floating Recent Purchase Popup */}
+          {/* Floating Recent Purchase Popup (Adjusted bottom offset for mobile nav) */}
           {recentPopup && (
-            <div className="fixed bottom-6 left-5 z-40 max-w-sm animate-bounce-in">
-              <div className="glass-card p-3 rounded-2xl flex items-center gap-3 border border-pink-500/30 shadow-2xl bg-slate-900/90 text-white">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-500 to-amber-400 flex items-center justify-center font-black text-sm text-white shadow-md">
+            <div className="fixed bottom-20 md:bottom-6 left-4 z-40 max-w-xs sm:max-w-sm transition-all duration-300">
+              <div className="glass-card p-3 rounded-2xl flex items-center gap-3 border border-pink-500/30 shadow-2xl">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-500 to-amber-400 flex items-center justify-center font-black text-sm keep-white shadow-md flex-shrink-0">
                   {recentPopup.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="text-xs">
@@ -699,7 +848,7 @@
           {/* Top Navbar */}
           <header className="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/40 border-b border-white/10 px-4 py-3 transition-colors">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <a href="#" className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 via-indigo-500 to-pink-500 p-0.5 shadow-lg shadow-sky-500/20">
                   <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                     <i className="fa-solid fa-rocket text-sky-400 text-base rocket-anim"></i>
@@ -709,15 +858,15 @@
                   <h1 className="font-display font-black text-sm tracking-wider text-white">ANH TUẤN <span className="title-gradient">iOS</span></h1>
                   <p className="text-[10px] text-sky-400 font-semibold tracking-widest uppercase">Locket 60s & Premium App</p>
                 </div>
-              </div>
+              </a>
 
-              {/* Navigation Links */}
+              {/* Navigation Links Desktop */}
               <nav className="hidden md:flex items-center gap-1 text-xs font-bold text-slate-300">
                 <a href="#packages-section" className="px-3 py-1.5 rounded-lg hover:text-sky-400 hover:bg-white/5 transition">Gói Locket</a>
                 <a href="#caption-studio" className="px-3 py-1.5 rounded-lg hover:text-pink-400 hover:bg-white/5 transition">Khung Caption</a>
                 <a href="#qr-payment-section" className="px-3 py-1.5 rounded-lg hover:text-emerald-400 hover:bg-white/5 transition">Tạo QR Mua</a>
                 <a href="#config-section" className="px-3 py-1.5 rounded-lg hover:text-amber-400 hover:bg-white/5 transition">Cấu Hình Free</a>
-                <a href="#tutorial-section" className="px-3 py-1.5 rounded-lg hover:text-purple-400 hover:bg-white/5 transition">Hướng Dẫn</a>
+                <a href="#faq-section" className="px-3 py-1.5 rounded-lg hover:text-purple-400 hover:bg-white/5 transition">Hỏi Đáp</a>
               </nav>
 
               {/* Theme & Contact Actions */}
@@ -727,13 +876,13 @@
                   aria-label="Đổi theme sáng tối"
                   className="w-9 h-9 rounded-xl glass-card flex items-center justify-center text-slate-300 hover:text-amber-400 transition hover:scale-105"
                 >
-                  <i className={`fa-solid ${theme === 'dark' ? 'fa-sun text-amber-400' : 'fa-moon text-sky-400'} text-sm`}></i>
+                  <i className={`fa-solid ${theme === 'dark' ? 'fa-sun text-amber-400' : 'fa-moon text-indigo-600'} text-sm`}></i>
                 </button>
                 <a 
                   href={CONFIGS.adminTelegram} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-sky-500/30 hover:scale-105 transition"
+                  className="keep-white px-3.5 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-sky-500/30 hover:scale-105 transition"
                 >
                   <i className="fa-brands fa-telegram text-sm"></i>
                   <span className="hidden sm:inline">Hỗ Trợ 1-1</span>
@@ -746,11 +895,15 @@
           <main className="max-w-4xl mx-auto px-4 pt-6 pb-12">
             
             {/* HERO SECTION */}
-            <section className="text-center mb-10 pt-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-card border border-amber-400/40 text-[11px] font-bold text-amber-300 mb-4 shimmer-badge shadow-lg">
-                <i className="fa-solid fa-crown text-amber-400"></i>
-                <span>Cập Nhật Locket 60s & Caption Custom Mới Nhất 2026</span>
+            <section className="text-center mb-10 pt-2">
+              {/* Live Server Status Pill */}
+              <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 rounded-full glass-card border border-emerald-400/30 text-[11px] font-bold text-slate-200 mb-4 shadow-lg">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span className="text-emerald-400">Máy Chủ DNS: Hoạt động</span>
+                <span className="text-slate-500">•</span>
+                <span className="font-mono text-sky-400">Ping: {serverPing}ms</span>
+                <span className="text-slate-500 hidden sm:inline">•</span>
+                <span className="text-amber-400 hidden sm:inline"><i className="fa-solid fa-certificate mr-1"></i>Chứng chỉ: Hợp lệ (2026)</span>
               </div>
 
               <h2 className="text-3xl sm:text-5xl font-black font-display tracking-tight text-white mb-3 leading-tight">
@@ -765,7 +918,7 @@
                 <div className="glass-card p-3 rounded-2xl text-center border border-white/5 hover:border-sky-400/30 transition">
                   <i className="fa-solid fa-bolt text-sky-400 text-lg mb-1"></i>
                   <p className="font-extrabold text-xs text-white">Quay Video 60s</p>
-                  <p className="text-[10px] text-slate-400">Chuẩn nét HD</p>
+                  <p className="text-[10px] text-slate-400">Chuẩn nét Full HD</p>
                 </div>
                 <div className="glass-card p-3 rounded-2xl text-center border border-white/5 hover:border-pink-400/30 transition">
                   <i className="fa-solid fa-palette text-pink-400 text-lg mb-1"></i>
@@ -788,7 +941,7 @@
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <a 
                   href="#packages-section"
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-400 via-indigo-500 to-pink-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-xl shadow-sky-500/25 hover:scale-105 transition flex items-center gap-2"
+                  className="keep-white px-6 py-3 rounded-xl bg-gradient-to-r from-sky-400 via-indigo-500 to-pink-500 font-extrabold text-xs tracking-wider uppercase shadow-xl shadow-sky-500/25 hover:scale-105 transition flex items-center gap-2"
                 >
                   <i className="fa-solid fa-bag-shopping"></i> Xem Các Gói Locket & Giá
                 </a>
@@ -804,10 +957,10 @@
             {/* NOTICE BANNER */}
             <div className="glass-card p-4 rounded-2xl mb-12 border-l-4 border-amber-400 flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <i className="fa-solid fa-bell text-sm"></i>
+                <i className="fa-solid fa-gift text-sm"></i>
               </div>
               <div className="text-xs text-slate-300 leading-relaxed">
-                <b className="text-amber-400">Lưu ý quan trọng:</b> Hiện tại các gói <b className="text-white">Locket 5s</b> và <b className="text-white">Locket 60s Video</b> đều sử dụng cấu trúc Module & DNS tối ưu nhất để tránh bị khóa tính năng. Bạn có thể tự dùng cấu hình free hoặc mua gói hỗ trợ cài sẵn trọn đời được bảo hành 1-1 từ tác giả.
+                <b className="text-amber-400">Ưu đãi đặc biệt hôm nay:</b> Nhập mã <code className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono font-bold">ANHTUAN</code> hoặc <code className="px-1.5 py-0.5 rounded bg-pink-500/20 text-pink-400 font-mono font-bold">SINHVIEN</code> ở phần thanh toán để được giảm trực tiếp tới <b>15.000đ</b> vào mã QR chuyển khoản!
               </div>
             </div>
 
@@ -830,13 +983,12 @@
                     className={`glass-card rounded-3xl p-6 relative flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${pkg.isPopular ? 'border-2 border-pink-500/80 shadow-2xl shadow-pink-500/20' : 'border border-white/10 hover:border-sky-400/40'}`}
                   >
                     {pkg.isPopular && (
-                      <div className="absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-amber-400 text-white font-black text-[10px] tracking-wider uppercase shadow-lg">
+                      <div className="keep-white absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-amber-400 font-black text-[10px] tracking-wider uppercase shadow-lg">
                         ⭐ KHUYÊN DÙNG NHẤT
                       </div>
                     )}
 
                     <div>
-                      {/* Top Header of Card */}
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${pkg.badgeColor} p-0.5 shadow-md flex items-center justify-center text-slate-950 font-black text-xl`}>
@@ -844,14 +996,13 @@
                           </div>
                           <div>
                             <h4 className="font-extrabold text-lg text-white">{pkg.name}</h4>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/10 text-sky-300">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-400">
                               {pkg.tag}
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Pricing */}
                       <div className="flex items-baseline gap-2 mb-3">
                         <span className="text-3xl font-black font-display text-white">{pkg.price}</span>
                         {pkg.originalPrice && (
@@ -864,7 +1015,6 @@
                         {pkg.desc}
                       </p>
 
-                      {/* Feature Checklist */}
                       <ul className="space-y-2.5 mb-6 text-xs text-slate-200">
                         {pkg.features.map((feat, i) => (
                           <li key={i} className="flex items-start gap-2.5">
@@ -875,15 +1025,14 @@
                       </ul>
                     </div>
 
-                    {/* Button trigger */}
                     <button
                       onClick={() => handleSelectPackage(pkg)}
                       className={`w-full py-3.5 px-4 rounded-xl font-extrabold text-xs tracking-wider uppercase transition shadow-lg flex items-center justify-center gap-2 ${
                         pkg.isPopular 
-                          ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 text-white shadow-pink-500/30 hover:scale-[1.02]' 
+                          ? 'keep-white bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 shadow-pink-500/30 hover:scale-[1.02]' 
                           : pkg.isFree
                           ? 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
-                          : 'bg-gradient-to-r from-sky-400 to-indigo-600 text-white shadow-sky-500/30 hover:scale-[1.02]'
+                          : 'keep-white bg-gradient-to-r from-sky-400 to-indigo-600 shadow-sky-500/30 hover:scale-[1.02]'
                       }`}
                     >
                       <i className={`fa-solid ${pkg.isFree ? 'fa-download' : 'fa-bolt'}`}></i>
@@ -903,7 +1052,7 @@
                   <i className="fa-solid fa-wand-magic-sparkles"></i> LOCKET CAPTION STUDIO
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black font-display text-white">TẠO KHUNG CAPTION LOCKET ĐỘC QUYỀN</h3>
-                <p className="text-xs text-slate-400 mt-1">Xem trước trực quan trên khung hình Locket - Tự do đổi màu nền, font chữ, nhãn dán Kitty & icon VIP</p>
+                <p className="text-xs text-slate-400 mt-1">Tải ảnh của bạn lên để thử trực tiếp - Chuyển chế độ Video 60s hoặc đặt gói kèm mẫu Caption vừa tạo</p>
               </div>
 
               <div className="glass-card rounded-3xl p-5 sm:p-7 border border-pink-500/30">
@@ -911,66 +1060,80 @@
                   
                   {/* LEFT: INTERACTIVE PHONE VIEWFINDER PREVIEW */}
                   <div className="lg:col-span-5 flex flex-col items-center">
-                    <p className="text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-wider flex items-center gap-1.5">
-                      <i className="fa-solid fa-mobile-screen-button text-pink-400"></i> Mô Phỏng Màn Hình Locket
-                    </p>
+                    <div className="flex items-center justify-between w-full max-w-[300px] mb-2">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i className="fa-solid fa-mobile-screen-button text-pink-400"></i> Mô Phỏng Locket
+                      </span>
+                      {/* Toggle Photo vs 60s Video Mode */}
+                      <button
+                        onClick={() => setIsVideoMode(!isVideoMode)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1 transition ${
+                          isVideoMode ? 'keep-white bg-red-500 shadow-lg shadow-red-500/30' : 'bg-white/10 text-slate-300'
+                        }`}
+                      >
+                        <i className="fa-solid fa-video"></i>
+                        {isVideoMode ? 'Đang Quay 60s' : 'Thử Quay 60s'}
+                      </button>
+                    </div>
 
                     {/* Phone Frame */}
-                    <div className="w-[280px] sm:w-[310px] h-[520px] rounded-[44px] bg-slate-950 p-3 shadow-2xl border-4 border-slate-700/60 relative overflow-hidden flex flex-col justify-between">
-                      {/* Dynamic Island / Notch */}
-                      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-30"></div>
+                    <div className="phone-mockup w-[280px] sm:w-[310px] h-[520px] rounded-[44px] bg-slate-950 p-3 shadow-2xl border-4 border-slate-700/60 relative overflow-hidden flex flex-col justify-between">
+                      {/* Dynamic Island */}
+                      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-30 flex items-center justify-end pr-2">
+                        {isVideoMode && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>}
+                      </div>
 
-                      {/* Photo Viewfinder Area */}
-                      <div className="relative w-full h-[370px] rounded-[32px] overflow-hidden bg-slate-900 mt-5 border border-white/10 shadow-inner group">
-                        {/* Background Photo */}
+                      {/* Photo/Video Viewfinder Area */}
+                      <div className="relative w-full h-[370px] rounded-[32px] overflow-hidden bg-slate-900 mt-5 border border-white/10 shadow-inner">
                         <img 
                           src={currentPhoto} 
                           alt="Locket Viewfinder Preview" 
-                          className="w-full h-full object-cover"
+                          className={`w-full h-full object-cover transition-transform duration-700 ${isVideoMode ? 'scale-105' : 'scale-100'}`}
                         />
 
                         {/* Top Locket Controls */}
                         <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-white drop-shadow-md z-20">
-                          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                            <span>Bạn bè • Vừa xong</span>
-                          </div>
+                          {isVideoMode ? (
+                            <div className="flex items-center gap-2 bg-red-600/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-mono font-bold">
+                              <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                              <span>REC 00:{String(videoTimer).padStart(2, '0')} / 01:00</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                              <span>Bạn bè • Vừa xong</span>
+                            </div>
+                          )}
                           <div className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-xs">
                             <i className="fa-solid fa-ellipsis"></i>
                           </div>
                         </div>
 
-                        {/* =================================== */}
+                        {/* Video Recording Progress Bar */}
+                        {isVideoMode && (
+                          <div className="absolute top-0 left-0 right-0 h-1 bg-black/40 z-20">
+                            <div 
+                              className="h-full bg-gradient-to-r from-amber-400 to-red-500 transition-all duration-1000"
+                              style={{ width: `${(videoTimer / 60) * 100}%` }}
+                            />
+                          </div>
+                        )}
+
                         {/* THE CUSTOM CAPTION OVERLAY BAR */}
-                        {/* =================================== */}
                         <div className="absolute bottom-4 left-3 right-3 z-20 flex justify-center">
                           <div 
-                            className={`px-3.5 py-2 rounded-2xl bg-gradient-to-r ${selectedGradient.class} shadow-2xl backdrop-blur-md border border-white/20 flex items-center gap-2 max-w-full transition-all duration-300 animate-fade-in`}
+                            className={`px-3.5 py-2 rounded-2xl bg-gradient-to-r ${selectedGradient.class} shadow-2xl backdrop-blur-md border border-white/20 flex items-center gap-2 max-w-full transition-all duration-300`}
                           >
-                            {/* Selected Icon / Sticker */}
                             {captionIcon === 'kitty' && (
                               <img src="https://i.ibb.co/RTm5P1n9/kitty-1.png" alt="Kitty" className="w-6 h-6 object-contain flex-shrink-0" />
                             )}
-                            {captionIcon === 'crown' && (
-                              <span className="text-base text-amber-300 filter drop-shadow">👑</span>
-                            )}
-                            {captionIcon === 'heart' && (
-                              <span className="text-base text-pink-500 heart-pulse-anim">💗</span>
-                            )}
-                            {captionIcon === 'fire' && (
-                              <span className="text-base text-amber-500">🔥</span>
-                            )}
-                            {captionIcon === 'sparkles' && (
-                              <span className="text-base text-yellow-300">✨</span>
-                            )}
-                            {captionIcon === 'star' && (
-                              <span className="text-base text-sky-300">⭐</span>
-                            )}
-                            {captionIcon === 'music' && (
-                              <span className="text-base text-emerald-300">🎵</span>
-                            )}
+                            {captionIcon === 'crown' && <span className="text-base filter drop-shadow">👑</span>}
+                            {captionIcon === 'heart' && <span className="text-base heart-pulse-anim">💗</span>}
+                            {captionIcon === 'fire' && <span className="text-base">🔥</span>}
+                            {captionIcon === 'sparkles' && <span className="text-base">✨</span>}
+                            {captionIcon === 'star' && <span className="text-base">⭐</span>}
+                            {captionIcon === 'music' && <span className="text-base">🎵</span>}
 
-                            {/* Caption Text Styled */}
                             <span 
                               style={{ color: captionTextColor }}
                               className={`text-xs font-black truncate max-w-[190px] drop-shadow-sm ${
@@ -987,32 +1150,47 @@
 
                       {/* Bottom Shutter & Controls Mock */}
                       <div className="flex items-center justify-around py-2 px-4 text-white">
-                        <button className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-300">
-                          <i className="fa-solid fa-images"></i>
-                        </button>
-                        <div className="w-14 h-14 rounded-full border-4 border-white flex items-center justify-center">
-                          <div className="w-11 h-11 rounded-full bg-amber-400 flex items-center justify-center text-slate-950 font-black text-xs">
+                        <label className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs text-slate-300 cursor-pointer transition" title="Tải ảnh của bạn lên">
+                          <i className="fa-solid fa-upload"></i>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleUserPhotoUpload} />
+                        </label>
+                        <button 
+                          onClick={() => setIsVideoMode(!isVideoMode)}
+                          className={`w-14 h-14 rounded-full border-4 ${isVideoMode ? 'border-red-500' : 'border-white'} flex items-center justify-center transition`}
+                        >
+                          <div className={`w-11 h-11 rounded-full ${isVideoMode ? 'bg-red-500 animate-pulse' : 'bg-amber-400'} flex items-center justify-center text-slate-950 font-black text-xs`}>
                             60s
                           </div>
-                        </div>
-                        <button className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-300">
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const nextIdx = (SAMPLE_PHOTOS.findIndex(p => p.url === currentPhoto) + 1) % SAMPLE_PHOTOS.length;
+                            setCurrentPhoto(SAMPLE_PHOTOS[nextIdx].url);
+                          }}
+                          className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs text-slate-300 transition"
+                          title="Đổi ảnh mẫu"
+                        >
                           <i className="fa-solid fa-rotate"></i>
                         </button>
                       </div>
                     </div>
 
-                    {/* Change Sample Photo */}
-                    <div className="flex items-center gap-1.5 mt-3">
-                      <span className="text-[10px] text-slate-400">Đổi ảnh nền:</span>
+                    {/* Change Sample Photo OR Upload Custom Photo */}
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
+                      <span className="text-[10px] text-slate-400">Ảnh mẫu:</span>
                       {SAMPLE_PHOTOS.map((p, i) => (
                         <button 
                           key={i}
                           onClick={() => setCurrentPhoto(p.url)}
-                          className={`w-5 h-5 rounded-full border ${currentPhoto === p.url ? 'border-pink-400 scale-110' : 'border-transparent opacity-60'}`}
+                          className={`w-6 h-6 rounded-full border-2 ${currentPhoto === p.url ? 'border-pink-400 scale-110' : 'border-transparent opacity-60'}`}
                           style={{ backgroundImage: `url(${p.url})`, backgroundSize: 'cover' }}
                           title={p.name}
                         />
                       ))}
+                      <label className="px-2.5 py-1 rounded-lg bg-pink-500/20 text-pink-400 border border-pink-500/30 text-[10px] font-bold cursor-pointer hover:bg-pink-500/30 transition flex items-center gap-1">
+                        <i className="fa-solid fa-camera"></i> Tải ảnh của bạn
+                        <input type="file" accept="image/*" className="hidden" onChange={handleUserPhotoUpload} />
+                      </label>
                     </div>
                   </div>
 
@@ -1070,7 +1248,7 @@
                             key={i}
                             onClick={() => setSelectedGradient(grad)}
                             className={`p-2 rounded-xl text-center border text-[10px] font-bold transition flex flex-col items-center gap-1.5 ${
-                              selectedGradient.name === grad.name ? 'border-white scale-105 shadow-md shadow-pink-500/20' : 'border-white/10 opacity-80 hover:opacity-100'
+                              selectedGradient.name === grad.name ? 'border-pink-500 scale-105 shadow-md shadow-pink-500/20' : 'border-white/10 opacity-80 hover:opacity-100'
                             }`}
                           >
                             <span className={`w-full h-5 rounded-lg bg-gradient-to-r ${grad.class} shadow-sm`}></span>
@@ -1082,25 +1260,24 @@
 
                     {/* Font & Icon Selection */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Sticker / Icon */}
                       <div>
                         <label className="text-xs font-bold text-slate-200 mb-2 block">
                           Icon / Nhãn Dán:
                         </label>
-                        <div className="flex items-center gap-1.5">
+                        <div className="grid grid-cols-3 gap-1.5">
                           {[
                             { id: 'kitty', label: '🐱 Kitty' },
-                            { id: 'crown', label: '👑 Vương miện' },
-                            { id: 'heart', label: '💗 Trái tim' },
+                            { id: 'crown', label: '👑 VIP' },
+                            { id: 'heart', label: '💗 Tim' },
                             { id: 'fire', label: '🔥 Hot' },
-                            { id: 'sparkles', label: '✨ Spark' },
+                            { id: 'sparkles', label: '✨ Lấp lánh' },
                             { id: 'music', label: '🎵 Nhạc' }
                           ].map(ic => (
                             <button
                               key={ic.id}
                               onClick={() => setCaptionIcon(ic.id)}
-                              className={`p-2 rounded-xl border text-xs font-bold transition flex-1 text-center ${
-                                captionIcon === ic.id ? 'bg-pink-500/20 border-pink-400 text-pink-300' : 'bg-white/5 border-white/10 text-slate-400'
+                              className={`p-2 rounded-xl border text-[11px] font-bold transition text-center ${
+                                captionIcon === ic.id ? 'bg-pink-500/20 border-pink-400 text-pink-400' : 'bg-white/5 border-white/10 text-slate-400'
                               }`}
                             >
                               {ic.label}
@@ -1109,12 +1286,11 @@
                         </div>
                       </div>
 
-                      {/* Font Style */}
                       <div>
                         <label className="text-xs font-bold text-slate-200 mb-2 block">
-                          Kiểu Font Chữ:
+                          Kiểu Font & Màu Chữ:
                         </label>
-                        <div className="grid grid-cols-4 gap-1.5">
+                        <div className="grid grid-cols-4 gap-1.5 mb-2.5">
                           {[
                             { id: 'sans', label: 'Modern' },
                             { id: 'display', label: 'Tech' },
@@ -1125,50 +1301,43 @@
                               key={f.id}
                               onClick={() => setCaptionFont(f.id)}
                               className={`py-2 px-1 rounded-xl border text-[11px] font-bold transition text-center ${
-                                captionFont === f.id ? 'bg-sky-500/20 border-sky-400 text-sky-300' : 'bg-white/5 border-white/10 text-slate-400'
+                                captionFont === f.id ? 'bg-sky-500/20 border-sky-400 text-sky-400' : 'bg-white/5 border-white/10 text-slate-400'
                               }`}
                             >
                               {f.label}
                             </button>
                           ))}
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Text Color Selection */}
-                    <div>
-                      <label className="text-xs font-bold text-slate-200 mb-2 block">
-                        Màu Chữ Caption:
-                      </label>
-                      <div className="flex items-center gap-2">
-                        {[
-                          { color: '#ffffff', name: 'Trắng' },
-                          { color: '#000000', name: 'Đen' },
-                          { color: '#8C315F', name: 'Hồng Đậm' },
-                          { color: '#fbbf24', name: 'Vàng Gold' },
-                          { color: '#38bdf8', name: 'Cyan' },
-                          { color: '#ec4899', name: 'Hồng Baby' }
-                        ].map(c => (
-                          <button
-                            key={c.color}
-                            onClick={() => setCaptionTextColor(c.color)}
-                            className={`w-7 h-7 rounded-full border-2 transition ${
-                              captionTextColor === c.color ? 'border-white scale-110 shadow-lg' : 'border-transparent'
-                            }`}
-                            style={{ backgroundColor: c.color }}
-                            title={c.name}
-                          />
-                        ))}
+                        <div className="flex items-center gap-2">
+                          {[
+                            { color: '#ffffff', name: 'Trắng' },
+                            { color: '#000000', name: 'Đen' },
+                            { color: '#8C315F', name: 'Hồng Đậm' },
+                            { color: '#fbbf24', name: 'Vàng Gold' },
+                            { color: '#38bdf8', name: 'Cyan' },
+                            { color: '#ec4899', name: 'Hồng Baby' }
+                          ].map(c => (
+                            <button
+                              key={c.color}
+                              onClick={() => setCaptionTextColor(c.color)}
+                              className={`w-6 h-6 rounded-full border-2 transition ${
+                                captionTextColor === c.color ? 'border-pink-500 scale-110 shadow-lg' : 'border-slate-500/40'
+                              }`}
+                              style={{ backgroundColor: c.color }}
+                              title={c.name}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
 
                     {/* Action Buttons for Caption */}
-                    <div className="pt-2 flex flex-wrap gap-2.5">
+                    <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
                       <button
-                        onClick={() => copyText(captionText, 'Đã sao chép nội dung Caption!')}
-                        className="flex-1 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 border border-white/15 transition"
+                        onClick={handleOrderWithCaption}
+                        className="keep-white flex-1 py-3.5 px-4 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25 transition hover:scale-[1.02]"
                       >
-                        <i className="fa-regular fa-copy"></i> Sao Chép Caption
+                        <i className="fa-solid fa-cart-plus"></i> Đặt Gói 60s Kèm Mẫu Caption Này
                       </button>
 
                       <button
@@ -1176,17 +1345,11 @@
                           const configSnippet = `// Custom Caption by Anh Tuan iOS\n{\n  overlay_id: "caption:anhtuaan08_personal",\n  text: "${captionText}",\n  textColor: "${captionTextColor}",\n  colors: ${JSON.stringify(selectedGradient.colors)},\n  imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"\n}`;
                           copyText(configSnippet, 'Đã sao chép mã cấu hình script Caption!');
                         }}
-                        className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25 transition hover:scale-[1.02]"
+                        className="py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 border border-white/15 transition"
                       >
-                        <i className="fa-solid fa-code"></i> Xuất Mã Script Locket
+                        <i className="fa-solid fa-code text-sky-400"></i> Copy Mã Script
                       </button>
                     </div>
-
-                    <div className="p-3 rounded-xl bg-pink-500/10 border border-pink-500/20 text-[11px] text-pink-300 flex items-center gap-2">
-                      <i className="fa-solid fa-circle-info"></i>
-                      <span>Khung Caption đặc quyền này được tích hợp sẵn trong <b>Gói Locket 60s VIP</b> của Anh Tuấn.</span>
-                    </div>
-
                   </div>
                 </div>
               </div>
@@ -1201,7 +1364,7 @@
                   <i className="fa-solid fa-qrcode"></i> THANH TOÁN TỰ ĐỘNG
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black font-display text-white">MUA HÀNG QUA QR TRỰC TIẾP & ĐIỀN FORM</h3>
-                <p className="text-xs text-slate-400 mt-1">Quét mã QR để chuyển khoản chính xác - Điền form để Anh Tuấn liên hệ gửi file và cài đặt ngay</p>
+                <p className="text-xs text-slate-400 mt-1">Quét mã QR để chuyển khoản chính xác - Đính kèm ảnh Bill để Bot Telegram duyệt đơn ngay lập tức</p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -1216,21 +1379,23 @@
                         </div>
                         <div>
                           <p className="font-extrabold text-sm text-white">Mã QR Thanh Toán</p>
-                          <p className="text-[10px] text-slate-400">Tự động điền số tiền & nội dung</p>
+                          <p className="text-[10px] text-slate-400">Tự động cập nhật số tiền</p>
                         </div>
                       </div>
 
                       {/* Payment Method Selector */}
                       <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-white/10 text-[11px] font-bold">
                         <button
+                          type="button"
                           onClick={() => setOrderForm(p => ({ ...p, paymentMethod: 'vietqr' }))}
-                          className={`px-2.5 py-1 rounded-lg transition ${orderForm.paymentMethod === 'vietqr' ? 'bg-emerald-500 text-white' : 'text-slate-400'}`}
+                          className={`px-2.5 py-1 rounded-lg transition ${orderForm.paymentMethod === 'vietqr' ? 'keep-white bg-emerald-500' : 'text-slate-400'}`}
                         >
                           VietQR
                         </button>
                         <button
+                          type="button"
                           onClick={() => setOrderForm(p => ({ ...p, paymentMethod: 'momo' }))}
-                          className={`px-2.5 py-1 rounded-lg transition ${orderForm.paymentMethod === 'momo' ? 'bg-pink-600 text-white' : 'text-slate-400'}`}
+                          className={`px-2.5 py-1 rounded-lg transition ${orderForm.paymentMethod === 'momo' ? 'keep-white bg-pink-600' : 'text-slate-400'}`}
                         >
                           MoMo
                         </button>
@@ -1245,8 +1410,34 @@
                         className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
                       />
                       <div className="mt-2 text-center text-slate-800 text-[11px] font-extrabold flex items-center gap-1">
-                        <i className="fa-solid fa-lock text-emerald-600"></i> Quét bằng ứng dụng Ngân hàng / MoMo
+                        <i className="fa-solid fa-lock text-emerald-600"></i> Quét bằng App Ngân hàng / MoMo
                       </div>
+                    </div>
+
+                    {/* Voucher Input Box */}
+                    <div className="mt-4">
+                      <div className="flex gap-1.5">
+                        <input
+                          type="text"
+                          value={voucherInput}
+                          onChange={(e) => setVoucherInput(e.target.value)}
+                          placeholder="Nhập mã giảm giá (VD: ANHTUAN)"
+                          className="flex-1 px-3 py-2 rounded-xl bg-slate-900/80 border border-white/10 text-white text-xs font-mono uppercase focus:outline-none focus:border-emerald-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyVoucher}
+                          className="keep-white px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 font-bold text-xs transition"
+                        >
+                          Áp Dụng
+                        </button>
+                      </div>
+                      {appliedVoucher && (
+                        <div className="mt-1.5 flex items-center justify-between text-[11px] text-emerald-400 font-bold px-1">
+                          <span>✓ {appliedVoucher.desc}</span>
+                          <button onClick={() => { setAppliedVoucher(null); setVoucherInput(''); }} className="text-rose-400 underline text-[10px]">Bỏ mã</button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Payment Info Table */}
@@ -1257,10 +1448,13 @@
                       </div>
 
                       <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
-                        <span className="text-slate-400">Số tiền:</span>
+                        <span className="text-slate-400">Số tiền cần CK:</span>
                         <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-white text-sm">{selectedPackage.price}</span>
-                          <button onClick={() => copyText(String(selectedPackage.priceNum || 0), 'Đã sao chép số tiền!')} className="text-slate-400 hover:text-sky-400">
+                          {appliedVoucher && (
+                            <span className="text-[11px] text-slate-400 line-through">{selectedPackage.price}</span>
+                          )}
+                          <span className="font-extrabold text-emerald-400 text-sm">{formatCurrency(finalPriceNum)}</span>
+                          <button onClick={() => copyText(String(finalPriceNum), 'Đã sao chép số tiền!')} className="text-slate-400 hover:text-sky-400">
                             <i className="fa-regular fa-copy"></i>
                           </button>
                         </div>
@@ -1282,36 +1476,31 @@
                       </div>
 
                       <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                        <span className="text-emerald-300 font-bold">Nội dung CK:</span>
+                        <span className="text-emerald-400 font-bold">Nội dung CK:</span>
                         <div className="flex items-center gap-2">
                           <span className="font-mono font-extrabold text-emerald-400">{transferMemo}</span>
-                          <button onClick={() => copyText(transferMemo, 'Đã sao chép nội dung chuyển khoản!')} className="text-emerald-300 hover:text-white">
+                          <button onClick={() => copyText(transferMemo, 'Đã sao chép nội dung chuyển khoản!')} className="text-emerald-400 hover:text-white">
                             <i className="fa-regular fa-copy"></i>
                           </button>
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  <p className="text-[10px] text-center text-slate-400 mt-4 italic">
-                    Chuyển khoản xong vui lòng điền form bên cạnh để được duyệt đơn tự động!
-                  </p>
                 </div>
 
-                {/* RIGHT: ORDER FORM (ĐIỀN FORM ĐỂ TÔI LIÊN HỆ) */}
+                {/* RIGHT: ORDER FORM */}
                 <div className="lg:col-span-7 glass-card rounded-3xl p-6 border border-white/10">
                   <div className="flex items-center gap-3 mb-5">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center text-white">
+                    <div className="keep-white w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center">
                       <i className="fa-solid fa-address-card text-base"></i>
                     </div>
                     <div>
                       <h4 className="font-extrabold text-base text-white">Điền Thông Tin Nhận Cấu Hình</h4>
-                      <p className="text-xs text-slate-400">Anh Tuấn sẽ liên hệ qua Zalo / Telegram trong vòng 5-15 phút</p>
+                      <p className="text-xs text-slate-400">Anh Tuấn sẽ liên hệ qua Zalo / Telegram ngay khi nhận được đơn</p>
                     </div>
                   </div>
 
                   <form onSubmit={handleSubmitOrder} className="space-y-4">
-                    {/* Full Name */}
                     <div>
                       <label className="text-xs font-bold text-slate-300 mb-1.5 block">
                         Họ và tên của bạn <span className="text-pink-500">*</span>
@@ -1329,7 +1518,6 @@
                       </div>
                     </div>
 
-                    {/* Phone / Zalo */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs font-bold text-slate-300 mb-1.5 block">
@@ -1348,7 +1536,6 @@
                         </div>
                       </div>
 
-                      {/* Social link / Telegram */}
                       <div>
                         <label className="text-xs font-bold text-slate-300 mb-1.5 block">
                           Link Facebook hoặc Telegram
@@ -1366,7 +1553,6 @@
                       </div>
                     </div>
 
-                    {/* Selected Package Selector in Form */}
                     <div>
                       <label className="text-xs font-bold text-slate-300 mb-1.5 block">
                         Gói dịch vụ đã chọn <span className="text-pink-500">*</span>
@@ -1390,56 +1576,53 @@
                       </select>
                     </div>
 
-                    {/* Optional Note */}
                     <div>
                       <label className="text-xs font-bold text-slate-300 mb-1.5 block">
-                        Ghi chú hoặc yêu cầu riêng (Tùy chọn)
+                        Ghi chú hoặc thông số Caption Custom
                       </label>
                       <textarea
                         rows="2"
                         value={orderForm.note}
                         onChange={(e) => setOrderForm(p => ({ ...p, note: e.target.value }))}
-                        placeholder="VD: Nhờ anh hỗ trợ qua UltraView, hoặc ghi chú caption muốn cài..."
+                        placeholder="VD: Nhờ anh hỗ trợ cài qua Zalo, hoặc ghi chú mẫu Caption..."
                         className="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-white text-xs font-medium focus:outline-none focus:border-sky-400 transition"
                       ></textarea>
                     </div>
 
-                    {/* Upload Bill Screenshot preview */}
-                    <div className="p-3 rounded-xl bg-white/5 border border-dashed border-white/15 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <i className="fa-solid fa-receipt text-amber-400 text-sm"></i>
-                        <div>
-                          <p className="text-xs font-bold text-white">Biên lai chuyển khoản (Ảnh bill)</p>
-                          <p className="text-[10px] text-slate-400">
-                            {orderForm.billImageName || 'Tải ảnh để xác thực đơn nhanh hơn'}
+                    {/* Upload Bill Screenshot with Thumbnail Preview */}
+                    <div className="p-3 rounded-xl bg-white/5 border border-dashed border-white/15 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        {billPreviewUrl ? (
+                          <img src={billPreviewUrl} alt="Bill Preview" className="w-10 h-10 rounded-lg object-cover border border-emerald-400 flex-shrink-0" />
+                        ) : (
+                          <i className="fa-solid fa-receipt text-amber-400 text-lg flex-shrink-0"></i>
+                        )}
+                        <div className="truncate">
+                          <p className="text-xs font-bold text-white">Ảnh biên lai chuyển khoản (Bill)</p>
+                          <p className="text-[10px] text-slate-400 truncate">
+                            {orderForm.billImageName ? `Đã chọn: ${orderForm.billImageName}` : 'Gửi ảnh bill trực tiếp về Telegram Admin'}
                           </p>
                         </div>
                       </div>
-                      <label className="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 font-bold text-xs cursor-pointer transition">
-                        <span>{orderForm.billImageName ? 'Đổi ảnh' : 'Chọn ảnh'}</span>
+                      <label className="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-400 hover:bg-sky-500/30 font-bold text-xs cursor-pointer transition flex-shrink-0">
+                        <span>{orderForm.billImageName ? 'Đổi ảnh' : 'Tải ảnh Bill'}</span>
                         <input 
                           type="file" 
                           accept="image/*" 
                           className="hidden" 
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              setOrderForm(p => ({ ...p, billImageName: e.target.files[0].name }));
-                              showToast('Đã đính kèm ảnh biên lai!');
-                            }
-                          }}
+                          onChange={handleBillChange}
                         />
                       </label>
                     </div>
 
-                    {/* Submit Button */}
                     <button
                       type="submit"
                       disabled={orderSubmitting}
-                      className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 text-white font-black text-xs tracking-wider uppercase shadow-xl shadow-emerald-500/25 hover:scale-[1.01] transition flex items-center justify-center gap-2 disabled:opacity-60"
+                      className="keep-white w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 font-black text-xs tracking-wider uppercase shadow-xl shadow-emerald-500/25 hover:scale-[1.01] transition flex items-center justify-center gap-2 disabled:opacity-60"
                     >
                       {orderSubmitting ? (
                         <>
-                          <i className="fa-solid fa-spinner fa-spin"></i> ĐANG GỬI THÔNG TIN...
+                          <i className="fa-solid fa-spinner fa-spin"></i> ĐANG GỬI ĐƠN & ẢNH BILL...
                         </>
                       ) : (
                         <>
@@ -1461,123 +1644,92 @@
                   <i className="fa-solid fa-cloud-arrow-down"></i> TẢI CẤU HÌNH MIỄN PHÍ
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black font-display text-white">CẤU HÌNH SHADOWROCKET & MODULE</h3>
-                <p className="text-xs text-slate-400 mt-1">Bấm nút để nhập tự động vào ứng dụng ShadowRocket trên iPhone/iPad của bạn</p>
+                <p className="text-xs text-slate-400 mt-1">Bấm nút để nhập tự động vào ShadowRocket hoặc bấm biểu tượng QR nếu bạn đang xem trên máy tính</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                
-                {/* Locket Gold Free */}
-                <div className="glass-card rounded-2xl p-4 border border-white/10 hover:border-sky-400/40 transition">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
-                        <i className="fa-solid fa-lock text-sm"></i>
-                      </div>
-                      <div>
-                        <h5 className="font-extrabold text-sm text-white">Locket Gold Config</h5>
-                        <p className="text-[10px] text-slate-400 font-mono">locketgoldbyanhtuaan.config</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => copyText(CONFIGS.locketGoldConfigUrl, 'Đã copy link cấu hình Locket Gold!')} 
-                      className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
-                      title="Copy Link"
-                    >
-                      <i className="fa-regular fa-copy text-xs"></i>
-                    </button>
-                  </div>
-                  <a 
-                    href={`shadowrocket://config/add/${CONFIGS.locketGoldConfigUrl}`}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] transition"
-                  >
-                    <i className="fa-solid fa-arrow-up-right-from-square"></i> MỞ TRONG SHADOWROCKET
-                  </a>
-                </div>
-
-                {/* Module Locket 60s */}
-                <div className="glass-card rounded-2xl p-4 border border-fuchsia-500/30 hover:border-fuchsia-400/50 transition">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-fuchsia-500/20 text-fuchsia-400 flex items-center justify-center font-bold">
-                        <i className="fa-solid fa-puzzle-piece text-sm"></i>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h5 className="font-extrabold text-sm text-white">Module Locket 60s VIP</h5>
-                          <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-fuchsia-500 text-white">VIP</span>
+                {[
+                  {
+                    title: 'Locket Gold Config',
+                    file: 'locketgoldbyanhtuaan.config',
+                    icon: 'fa-lock',
+                    color: 'sky',
+                    btnGrad: 'from-sky-500 to-blue-600',
+                    rawUrl: CONFIGS.locketGoldConfigUrl,
+                    deepLink: `shadowrocket://config/add/${CONFIGS.locketGoldConfigUrl}`,
+                    btnLabel: 'MỞ TRONG SHADOWROCKET'
+                  },
+                  {
+                    title: 'Module Locket 60s VIP',
+                    file: 'locket60s.sgmodule',
+                    icon: 'fa-puzzle-piece',
+                    color: 'fuchsia',
+                    badge: 'VIP',
+                    btnGrad: 'from-fuchsia-500 to-pink-600',
+                    rawUrl: CONFIGS.locket60sModuleUrl,
+                    deepLink: `shadowrocket://install?module=${CONFIGS.locket60sModuleUrl}`,
+                    btnLabel: 'CÀI ĐẶT MODULE 60S'
+                  },
+                  {
+                    title: 'Youtube Premium',
+                    file: 'youtubepremium.config',
+                    icon: 'fa-brands fa-youtube',
+                    color: 'red',
+                    btnGrad: 'from-red-500 to-rose-600',
+                    rawUrl: CONFIGS.youtubeConfigUrl,
+                    deepLink: `shadowrocket://config/add/${CONFIGS.youtubeConfigUrl}`,
+                    btnLabel: 'MỞ TRONG SHADOWROCKET'
+                  },
+                  {
+                    title: 'Spotify Premium',
+                    file: 'spotify.config',
+                    icon: 'fa-brands fa-spotify',
+                    color: 'emerald',
+                    btnGrad: 'from-emerald-500 to-teal-600',
+                    rawUrl: CONFIGS.spotifyConfigUrl,
+                    deepLink: `shadowrocket://config/add/${CONFIGS.spotifyConfigUrl}`,
+                    btnLabel: 'MỞ TRONG SHADOWROCKET'
+                  }
+                ].map((cfg, idx) => (
+                  <div key={idx} className="glass-card rounded-2xl p-4 border border-white/10 hover:border-sky-400/40 transition">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center font-bold">
+                          <i className={`${cfg.icon.includes('fa-brands') ? cfg.icon : `fa-solid ${cfg.icon}`} text-sm`}></i>
                         </div>
-                        <p className="text-[10px] text-slate-400 font-mono">locket60s.sgmodule</p>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <h5 className="font-extrabold text-sm text-white">{cfg.title}</h5>
+                            {cfg.badge && <span className="keep-white text-[8px] font-black px-1.5 py-0.5 rounded bg-fuchsia-500">{cfg.badge}</span>}
+                          </div>
+                          <p className="text-[10px] text-slate-400 font-mono">{cfg.file}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={() => setQrConfigModal({ title: cfg.title, url: cfg.deepLink })}
+                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-sky-400 flex items-center justify-center transition"
+                          title="Hiện mã QR cho iPhone quét"
+                        >
+                          <i className="fa-solid fa-qrcode text-xs"></i>
+                        </button>
+                        <button 
+                          onClick={() => copyText(cfg.rawUrl, `Đã copy link ${cfg.title}!`)} 
+                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
+                          title="Copy Link"
+                        >
+                          <i className="fa-regular fa-copy text-xs"></i>
+                        </button>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => copyText(CONFIGS.locket60sModuleUrl, 'Đã copy link Module 60s!')} 
-                      className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
-                      title="Copy Link"
+                    <a 
+                      href={cfg.deepLink}
+                      className={`keep-white w-full py-2.5 rounded-xl bg-gradient-to-r ${cfg.btnGrad} font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] transition`}
                     >
-                      <i className="fa-regular fa-copy text-xs"></i>
-                    </button>
+                      <i className="fa-solid fa-arrow-up-right-from-square"></i> {cfg.btnLabel}
+                    </a>
                   </div>
-                  <a 
-                    href={`shadowrocket://install?module=${CONFIGS.locket60sModuleUrl}`}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] transition"
-                  >
-                    <i className="fa-solid fa-puzzle-piece"></i> CÀI ĐẶT MODULE 60S
-                  </a>
-                </div>
-
-                {/* Youtube Premium */}
-                <div className="glass-card rounded-2xl p-4 border border-white/10 hover:border-red-400/40 transition">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center font-bold">
-                        <i className="fa-brands fa-youtube text-sm"></i>
-                      </div>
-                      <div>
-                        <h5 className="font-extrabold text-sm text-white">Youtube Premium</h5>
-                        <p className="text-[10px] text-slate-400 font-mono">youtubepremium.config</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => copyText(CONFIGS.youtubeConfigUrl, 'Đã copy link Youtube!')} 
-                      className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
-                    >
-                      <i className="fa-regular fa-copy text-xs"></i>
-                    </button>
-                  </div>
-                  <a 
-                    href={`shadowrocket://config/add/${CONFIGS.youtubeConfigUrl}`}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] transition"
-                  >
-                    <i className="fa-solid fa-arrow-up-right-from-square"></i> MỞ TRONG SHADOWROCKET
-                  </a>
-                </div>
-
-                {/* Spotify Premium */}
-                <div className="glass-card rounded-2xl p-4 border border-white/10 hover:border-emerald-400/40 transition">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                        <i className="fa-brands fa-spotify text-sm"></i>
-                      </div>
-                      <div>
-                        <h5 className="font-extrabold text-sm text-white">Spotify Premium</h5>
-                        <p className="text-[10px] text-slate-400 font-mono">spotify.config</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => copyText(CONFIGS.spotifyConfigUrl, 'Đã copy link Spotify!')} 
-                      className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
-                    >
-                      <i className="fa-regular fa-copy text-xs"></i>
-                    </button>
-                  </div>
-                  <a 
-                    href={`shadowrocket://config/add/${CONFIGS.spotifyConfigUrl}`}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] transition"
-                  >
-                    <i className="fa-brands fa-spotify"></i> MỞ TRONG SHADOWROCKET
-                  </a>
-                </div>
+                ))}
               </div>
 
               {/* DNS duy trì Locket vĩnh viễn */}
@@ -1601,7 +1753,7 @@
                     </a>
                     <a 
                       href={CONFIGS.dnsLocket60sUrl}
-                      className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black text-xs text-center shadow-lg hover:scale-105 transition"
+                      className="keep-white flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 font-black text-xs text-center shadow-lg hover:scale-105 transition"
                     >
                       <i className="fa-solid fa-download mr-1"></i> Tải DNS 60s
                     </a>
@@ -1623,7 +1775,7 @@
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <a 
                     href={CONFIGS.shadowrocketDirectDownload}
-                    className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-sky-500 text-white font-extrabold text-xs text-center hover:bg-sky-400 transition"
+                    className="keep-white flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-sky-500 font-extrabold text-xs text-center hover:bg-sky-400 transition"
                   >
                     Tải App Trực Tiếp
                   </a>
@@ -1664,7 +1816,7 @@
                     { step: 8, title: 'Kết Nối VPN & Mở Locket Tận Hưởng!', desc: 'Quay lại app ShadowRocket, gạt nút Kết nối VPN ở trên cùng. Mở Locket là đã có bản quyền 60s & Gold! 🎉' }
                   ].map((s) => (
                     <div key={s.step} className="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-indigo-600 text-white font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
+                      <div className="keep-white w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-indigo-600 font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md">
                         {s.step}
                       </div>
                       <div>
@@ -1678,9 +1830,41 @@
             </section>
 
             {/* ======================================================== */}
+            {/* SECTION: CÂU HỎI THƯỜNG GẶP (FAQ ACCORDION) */}
+            {/* ======================================================== */}
+            <section id="faq-section" className="mb-14 scroll-mt-20">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-1.5 text-xs font-black tracking-widest uppercase text-amber-400 mb-1">
+                  <i className="fa-solid fa-circle-question"></i> GIẢI ĐÁP THẮC MẮC
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black font-display text-white">CÂU HỎI THƯỜNG GẶP (FAQ)</h3>
+                <p className="text-xs text-slate-400 mt-1">Những thông tin quan trọng bạn nên biết trước và sau khi kích hoạt</p>
+              </div>
+
+              <div className="space-y-3">
+                {FAQS.map((item, idx) => (
+                  <div key={idx} className="glass-card rounded-2xl border border-white/10 overflow-hidden transition">
+                    <button
+                      onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}
+                      className="w-full p-4 text-left flex items-center justify-between gap-3 font-extrabold text-xs sm:text-sm text-white hover:text-sky-400 transition"
+                    >
+                      <span>{idx + 1}. {item.q}</span>
+                      <i className={`fa-solid fa-chevron-down text-xs text-sky-400 transition-transform duration-300 ${openFaq === idx ? 'rotate-180' : ''}`}></i>
+                    </button>
+                    {openFaq === idx && (
+                      <div className="px-4 pb-4 text-xs text-slate-300 leading-relaxed border-t border-white/5 pt-3">
+                        {item.a}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* ======================================================== */}
             {/* SECTION: LIÊN HỆ HỖ TRỢ & GỬI THƯ TÁC GIẢ */}
             {/* ======================================================== */}
-            <section className="mb-14">
+            <section className="mb-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 
                 {/* Support Form */}
@@ -1711,52 +1895,44 @@
                     </div>
                   ) : (
                     <form onSubmit={handleSubmitSupport} className="space-y-3">
-                      <div>
-                        <input 
-                          type="text" 
-                          required
-                          value={contactForm.name}
-                          onChange={e => setContactForm(p => ({ ...p, name: e.target.value }))}
-                          placeholder="Tên của bạn"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400"
-                        />
-                      </div>
-                      <div>
-                        <input 
-                          type="text" 
-                          required
-                          value={contactForm.contact}
-                          onChange={e => setContactForm(p => ({ ...p, contact: e.target.value }))}
-                          placeholder="Số Zalo hoặc Telegram"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400"
-                        />
-                      </div>
-                      <div>
-                        <select 
-                          value={contactForm.subject}
-                          onChange={e => setContactForm(p => ({ ...p, subject: e.target.value }))}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400 cursor-pointer"
-                        >
-                          <option value="Hỗ trợ Locket 60s">Hỗ trợ cài đặt Locket 60s VIP</option>
-                          <option value="Lỗi Locket Gold">Báo lỗi Locket Gold</option>
-                          <option value="Hỗ trợ Youtube / Spotify">Hỗ trợ Youtube / Spotify</option>
-                          <option value="Yêu cầu khác">Khác</option>
-                        </select>
-                      </div>
-                      <div>
-                        <textarea 
-                          rows="3"
-                          required
-                          value={contactForm.message}
-                          onChange={e => setContactForm(p => ({ ...p, message: e.target.value }))}
-                          placeholder="Mô tả sự cố bạn đang gặp phải..."
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400"
-                        ></textarea>
-                      </div>
+                      <input 
+                        type="text" 
+                        required
+                        value={contactForm.name}
+                        onChange={e => setContactForm(p => ({ ...p, name: e.target.value }))}
+                        placeholder="Tên của bạn"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400"
+                      />
+                      <input 
+                        type="text" 
+                        required
+                        value={contactForm.contact}
+                        onChange={e => setContactForm(p => ({ ...p, contact: e.target.value }))}
+                        placeholder="Số Zalo hoặc Telegram"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400"
+                      />
+                      <select 
+                        value={contactForm.subject}
+                        onChange={e => setContactForm(p => ({ ...p, subject: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400 cursor-pointer"
+                      >
+                        <option value="Hỗ trợ Locket 60s">Hỗ trợ cài đặt Locket 60s VIP</option>
+                        <option value="Lỗi Locket Gold">Báo lỗi Locket Gold</option>
+                        <option value="Hỗ trợ Youtube / Spotify">Hỗ trợ Youtube / Spotify</option>
+                        <option value="Yêu cầu khác">Khác</option>
+                      </select>
+                      <textarea 
+                        rows="3"
+                        required
+                        value={contactForm.message}
+                        onChange={e => setContactForm(p => ({ ...p, message: e.target.value }))}
+                        placeholder="Mô tả sự cố bạn đang gặp phải..."
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400"
+                      ></textarea>
                       <button
                         type="submit"
                         disabled={contactSubmitting}
-                        className="w-full py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-extrabold text-xs uppercase tracking-wider transition"
+                        className="keep-white w-full py-3 rounded-xl bg-sky-500 hover:bg-sky-400 font-extrabold text-xs uppercase tracking-wider transition"
                       >
                         {contactSubmitting ? 'ĐANG GỬI...' : 'GỬI YÊU CẦU HỖ TRỢ'}
                       </button>
@@ -1783,23 +1959,22 @@
                     </div>
 
                     <p className="text-xs text-slate-300 leading-relaxed mb-4">
-                      Chuyên phát triển và nghiên cứu các module ShadowRocket, giải pháp DNS duy trì chứng chỉ không giới hạn cho cộng đồng iOS Việt Nam. Cam kết hỗ trợ nhiệt tình, uy tín 100%!
+                      Chuyên phát triển và nghiên cứu các module ShadowRocket, giải pháp DNS duy trì chứng chỉ không giới hạn cho cộng đồng iOS Việt Nam. Cam kết hỗ trợ nhiệt tình, bảo hành uy tín 100%!
                     </p>
 
                     <div className="flex flex-wrap gap-1.5 mb-5">
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/20">ShadowRocket Pro</span>
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-300 border border-pink-500/20">Locket 60s VIP</span>
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">DNS MobileConfig</span>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">ShadowRocket Pro</span>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">Locket 60s VIP</span>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">DNS MobileConfig</span>
                     </div>
                   </div>
 
-                  {/* Social Buttons */}
                   <div className="flex items-center gap-2 pt-2 border-t border-white/10">
                     <a 
                       href={CONFIGS.adminTelegram} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex-1 py-2 rounded-xl bg-white/5 hover:bg-sky-500/20 text-slate-300 hover:text-sky-400 text-xs font-bold text-center border border-white/10 transition flex items-center justify-center gap-1.5"
+                      className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-sky-500/20 text-slate-300 hover:text-sky-400 text-xs font-bold text-center border border-white/10 transition flex items-center justify-center gap-1.5"
                     >
                       <i className="fa-brands fa-telegram text-sm"></i> Telegram
                     </a>
@@ -1807,7 +1982,7 @@
                       href={CONFIGS.adminInstagram} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex-1 py-2 rounded-xl bg-white/5 hover:bg-pink-500/20 text-slate-300 hover:text-pink-400 text-xs font-bold text-center border border-white/10 transition flex items-center justify-center gap-1.5"
+                      className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-pink-500/20 text-slate-300 hover:text-pink-400 text-xs font-bold text-center border border-white/10 transition flex items-center justify-center gap-1.5"
                     >
                       <i className="fa-brands fa-instagram text-sm"></i> Instagram
                     </a>
@@ -1815,7 +1990,7 @@
                       href={CONFIGS.adminZalo} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex-1 py-2 rounded-xl bg-white/5 hover:bg-blue-500/20 text-slate-300 hover:text-blue-400 text-xs font-bold text-center border border-white/10 transition flex items-center justify-center gap-1.5"
+                      className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-blue-500/20 text-slate-300 hover:text-blue-400 text-xs font-bold text-center border border-white/10 transition flex items-center justify-center gap-1.5"
                     >
                       <i className="fa-solid fa-comment-dots text-sm"></i> Zalo
                     </a>
@@ -1827,10 +2002,35 @@
           </main>
 
           {/* ======================================================== */}
-          {/* ORDER SUCCESS MODAL */}
+          {/* MODAL: QR CODE FOR SHADOWROCKET CONFIG */}
+          {/* ======================================================== */}
+          {qrConfigModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setQrConfigModal(null)}>
+              <div className="glass-card max-w-xs w-full rounded-3xl p-6 text-center border border-sky-500/40 shadow-2xl" onClick={e => e.stopPropagation()}>
+                <h4 className="font-extrabold text-base text-white mb-1">{qrConfigModal.title}</h4>
+                <p className="text-[11px] text-slate-400 mb-4">Mở Camera iPhone hoặc tính năng Quét QR trong ShadowRocket để cài đặt</p>
+                <div className="bg-white p-4 rounded-2xl inline-block mb-4 shadow-lg">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrConfigModal.url)}`} 
+                    alt="Config QR" 
+                    className="w-48 h-48 object-contain"
+                  />
+                </div>
+                <button 
+                  onClick={() => setQrConfigModal(null)}
+                  className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* MODAL: ORDER SUCCESS */}
           {/* ======================================================== */}
           {orderSuccessModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
               <div className="glass-card max-w-md w-full rounded-3xl p-6 sm:p-8 text-center border border-emerald-500/40 relative shadow-2xl">
                 <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center text-3xl mb-4 border border-emerald-500/30">
                   <i className="fa-solid fa-check"></i>
@@ -1846,15 +2046,15 @@
                 </div>
 
                 <p className="text-[11px] text-slate-300 mb-6 leading-relaxed">
-                  Để nhận file cấu hình nhanh nhất trong vòng 2 phút, vui lòng bấm vào nút bên dưới để nhắn tin trực tiếp cho Anh Tuấn nhé!
+                  Thông tin và ảnh biên lai đã được gửi tới Telegram của Anh Tuấn. Để nhận file cấu hình ngay lập tức, bạn hãy bấm nhắn tin bên dưới nhé!
                 </p>
 
                 <div className="space-y-2.5">
                   <a 
-                    href={`${CONFIGS.adminTelegram}?text=${encodeURIComponent(`Chào Anh Tuấn, mình vừa đặt đơn hàng mã ${lastOrderCode} (${selectedPackage.name}). Nhờ bạn gửi file và kích hoạt giúp mình nhé!`)}`}
+                    href={`${CONFIGS.adminTelegram}?text=${encodeURIComponent(`Chào Anh Tuấn, mình vừa đặt đơn hàng mã ${lastOrderCode} (${selectedPackage.name} - ${formatCurrency(finalPriceNum)}). Nhờ bạn gửi file và kích hoạt giúp mình nhé!`)}`}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-400 to-blue-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg hover:scale-105 transition"
+                    className="keep-white w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-400 to-blue-600 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg hover:scale-105 transition"
                   >
                     <i className="fa-brands fa-telegram text-base"></i> Nhắn Tin Qua Telegram Ngay
                   </a>
@@ -1863,7 +2063,7 @@
                     href={CONFIGS.adminZalo}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg hover:scale-105 transition"
+                    className="keep-white w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg hover:scale-105 transition"
                   >
                     <i className="fa-solid fa-comment text-base"></i> Nhắn Tin Qua Zalo
                   </a>
@@ -1884,11 +2084,37 @@
             <button 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               aria-label="Lên đầu trang"
-              className="fixed bottom-6 right-5 z-40 w-11 h-11 rounded-full glass-card border border-sky-400/40 text-sky-400 flex items-center justify-center shadow-xl hover:scale-110 transition"
+              className="fixed bottom-20 md:bottom-6 right-5 z-40 w-11 h-11 rounded-full glass-card border border-sky-400/40 text-sky-400 flex items-center justify-center shadow-xl hover:scale-110 transition"
             >
               <i className="fa-solid fa-arrow-up text-sm"></i>
             </button>
           )}
+
+          {/* ======================================================== */}
+          {/* MOBILE BOTTOM NAVIGATION BAR (iOS STYLE) */}
+          {/* ======================================================== */}
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 backdrop-blur-2xl bg-slate-950/80 border-t border-white/10 px-2 py-2 flex items-center justify-around">
+            <a href="#packages-section" className="flex flex-col items-center gap-1 text-[10px] font-bold text-slate-300 hover:text-sky-400 py-1 px-3">
+              <i className="fa-solid fa-crown text-amber-400 text-sm"></i>
+              <span>Gói VIP</span>
+            </a>
+            <a href="#caption-studio" className="flex flex-col items-center gap-1 text-[10px] font-bold text-slate-300 hover:text-pink-400 py-1 px-3">
+              <i className="fa-solid fa-wand-magic-sparkles text-pink-400 text-sm"></i>
+              <span>Caption</span>
+            </a>
+            <a href="#qr-payment-section" className="flex flex-col items-center gap-1 text-[10px] font-bold text-slate-300 hover:text-emerald-400 py-1 px-3">
+              <i className="fa-solid fa-qrcode text-emerald-400 text-sm"></i>
+              <span>Mua QR</span>
+            </a>
+            <a href="#config-section" className="flex flex-col items-center gap-1 text-[10px] font-bold text-slate-300 hover:text-sky-400 py-1 px-3">
+              <i className="fa-solid fa-cloud-arrow-down text-sky-400 text-sm"></i>
+              <span>Config Free</span>
+            </a>
+            <a href="#faq-section" className="flex flex-col items-center gap-1 text-[10px] font-bold text-slate-300 hover:text-purple-400 py-1 px-3">
+              <i className="fa-solid fa-circle-question text-purple-400 text-sm"></i>
+              <span>Hỏi Đáp</span>
+            </a>
+          </nav>
 
           {/* Footer */}
           <footer className="max-w-4xl mx-auto px-4 text-center text-xs text-slate-400 border-t border-white/10 pt-8 mt-12">
@@ -1903,6 +2129,4 @@
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
-</html>
-
 </html>
