@@ -58,6 +58,15 @@
       colors: ["#7dd3fc","#f472b6","#a5b4fc"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
     }
+    ,{
+     overlay_id: "caption:anhtuaan08_personal:7",
+     text: "✨Ngon hămm",
+     textColor: "#ffffff",
+     colors: ["#c026d3","#9333ea","#4f46e5"],
+     imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
+    }
+    // Custom Caption by Anh Tuan iOS
+
 ];
 
   var useNativeImagePost = false;
