@@ -42,7 +42,7 @@
       <key>PayloadVersion</key><integer>1</integer>
       <key>PayloadIdentifier</key><string>io.anhtuaan08.dns.d71158.settings</string>
       <key>PayloadUUID</key><string>2A94BAFC-7F33-5B59-A31D-86E654378409</string>
-      <key>PayloadDisplayName</key><string>Locket 60s</string>
+      <key>PayloadDisplayName</key><string>Locket Gold</string>
       <key>PayloadOrganization</key><string>anhtuaan08</string>
       <key>DNSSettings</key>
       <dict>
@@ -76,7 +76,7 @@
       <key>PayloadVersion</key><integer>1</integer>
       <key>PayloadIdentifier</key><string>io.anhtuaan08.nextdns.rootca</string>
       <key>PayloadUUID</key><string>B2C3D4E5-F6A7-8901-BCDE-F23456789012</string>
-      <key>PayloadDisplayName</key><string>Locket 60s by anhtuaan08</string>
+      <key>PayloadDisplayName</key><string>Locket Gold by anhtuaan08</string>
       <key>PayloadOrganization</key><string>NextDNS</string>
       <key>PayloadDescription</key><string>Chứng chỉ gốc của NextDNS dùng để hiển thị trang chặn (Block Page).</string>
       <key>PayloadCertificateFileName</key><string>NextDNS.cer</string>
