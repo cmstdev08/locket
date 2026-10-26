@@ -56,6 +56,14 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0                             // 0 = không pad
     }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:6",
+      text: "LGBT🏳️‍🌈",
+      textColor: "#8C315F",
+      colors: ["#7dd3fc","#f472b6","#a5b4fc"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
+    }
+    // Custom Caption by Anh Tuan iOS
     // Thêm caption khác ở đây:
     // { overlay_id: "caption:anhtuaan08_personal:1", text: "...", textColor: "#...", colors: ["#...","#..."], imageUrl: "https://..." }
   ];
