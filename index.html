@@ -753,6 +753,8 @@
 
       // GitHub Deploy Caption State
       const [ghToken, setGhToken] = useState(() => localStorage.getItem('at_gh_token') || CONFIGS.defaultGhToken || '');
+      const [teleToken, setTeleToken] = useState(() => localStorage.getItem('at_tele_token') || '');
+      const [teleChatId, setTeleChatId] = useState(() => localStorage.getItem('at_tele_chat_id') || '');
       const [ghRepo, setGhRepo] = useState(() => localStorage.getItem('at_gh_repo') || CONFIGS.defaultGhRepo || 'cmstdev08/locket');
       const [ghBranch, setGhBranch] = useState(() => localStorage.getItem('at_gh_branch') || CONFIGS.defaultGhBranch || 'master');
       const [ghCustomerUsername, setGhCustomerUsername] = useState('');
@@ -1413,11 +1415,11 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 ━━━━━━━━━━━━━━━━━━━━
 ⏰ <i>${new Date().toLocaleString('vi-VN')}</i>`;
 
-            await fetch(`https://api.telegram.org/bot${CONFIGS.telegramBotToken}/sendMessage`, {
+            await fetch(`https://api.telegram.org/bot${teleToken.trim() || CONFIGS.telegramBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                chat_id: CONFIGS.telegramChatId,
+                chat_id: (teleChatId.trim() || CONFIGS.telegramChatId),
                 text: notifMsg,
                 parse_mode: 'HTML'
               })
@@ -1536,17 +1538,17 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             formData.append('caption', telegramMessage);
             formData.append('parse_mode', 'HTML');
 
-            await fetch(`https://api.telegram.org/bot${CONFIGS.telegramBotToken}/sendPhoto`, {
+            await fetch(`https://api.telegram.org/bot${teleToken.trim() || CONFIGS.telegramBotToken}/sendPhoto`, {
               method: 'POST',
               body: formData
             }).catch(() => {});
           } else {
             // Send text message if no photo attached
-            await fetch(`https://api.telegram.org/bot${CONFIGS.telegramBotToken}/sendMessage`, {
+            await fetch(`https://api.telegram.org/bot${teleToken.trim() || CONFIGS.telegramBotToken}/sendMessage`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                chat_id: CONFIGS.telegramChatId,
+                chat_id: (teleChatId.trim() || CONFIGS.telegramChatId),
                 text: telegramMessage,
                 parse_mode: 'HTML'
               })
@@ -1574,11 +1576,11 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
         const text = `📬 <b>YÊU CẦU HỖ TRỢ / TIN NHẮN</b>\n━━━━━━━━━━━━━━\n👤 <b>Tên:</b> ${contactForm.name}\n📱 <b>Liên hệ:</b> ${contactForm.contact}\n🏷️ <b>Chủ đề:</b> ${contactForm.subject}\n💬 <b>Nội dung:</b>\n${contactForm.message}\n━━━━━━━━━━━━━━\n⏰ <i>${timeStr}</i>`;
         
         try {
-          await fetch(`https://api.telegram.org/bot${CONFIGS.telegramBotToken}/sendMessage`, {
+          await fetch(`https://api.telegram.org/bot${teleToken.trim() || CONFIGS.telegramBotToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              chat_id: CONFIGS.telegramChatId,
+              chat_id: (teleChatId.trim() || CONFIGS.telegramChatId),
               text: text,
               parse_mode: 'HTML'
             })
@@ -3558,6 +3560,48 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                             className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
                           />
                         </div>
+                      </div>
+
+                      {/* Tùy chọn Bot Telegram nhận thông báo đơn hàng & bill */}
+                      <div className="pt-2 border-t border-white/10 space-y-2">
+                        <label className="text-[10px] font-bold text-amber-300 block">
+                          <i className="fa-brands fa-telegram mr-1"></i> Telegram Bot nhận thông báo Đơn Hàng & Bill (Tùy chọn):
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-[9px] text-slate-400 block mb-0.5">Bot Token (từ @BotFather):</span>
+                            <input 
+                              type="password"
+                              value={teleToken}
+                              onChange={(e) => setTeleToken(e.target.value)}
+                              placeholder="VD: 8123456789:AAH_..."
+                              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-slate-400 block mb-0.5">Chat ID (từ @userinfobot):</span>
+                            <input 
+                              type="text"
+                              value={teleChatId}
+                              onChange={(e) => setTeleChatId(e.target.value)}
+                              placeholder="VD: 123456789"
+                              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (teleToken.trim()) localStorage.setItem('at_tele_token', teleToken.trim());
+                            else localStorage.removeItem('at_tele_token');
+                            if (teleChatId.trim()) localStorage.setItem('at_tele_chat_id', teleChatId.trim());
+                            else localStorage.removeItem('at_tele_chat_id');
+                            showToast('Đã lưu cấu hình Bot Telegram nhận đơn hàng!');
+                          }}
+                          className="w-full py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 text-xs font-bold border border-sky-500/30 transition flex items-center justify-center gap-1.5"
+                        >
+                          <i className="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình Telegram Nhận Đơn
+                        </button>
                       </div>
                     </div>
                   )}
