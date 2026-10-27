@@ -1015,6 +1015,10 @@
             setKeyVerified(true);
             setVerifiedKeyInfo(matched);
             localStorage.setItem('at_customer_key', key);
+            try {
+              const savedUser = localStorage.getItem('at_user_for_key_' + key.toUpperCase());
+              if (savedUser) setGhCustomerUsername(savedUser);
+            } catch (_) {}
             showToast(`Key hợp lệ! Xin chào ${matched.owner || 'khách hàng'}.`);
             setCheckingKey(false);
             return true;
@@ -1066,7 +1070,20 @@ ${JSON.stringify(captionObj, null, 2)}
       };
 
       const handleDeployCaptionToGitHub = async () => {
-        const cleanUser = (ghCustomerUsername.trim() || 'user').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() || 'vip';
+        // 1. Xác định định danh User / Key độc quyền
+        let rawId = (ghCustomerUsername.trim() || '').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+        if (!rawId && accessKeyInput.trim()) {
+          rawId = accessKeyInput.trim().replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+        }
+        const cleanUser = rawId || 'vip';
+
+        // Tự động ghi nhớ liên kết Key <-> Username
+        if (accessKeyInput.trim() && cleanUser) {
+          try {
+            localStorage.setItem('at_user_for_key_' + accessKeyInput.trim().toUpperCase(), cleanUser);
+          } catch (_) {}
+        }
+
         const effectiveToken = ghToken.trim() || CONFIGS.defaultGhToken;
         const effectiveRepo = ghRepo.trim() || CONFIGS.defaultGhRepo || 'cmstdev08/locket';
         const effectiveBranch = ghBranch.trim() || CONFIGS.defaultGhBranch || 'master';
@@ -1083,6 +1100,17 @@ ${JSON.stringify(captionObj, null, 2)}
         try {
           const timestamp = Date.now();
           const captionId = `${cleanUser}-${timestamp}`;
+
+          // ĐẶC QUYỀN: Bộ 3 file RIÊNG BIỆT cho từng Key/User (Không dùng chung)
+          let userExpFilePath = `locket60s/anhtuaan08-${cleanUser}-expiry-check.js`;
+          let userCapFilePath = `locket60s/caption-${cleanUser}.js`;
+          if (cleanUser === 'thaocute') {
+            userExpFilePath = 'locket60s/anhtuaan08-thaocute-expriry-check.js';
+            userCapFilePath = 'locket60s/captionthaocute.js';
+          }
+          const userExpFileName = userExpFilePath.split('/').pop();
+          const userCapFileName = userCapFilePath.split('/').pop();
+
           const sgmoduleFolder = 'modules';
           const sgmoduleFileName = `locket60s-${cleanUser}.sgmodule`;
           const sgmoduleFilePath = `${sgmoduleFolder}/${sgmoduleFileName}`;
@@ -1090,51 +1118,47 @@ ${JSON.stringify(captionObj, null, 2)}
           const rawSgmoduleUrl = `${rawBase}/${sgmoduleFilePath}`;
           const shadowrocketDeepLink = `shadowrocket://install?module=${encodeURIComponent(rawSgmoduleUrl)}`;
 
-          // 1. Tải trước nội dung file anhtuaan08-expiry-check.js & caption-post.js để dò tìm số thứ tự lớn nhất
-          let rawExpText = '';
-          let rawCapText = '';
-
-          // Tải từ GitHub Contents API trực tiếp nếu có token (Real-time 100% không bị delay cache 5 phút)
-          if (effectiveToken) {
+          // Helper đọc file từ GitHub API hoặc Raw URL
+          const fetchFileText = async (filePath) => {
+            if (effectiveToken) {
+              try {
+                const apiRes = await fetch(`${_atDec('aHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy8=')}${effectiveRepo}/contents/${filePath}?ref=${effectiveBranch}`, {
+                  headers: { 'Authorization': `Bearer ${effectiveToken}`, 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (apiRes.ok) {
+                  const data = await apiRes.json();
+                  return decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+                }
+              } catch (_) {}
+            }
             try {
-              const expApiRes = await fetch(`${_atDec('aHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy8=')}${effectiveRepo}/contents/locket60s/anhtuaan08-expiry-check.js?ref=${effectiveBranch}`, {
-                headers: { 'Authorization': `Bearer ${effectiveToken}`, 'Accept': 'application/vnd.github.v3+json' }
-              });
-              if (expApiRes.ok) {
-                const expApiData = await expApiRes.json();
-                rawExpText = decodeURIComponent(escape(atob(expApiData.content.replace(/\s/g, ''))));
-              }
+              let rawRes = await fetch(`${rawBase}/${filePath}?_t=${Date.now()}`);
+              if (!rawRes.ok) rawRes = await fetch(`./${filePath}?_t=${Date.now()}`);
+              if (rawRes.ok) return await rawRes.text();
             } catch (_) {}
+            return '';
+          };
 
-            try {
-              const capApiRes = await fetch(`${_atDec('aHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy8=')}${effectiveRepo}/contents/locket60s/caption-post.js?ref=${effectiveBranch}`, {
-                headers: { 'Authorization': `Bearer ${effectiveToken}`, 'Accept': 'application/vnd.github.v3+json' }
-              });
-              if (capApiRes.ok) {
-                const capApiData = await capApiRes.json();
-                rawCapText = decodeURIComponent(escape(atob(capApiData.content.replace(/\s/g, ''))));
-              }
-            } catch (_) {}
-          }
-
-          // Fallback nếu không có token hoặc API chưa lấy được
+          // 1. Tải trước nội dung file RIÊNG của User (nếu đã tạo trước đây)
+          let rawExpText = await fetchFileText(userExpFilePath);
           if (!rawExpText) {
-            try {
-              let expRes = await fetch(`${_atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29t')}/${effectiveRepo}/${effectiveBranch}/locket60s/anhtuaan08-expiry-check.js?_t=${Date.now()}`);
-              if (!expRes.ok) expRes = await fetch('./locket60s/anhtuaan08-expiry-check.js?_t=' + Date.now());
-              if (expRes.ok) rawExpText = await expRes.text();
-            } catch (_) {}
+            // User này chưa có file riêng -> Lấy file mẫu gốc làm template và gán username
+            rawExpText = await fetchFileText('locket60s/anhtuaan08-expiry-check.js');
+            if (rawExpText) {
+              rawExpText = rawExpText.replace(
+                /var BADGE_USERNAMESs*=s*[.*?];/,
+                `var BADGE_USERNAMES = ["${cleanUser}", "anhtuaan08"];`
+              );
+            }
           }
 
+          let rawCapText = await fetchFileText(userCapFilePath);
           if (!rawCapText) {
-            try {
-              let capRes = await fetch(`${_atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29t')}/${effectiveRepo}/${effectiveBranch}/locket60s/caption-post.js?_t=${Date.now()}`);
-              if (!capRes.ok) capRes = await fetch('./locket60s/caption-post.js?_t=' + Date.now());
-              if (capRes.ok) rawCapText = await capRes.text();
-            } catch (_) {}
+            // User này chưa có file riêng -> Lấy file mẫu gốc làm template
+            rawCapText = await fetchFileText('locket60s/caption-post.js');
           }
 
-          // Tự động tìm số thứ tự lớn nhất trong code hiện tại (bỏ qua các dòng comment // để không bị nhận nhầm ví dụ mẫu)
+          // 2. Tìm số thứ tự lớn nhất trong file RIÊNG của chính User này
           const stripComments = (str) => (str || '').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
           const cleanExp = stripComments(rawExpText);
           const cleanCap = stripComments(rawCapText);
@@ -1151,26 +1175,25 @@ ${JSON.stringify(captionObj, null, 2)}
             if (!isNaN(num) && num > maxIndex) maxIndex = num;
           }
 
-          // Kiểm tra thêm lịch sử lưu trong localStorage để luôn tăng dần không bao giờ bị trùng lặp
-          const savedLastIdx = parseInt(localStorage.getItem('at_last_caption_idx') || '0', 10);
-          if (savedLastIdx > maxIndex) maxIndex = savedLastIdx;
+          const savedUserLastIdx = parseInt(localStorage.getItem(`at_last_idx_${cleanUser}`) || '0', 10);
+          if (savedUserLastIdx > maxIndex) maxIndex = savedUserLastIdx;
 
-          // Số thứ tự mới bắt buộc phải TĂNG LÊN (+1) để không bị trùng lặp code
+          // Số thứ tự mới bắt buộc phải TĂNG LÊN (+1) trong file riêng của User
           const nextIndex = maxIndex + 1;
-          localStorage.setItem('at_last_caption_idx', String(nextIndex));
+          localStorage.setItem(`at_last_idx_${cleanUser}`, String(nextIndex));
           const overlayId = `caption:anhtuaan08_personal:${nextIndex}`;
 
-          // Nội dung File SGModule cá nhân hóa cho khách hàng
+          // 3. Nội dung File SGModule riêng: TẤT CẢ SCRIPT ĐỀU TRỎ VÀO FILE RIÊNG CỦA USER NÀY!
           const sgmoduleContent = `#!name=Locket 60s VIP - @${cleanUser}
 #!desc=Module Locket Gold & 60s dành riêng cho @${cleanUser} | Caption & Khung Viền Widget Màn Hình Chính
 #!author=anhtuaan08
 
 [Script]
-revenuecat = type=http-response, pattern=^https:\\/\\/api\\.revenuecat\\.com\\/.+\\/(receipts$|subscribers\\/[^/]+$), script-path=${rawBase}/locket60s/anhtuaan08-expiry-check.js, requires-body=true, max-size=-1, timeout=60
+revenuecat = type=http-response, pattern=^https:\\/\\/api\\.revenuecat\\.com\\/.+\\/(receipts$|subscribers\\/[^/]+$), script-path=${rawBase}/${userExpFilePath}, requires-body=true, max-size=-1, timeout=60
 deleteHeader = type=http-request, pattern=^https:\\/\\/api\\.revenuecat\\.com\\/.+\\/(receipts|subscribers), script-path=${rawBase}/locket60s/deleteHeader-expiry-check.js, timeout=60
-locket_rc = type=http-response, pattern=^https:\\/\\/firebaseremoteconfig\\.googleapis\\.com\\/v1\\/projects\\/locket-4252a\\/.+, script-path=${rawBase}/locket60s/anhtuaan08-expiry-check.js, requires-body=true, max-size=-1, timeout=60
-locket_profile_badge = type=http-response, pattern=^https:\\/\\/(api\\.locketcamera\\.com|us-central1-locket-4252a\\.cloudfunctions\\.net)\\/(?:[^?#]*\\/)?(fetchUserV2|getUserByUsername|changeProfileInfo|updateUser|createUser)(?:[/?#]|$), script-path=${rawBase}/locket60s/anhtuaan08-expiry-check.js, requires-body=true, max-size=-1, timeout=30
-locket_caption_post16 = type=http-request, pattern=^https:\\/\\/(api\\.locketcamera\\.com|us-central1-locket-4252a\\.cloudfunctions\\.net)\\/postMomentV2(?:\\?.*)?$, script-path=${rawBase}/locket60s/caption-post.js, requires-body=true, max-size=-1, timeout=60
+locket_rc = type=http-response, pattern=^https:\\/\\/firebaseremoteconfig\\.googleapis\\.com\\/v1\\/projects\\/locket-4252a\\/.+, script-path=${rawBase}/${userExpFilePath}, requires-body=true, max-size=-1, timeout=60
+locket_profile_badge = type=http-response, pattern=^https:\\/\\/(api\\.locketcamera\\.com|us-central1-locket-4252a\\.cloudfunctions\\.net)\\/(?:[^?#]*\\/)?(fetchUserV2|getUserByUsername|changeProfileInfo|updateUser|createUser)(?:[/?#]|$), script-path=${rawBase}/${userExpFilePath}, requires-body=true, max-size=-1, timeout=30
+locket_caption_post16 = type=http-request, pattern=^https:\\/\\/(api\\.locketcamera\\.com|us-central1-locket-4252a\\.cloudfunctions\\.net)\\/(?:postMomentV2|postMoment)(?:\\?.*)?$, script-path=${rawBase}/${userCapFilePath}, requires-body=true, max-size=-1, timeout=60
 
 [MITM]
 hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api.locketcamera.com, us-central1-locket-4252a.cloudfunctions.net
@@ -1193,14 +1216,12 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
           let updatedExpContent = null;
           let updatedCaptionPostContent = null;
 
-          // 2. Sửa nội dung anhtuaan08-expiry-check.js
+          // 4. Sửa nội dung file Expiry riêng của User
           if (rawExpText) {
             let text = rawExpText;
-            // Chỉ cập nhật khung viền khi đang ở tab frame
             if (studioTab === 'frame' && customFrameUrl && customFrameUrl.trim()) {
               text = text.replace(/var WIDGET_FRAME_URL = ".*?";/, `var WIDGET_FRAME_URL = "${customFrameUrl.trim()}";`);
             }
-            // Chỉ chèn caption khi đang ở tab caption
             if (studioTab === 'caption' && captionText && text.includes('// Custom Caption by Anh Tuan iOS')) {
               text = text.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
             }
@@ -1215,7 +1236,7 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             updatedExpContent = text;
           }
 
-          // 3. Sửa nội dung caption-post.js (chỉ khi tạo Caption)
+          // 5. Sửa nội dung file Caption riêng của User (khi tạo Caption)
           if (rawCapText && studioTab === 'caption') {
             let capText = rawCapText;
             if (captionText && capText.includes('// Custom Caption by Anh Tuan iOS')) {
@@ -1224,13 +1245,14 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             updatedCaptionPostContent = capText;
           }
 
-          // 3. Nếu có Token GitHub của Admin, tự động commit đồng bộ lên GitHub repo
+          // 6. Commit đồng bộ lên GitHub: CHỈ GHI VÀO FILE RIÊNG CỦA USER NÀY!
           if (effectiveToken) {
             try {
               const captionFileName = `captions/caption-${captionId}.json`;
               const captionData = {
                 overlay_id: overlayId,
                 username: cleanUser,
+                userKey: accessKeyInput || '',
                 text: captionText,
                 textColor: captionTextColor,
                 colors: selectedGradient.colors,
@@ -1241,6 +1263,9 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                 widgetFrameUrl: customFrameUrl,
                 imageUrl: 'https://i.ibb.co/RTm5P1n9/kitty-1.png',
                 captionMinChars: 0,
+                userExpFilePath,
+                userCapFilePath,
+                sgmoduleFilePath,
                 createdAt: new Date().toISOString()
               };
 
@@ -1285,32 +1310,32 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                 return true;
               };
 
-              // Đẩy JSON caption
+              // Đẩy JSON lịch sử caption
               await putGitHubFile(
                 captionFileName,
                 JSON.stringify(captionData, null, 2),
                 `✨ Thêm caption cho @${cleanUser}: "${captionText}"`
               );
 
-              // Cập nhật file anhtuaan08-expiry-check.js trên GitHub
+              // 1. Cập nhật file anhtuaan08-expiry-check RIÊNG của user trên GitHub
               if (updatedExpContent) {
                 await putGitHubFile(
-                  'locket60s/anhtuaan08-expiry-check.js',
+                  userExpFilePath,
                   updatedExpContent,
-                  `🔥 Cập nhật expiry-check (frame & caption) cho @${cleanUser}`
+                  `🔥 Cập nhật ${userExpFileName} cho @${cleanUser}`
                 );
               }
 
-              // Cập nhật file caption-post.js trên GitHub
+              // 2. Cập nhật file caption-post RIÊNG của user trên GitHub
               if (updatedCaptionPostContent) {
                 await putGitHubFile(
-                  'locket60s/caption-post.js',
+                  userCapFilePath,
                   updatedCaptionPostContent,
-                  `✨ Cập nhật caption-post cho @${cleanUser}`
+                  `✨ Cập nhật ${userCapFileName} cho @${cleanUser}`
                 );
               }
 
-              // Đẩy file SGModule cá nhân vào thư mục riêng modules/
+              // 3. Đẩy file SGModule RIÊNG của user vào thư mục modules/
               await putGitHubFile(
                 sgmoduleFilePath,
                 sgmoduleContent,
@@ -1326,17 +1351,19 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             githubError = 'Chưa có Token GitHub Admin';
           }
 
-          // Gửi thông báo về Telegram Admin để bạn biết khách vừa tạo cấu hình gì
+          // Gửi thông báo Telegram
           try {
-            const notifMsg = `🎨 <b>YÊU CẦU TẠO CẤU HÌNH MỚI!</b>
+            const notifMsg = `🎨 <b>YÊU CẦU CẤU HÌNH RIÊNG CHO USER!</b>
 ━━━━━━━━━━━━━━━━━━━━
 👤 <b>Khách hàng:</b> @${cleanUser}
-🔑 <b>Key sử dụng:</b> <code>${accessKeyInput}</code>
+🔑 <b>Key:</b> <code>${accessKeyInput || 'N/A'}</code>
 🏷️ <b>Caption:</b> "${captionText}"
 🎨 <b>Màu nền:</b> ${selectedGradient.name}
-🖼️ <b>Khung viền Widget:</b> ${customFrameUrl ? `<a href="${customFrameUrl}">Xem ảnh khung</a>` : 'Không có'}
-📦 <b>File SGModule:</b> <code>${sgmoduleFileName}</code>
-🌐 <b>Đồng bộ GitHub:</b> ${syncedToGithub ? '✅ Thành công' : '⚡ Tạo file trực tiếp'}
+🖼️ <b>Khung:</b> ${customFrameUrl ? `<a href="${customFrameUrl}">Xem ảnh</a>` : 'Không có'}
+📄 <b>File Expiry:</b> <code>${userExpFilePath}</code>
+📝 <b>File Caption:</b> <code>${userCapFilePath}</code>
+📦 <b>File Module:</b> <code>${sgmoduleFilePath}</code>
+🌐 <b>Đồng bộ GitHub:</b> ${syncedToGithub ? '✅ Thành công (File Riêng)' : '⚡ Tạo file trực tiếp'}
 ━━━━━━━━━━━━━━━━━━━━
 ⏰ <i>${new Date().toLocaleString('vi-VN')}</i>`;
 
@@ -1356,6 +1383,8 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             sgmoduleFile: sgmoduleFilePath,
             sgmoduleUrl: rawSgmoduleUrl,
             deepLink: shadowrocketDeepLink,
+            userExpFilePath,
+            userCapFilePath,
             username: cleanUser,
             overlayId: overlayId,
             text: captionText,
@@ -1373,12 +1402,17 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             syncedToGithub,
             githubError,
             message: syncedToGithub 
-              ? `Cấu hình Locket VIP đã được tự động lưu lên GitHub repo cho @${cleanUser}.`
-              : `Cấu hình Locket VIP đã tạo thành công cho @${cleanUser} (Chưa lưu lên GitHub cloud do chưa có token admin).`,
+              ? `Toàn bộ file cấu hình riêng cho @${cleanUser} đã lưu an toàn trên GitHub!`
+              : `Cấu hình Locket VIP đã tạo thành công cho @${cleanUser} (Chưa lưu lên GitHub do chưa có token admin).`,
             sgmoduleFile: sgmoduleFilePath,
+            sgmoduleFileName: sgmoduleFileName,
             sgmoduleUrl: rawSgmoduleUrl,
             sgmoduleDeepLink: shadowrocketDeepLink,
             sgmoduleContent: sgmoduleContent,
+            userExpFilePath,
+            userExpFileName,
+            userCapFilePath,
+            userCapFileName,
             username: cleanUser,
             updatedExpContent,
             updatedCaptionPostContent,
@@ -3499,18 +3533,20 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                               <div className="flex flex-col sm:flex-row gap-2">
                                 {deployResult.updatedExpContent && (
                                   <button 
-                                    onClick={() => downloadTextFile('anhtuaan08-expiry-check.js', deployResult.updatedExpContent)}
-                                    className="flex-1 py-2 px-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold text-[10px] border border-indigo-500/30 flex items-center justify-center gap-1.5 transition"
+                                    onClick={() => downloadTextFile(deployResult.userExpFileName || 'anhtuaan08-expiry-check.js', deployResult.updatedExpContent)}
+                                    className="flex-1 py-2 px-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold text-[10px] border border-indigo-500/30 flex items-center justify-center gap-1.5 transition truncate"
+                                    title={deployResult.userExpFileName}
                                   >
-                                    <i className="fa-solid fa-download"></i> Tải anhtuaan08-expiry-check.js
+                                    <i className="fa-solid fa-download"></i> Tải {deployResult.userExpFileName || 'expiry-check.js'}
                                   </button>
                                 )}
                                 {deployResult.updatedCaptionPostContent && (
                                   <button 
-                                    onClick={() => downloadTextFile('caption-post.js', deployResult.updatedCaptionPostContent)}
-                                    className="flex-1 py-2 px-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-bold text-[10px] border border-purple-500/30 flex items-center justify-center gap-1.5 transition"
+                                    onClick={() => downloadTextFile(deployResult.userCapFileName || 'caption-post.js', deployResult.updatedCaptionPostContent)}
+                                    className="flex-1 py-2 px-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-bold text-[10px] border border-purple-500/30 flex items-center justify-center gap-1.5 transition truncate"
+                                    title={deployResult.userCapFileName}
                                   >
-                                    <i className="fa-solid fa-download"></i> Tải caption-post.js
+                                    <i className="fa-solid fa-download"></i> Tải {deployResult.userCapFileName || 'caption-post.js'}
                                   </button>
                                 )}
                               </div>
