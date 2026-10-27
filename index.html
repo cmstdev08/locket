@@ -3487,7 +3487,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                         {deployResult.syncedToGithub ? (
                           <div className="mt-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-300 flex items-center gap-2">
                             <i className="fa-solid fa-circle-check text-emerald-400"></i>
-                            <span>Đã cập nhật tự động vào <b>anhtuaan08-expiry-check.js</b> và <b>caption-post.js</b> trên GitHub!</span>
+                            <span>Đã cập nhật và lưu trữ bảo mật cấu hình riêng cho bạn trên GitHub Cloud!</span>
                           </div>
                         ) : (
                           <div className="mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 space-y-1.5">
@@ -3498,9 +3498,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                             <p className="text-[10px] text-slate-300 leading-relaxed">
                               👉 <b>Cách tự động 100%:</b> Nhấn biểu tượng <b className="text-amber-300">⚙️</b> ở góc trên bên phải popup này, dán <b>GitHub Token</b> (PAT quyền repo) của bạn vào và bấm Lưu. Sau đó web sẽ tự động commit lên GitHub cho mọi khách hàng!
                             </p>
-                            <p className="text-[10px] text-slate-300 leading-relaxed">
-                              👉 <b>Cách cập nhật vào máy:</b> Bạn có thể bấm các nút tải file bên dưới để lưu vào thư mục dự án trên máy tính rồi <code>git push</code>.
-                            </p>
+                            
                           </div>
                         )}
                         
@@ -3511,53 +3509,27 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                               <span className="font-mono text-[10px] text-slate-200 bg-white/10 px-2 py-0.5 rounded">{deployResult.sgmoduleFile}</span>
                             </div>
 
-                            {/* Cài đặt Shadowrocket & tải file sgmodule */}
-                            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                            {/* Cài đặt Shadowrocket & Tải / Copy file .sgmodule (Bảo mật 100% không lộ file JS) */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
                               <a 
                                 href={deployResult.sgmoduleDeepLink}
-                                className="keep-white flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 font-extrabold text-[11px] text-center shadow-md flex items-center justify-center gap-1.5 transition"
+                                className="keep-white py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 font-extrabold text-[11px] text-center shadow-md flex items-center justify-center gap-1.5 transition"
                               >
                                 <i className="fa-solid fa-bolt"></i> Cài Vào ShadowRocket
                               </a>
                               <button 
                                 onClick={() => downloadTextFile(deployResult.sgmoduleFile, deployResult.sgmoduleContent)}
-                                className="flex-1 py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-bold text-[11px] text-center border border-white/15 flex items-center justify-center gap-1.5 transition"
+                                className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-bold text-[11px] text-center border border-white/15 flex items-center justify-center gap-1.5 transition"
                               >
                                 <i className="fa-solid fa-file-arrow-down text-sky-400"></i> Tải File .sgmodule
                               </button>
+                              <button 
+                                onClick={() => copyText(deployResult.sgmoduleUrl, 'Đã copy link cấu hình SGModule!')}
+                                className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-emerald-300 font-bold text-[11px] text-center border border-white/15 flex items-center justify-center gap-1.5 transition"
+                              >
+                                <i className="fa-regular fa-copy text-emerald-400"></i> Sao Chép Link
+                              </button>
                             </div>
-
-                            {/* Nút tải các file JS đã cập nhật nếu muốn lưu vào máy */}
-                            <div className="pt-2 border-t border-white/10 space-y-2">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tải file JS đã cập nhật (để lưu vào máy / repo):</span>
-                              <div className="flex flex-col sm:flex-row gap-2">
-                                {deployResult.updatedExpContent && (
-                                  <button 
-                                    onClick={() => downloadTextFile(deployResult.userExpFileName || 'anhtuaan08-expiry-check.js', deployResult.updatedExpContent)}
-                                    className="flex-1 py-2 px-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold text-[10px] border border-indigo-500/30 flex items-center justify-center gap-1.5 transition truncate"
-                                    title={deployResult.userExpFileName}
-                                  >
-                                    <i className="fa-solid fa-download"></i> Tải {deployResult.userExpFileName || 'expiry-check.js'}
-                                  </button>
-                                )}
-                                {deployResult.updatedCaptionPostContent && (
-                                  <button 
-                                    onClick={() => downloadTextFile(deployResult.userCapFileName || 'caption-post.js', deployResult.updatedCaptionPostContent)}
-                                    className="flex-1 py-2 px-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-bold text-[10px] border border-purple-500/30 flex items-center justify-center gap-1.5 transition truncate"
-                                    title={deployResult.userCapFileName}
-                                  >
-                                    <i className="fa-solid fa-download"></i> Tải {deployResult.userCapFileName || 'caption-post.js'}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            <button 
-                              onClick={() => copyText(deployResult.captionSnippet, 'Đã copy đoạn mã Script!')}
-                              className="w-full py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium text-[10px] text-center border border-white/10 flex items-center justify-center gap-1.5 transition"
-                            >
-                              <i className="fa-regular fa-copy text-amber-400"></i> Copy đoạn mã Caption / Khung Viền
-                            </button>
 
                             {/* Hướng dẫn cài đặt 2 bước cho người dùng */}
                             <div className="pt-2 border-t border-white/10 text-[10px] text-slate-400 space-y-1">
