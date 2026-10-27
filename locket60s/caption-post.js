@@ -65,6 +65,14 @@
      colors: ["#c026d3","#9333ea","#4f46e5"],
      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
     }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:0",
+      text: "Iu vợ Thảo",
+      textColor: "#8C315F",
+      colors: ["#c026d3","#9333ea","#4f46e5"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
 
 ];
