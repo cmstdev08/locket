@@ -756,6 +756,7 @@
       const [ghRepo, setGhRepo] = useState(() => localStorage.getItem('at_gh_repo') || CONFIGS.defaultGhRepo || 'cmstdev08/locket');
       const [ghBranch, setGhBranch] = useState(() => localStorage.getItem('at_gh_branch') || CONFIGS.defaultGhBranch || 'master');
       const [ghCustomerUsername, setGhCustomerUsername] = useState('');
+      const [goldJoinedAt, setGoldJoinedAt] = useState('2008-06-15');
       const [deploying, setDeploying] = useState(false);
       const [deployResult, setDeployResult] = useState(null);
       const [copiedLink, setCopiedLink] = useState(false); // { success, message, url?, sgmoduleUrl?, sgmoduleDeepLink?, sgmoduleContent? }
@@ -1035,7 +1036,11 @@
             localStorage.setItem('at_customer_key', key);
             try {
               const savedUser = localStorage.getItem('at_user_for_key_' + key.toUpperCase());
-              if (savedUser) setGhCustomerUsername(savedUser);
+              if (savedUser) {
+                setGhCustomerUsername(savedUser);
+                const savedJoined = localStorage.getItem('at_gold_joined_' + savedUser);
+                if (savedJoined) setGoldJoinedAt(savedJoined);
+              }
             } catch (_) {}
             showToast(`Key hợp lệ! Xin chào ${matched.owner || 'khách hàng'}.`);
             setCheckingKey(false);
@@ -1240,6 +1245,20 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             if (studioTab === 'frame' && customFrameUrl && customFrameUrl.trim()) {
               text = text.replace(/var WIDGET_FRAME_URL = ".*?";/, `var WIDGET_FRAME_URL = "${customFrameUrl.trim()}";`);
             }
+
+            // Tùy chỉnh ngày mua Gold độc quyền cho Key / User này (GOLD_JOINED_AT)
+            const cleanJoinedDate = (goldJoinedAt || '2008-06-15').trim();
+            if (text.includes('var GOLD_JOINED_AT =')) {
+              text = text.replace(/var GOLD_JOINED_AT\s*=\s*".*?";/, `var GOLD_JOINED_AT = "${cleanJoinedDate}";`);
+            } else {
+              text = text.replace(
+                '// ===== HARD-CODED CONFIG =====',
+                `// ===== HARD-CODED CONFIG =====\r\n  var GOLD_JOINED_AT = "${cleanJoinedDate}"; // Ngày mua Gold`
+              );
+            }
+            try {
+              localStorage.setItem('at_gold_joined_' + cleanUser, cleanJoinedDate);
+            } catch (_) {}
             if (studioTab === 'caption' && captionText && text.includes('// Custom Caption by Anh Tuan iOS')) {
               text = text.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
             }
@@ -2323,7 +2342,23 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                         placeholder="https://i.ibb.co/.../frame.png"
                         className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400 transition"
                       />
-                      <p className="text-[10px] text-slate-400 mt-1">Ảnh định dạng .PNG trong suốt tỉ lệ 1:1 sẽ hiển thị đẹp nhất trên Widget iPhone.</p>
+                    </div>
+
+                    {/* Ghi chú quy chuẩn kích thước khung 460x460 đã tách nền */}
+                    <div className="p-3.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-[11px] text-amber-200 flex items-start gap-3 shadow-sm">
+                      <div className="w-8 h-8 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
+                        <i className="fa-solid fa-ruler-combined text-sm"></i>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-extrabold text-amber-300 text-xs flex items-center gap-1.5">
+                          <span>Quy Chuẩn Kích Thước Khung Viền Widget:</span>
+                          <span className="bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded text-[9px]">460 × 460 PX</span>
+                        </p>
+                        <p className="text-slate-300 text-[11px] leading-relaxed">
+                          • Tỉ lệ chuẩn tối ưu: <b className="text-amber-300 font-mono">460 × 460 px</b> (Hình vuông tỉ lệ 1:1 chuẩn xác).<br />
+                          • Định dạng bắt buộc: <b className="text-sky-300 font-bold">File ảnh .PNG đã tách nền trong suốt</b> (Transparent) để không che khuất ảnh chụp của bạn bè trên widget iPhone.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -3419,22 +3454,52 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                   )}
                 </div>
 
-                {/* Customer Settings */}
+                {/* Customer Settings: Username Locket & Ngày Mua Gold (GOLD_JOINED_AT) */}
                 <div className="space-y-3 mb-5">
-                  <div>
-                    <label className="text-xs font-bold text-slate-200 mb-1.5 block flex items-center gap-1.5">
-                      <i className="fa-solid fa-user-tag text-pink-400"></i> Tên người dùng / Username Locket của bạn: <span className="text-pink-500">*</span>
-                    </label>
-                    <input 
-                      type="text"
-                      value={ghCustomerUsername}
-                      onChange={(e) => setGhCustomerUsername(e.target.value)}
-                      placeholder="VD: thuytien, hoanglong, minhanh..."
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-semibold focus:outline-none focus:border-pink-500 transition shadow-inner"
-                    />
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      Hệ thống sẽ tạo riêng cho bạn file cấu hình mang tên <code className="text-pink-400 font-mono font-bold bg-white/5 px-1 py-0.5 rounded">modules/locket60s-{ghCustomerUsername.trim() || 'username'}.sgmodule</code>.
-                    </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
+                      <div>
+                        <label className="text-xs font-bold text-slate-200 mb-1.5 block flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <i className="fa-solid fa-user-tag text-pink-400"></i> Username Locket:
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-normal">Không kèm @</span>
+                        </label>
+                        <input 
+                          type="text"
+                          value={ghCustomerUsername}
+                          onChange={(e) => setGhCustomerUsername(e.target.value)}
+                          placeholder="VD: thaocute, hoanglong..."
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-semibold focus:outline-none focus:border-pink-500 transition shadow-inner"
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-2">
+                        Tạo file: <code className="text-pink-400 font-mono text-[9px] font-bold">modules/locket60s-{ghCustomerUsername.trim() || 'user'}.sgmodule</code>
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
+                      <div>
+                        <label className="text-xs font-bold text-slate-200 mb-1.5 block flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <i className="fa-solid fa-calendar-days text-amber-400"></i> Ngày Mua Gold:
+                          </span>
+                          <span className="text-[10px] text-amber-300 font-bold">Hiển thị Profile</span>
+                        </label>
+                        <input 
+                          type="date"
+                          value={goldJoinedAt}
+                          onChange={(e) => setGoldJoinedAt(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-mono font-bold focus:outline-none focus:border-amber-400 transition shadow-inner"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                        <span className="text-[9px] text-slate-400">Chọn nhanh:</span>
+                        <button type="button" onClick={() => setGoldJoinedAt('2008-06-15')} className="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/15 text-amber-300 font-mono text-[9px]">2008-06-15</button>
+                        <button type="button" onClick={() => setGoldJoinedAt('2020-01-01')} className="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/15 text-amber-300 font-mono text-[9px]">2020-01-01</button>
+                        <button type="button" onClick={() => setGoldJoinedAt(new Date().toISOString().split('T')[0])} className="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/15 text-amber-300 font-mono text-[9px]">Hôm nay</button>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Cài đặt nâng cao dành riêng cho Admin (Chỉ mở khi Admin bấm icon bánh răng) */}
