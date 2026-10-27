@@ -295,30 +295,28 @@
       {
         id: 'youtube-premium',
         name: 'Gói YouTube Premium VIP',
-        tag: 'CHẶN QUẢNG CÁO • PHÁT NỀN 🎬',
-        badgeColor: 'from-red-500 via-rose-500 to-amber-500',
+        tag: 'BẢO TRÌ VÔ THỜI HẠN 🔒',
+        badgeColor: 'from-slate-600 to-slate-700',
         price: '49.000đ',
         priceNum: 49000,
         originalPrice: '120.000đ',
         isFree: false,
         isPopular: false,
-        desc: 'Cấu hình ShadowRocket chuyên dụng: Chặn 100% quảng cáo YouTube, phát trong nền khi tắt màn hình & Picture-in-Picture (PiP).',
+        isMaintenance: true,
+        desc: 'Cấu hình ShadowRocket YouTube hiện đang tạm ngưng bảo trì vô thời hạn. Quý khách vui lòng tham khảo Gói Locket 60s VIP đang mở bán.',
         features: [
-          'Chặn sạch 100% mọi loại quảng cáo video và banner YouTube',
-          'Phát nhạc & video trong nền (Tắt màn hình vẫn nghe âm thanh)',
-          'Hình trong hình (Picture-in-Picture / PiP) đa nhiệm mượt mà',
-          'Không cần đăng nhập tài khoản Google hay mua qua thẻ Visa/Master',
-          'Tặng kèm Access Key mở khóa Full cấu hình trên hệ thống',
-          'Hỗ trợ cài đặt 1-1 nhanh gọn trong 2 phút',
-          'Bảo hành kích hoạt trọn đời'
+          'Chặn sạch 100% quảng cáo video và banner YouTube',
+          'Phát nhạc & video trong nền (Tắt màn hình)',
+          'Hình trong hình (Picture-in-Picture / PiP)',
+          'Trạng thái: 🔒 Tạm khóa bảo trì vô thời hạn'
         ],
         icon: 'fa-brands fa-youtube',
-        btnText: 'Mua Gói YouTube VIP'
+        btnText: 'TẠM NGƯNG BÁN (ĐANG BẢO TRÌ)'
       },
       {
         id: 'locket-60s',
         name: 'Gói Locket 60s VIP',
-        tag: 'SIÊU PHẨM - BÁN CHẠY NHẤT 🔥',
+        tag: 'ĐANG MỞ BÁN • BÁN CHẠY NHẤT 🔥',
         badgeColor: 'from-fuchsia-500 via-pink-500 to-amber-400',
         price: '89.000đ',
         priceNum: 89000,
@@ -341,23 +339,23 @@
       {
         id: 'allinone-super-vip',
         name: 'Super Combo All-In-One',
-        tag: 'GÓI TRỌN ĐỜI TIẾT KIỆM 💎',
-        badgeColor: 'from-emerald-400 to-teal-600',
+        tag: 'BẢO TRÌ YOUTUBE & SPOTIFY 🔒',
+        badgeColor: 'from-slate-600 to-slate-700',
         price: '139.000đ',
         priceNum: 139000,
         originalPrice: '350.000đ',
         isFree: false,
         isPopular: false,
-        desc: 'Trọn bộ quyền lợi VIP nhất: Locket 60s + Youtube Premium không quảng cáo + Spotify Premium vĩnh viễn.',
+        isMaintenance: true,
+        desc: 'Do YouTube và Spotify đang tạm ngưng bảo trì vô thời hạn, gói Super Combo tạm dừng nhận đơn. Quý khách vui lòng chọn Gói Locket 60s VIP.',
         features: [
           'Full quyền lợi Locket 60s VIP + Caption Custom',
-          'Youtube Premium: Chặn quảng cáo, phát trong nền, PiP',
-          'Spotify Premium: Nghe nhạc chất lượng cao không gián đoạn',
-          'Tặng Apple ID tải ShadowRocket bản quyền chính thức',
-          'Hỗ trợ kỹ thuật ưu tiên 24/7 từ Admin Anh Tuấn'
+          'Youtube Premium (Đang bảo trì vô thời hạn 🔒)',
+          'Spotify Premium (Đang bảo trì vô thời hạn 🔒)',
+          'Trạng thái: 🔒 Tạm ngưng nhận đơn'
         ],
         icon: 'fa-gem',
-        btnText: 'Sở Hữu Trọn Bộ VIP'
+        btnText: 'TẠM NGƯNG BÁN (ĐANG BẢO TRÌ)'
       }
     ];
 
@@ -1488,11 +1486,22 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                 {PACKAGES.map((pkg) => (
                   <div 
                     key={pkg.id} 
-                    className={`glass-card rounded-3xl p-6 relative flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${pkg.isPopular ? 'border-2 border-pink-500/80 shadow-2xl shadow-pink-500/20' : 'border border-white/10 hover:border-sky-400/40'}`}
+                    className={`glass-card rounded-3xl p-6 relative flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${
+                      pkg.isMaintenance 
+                        ? 'border border-rose-500/30 bg-slate-950/60 opacity-80' 
+                        : pkg.isPopular 
+                        ? 'border-2 border-pink-500/80 shadow-2xl shadow-pink-500/20' 
+                        : 'border border-white/10 hover:border-sky-400/40'
+                    }`}
                   >
-                    {pkg.isPopular && (
+                    {pkg.isPopular && !pkg.isMaintenance && (
                       <div className="keep-white absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-amber-400 font-black text-[10px] tracking-wider uppercase shadow-lg">
                         ⭐ KHUYÊN DÙNG NHẤT
+                      </div>
+                    )}
+                    {pkg.isMaintenance && (
+                      <div className="keep-white absolute -top-3.5 right-6 px-3 py-1 rounded-full bg-gradient-to-r from-rose-600 to-red-600 font-black text-[10px] tracking-wider uppercase shadow-lg flex items-center gap-1">
+                        <i className="fa-solid fa-lock"></i> BẢO TRÌ VÔ THỜI HẠN
                       </div>
                     )}
 
@@ -1535,15 +1544,18 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 
                     <button
                       onClick={() => handleSelectPackage(pkg)}
+                      disabled={pkg.isMaintenance}
                       className={`w-full py-3.5 px-4 rounded-xl font-extrabold text-xs tracking-wider uppercase transition shadow-lg flex items-center justify-center gap-2 ${
-                        pkg.isPopular 
+                        pkg.isMaintenance
+                          ? 'bg-slate-800 text-slate-400 border border-white/10 cursor-not-allowed opacity-80'
+                          : pkg.isPopular 
                           ? 'keep-white bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 shadow-pink-500/30 hover:scale-[1.02]' 
                           : pkg.isFree
                           ? 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
                           : 'keep-white bg-gradient-to-r from-sky-400 to-indigo-600 shadow-sky-500/30 hover:scale-[1.02]'
                       }`}
                     >
-                      <i className={`fa-solid ${pkg.isFree ? 'fa-download' : 'fa-bolt'}`}></i>
+                      <i className={`fa-solid ${pkg.isMaintenance ? 'fa-lock text-amber-400' : pkg.isFree ? 'fa-download' : 'fa-bolt'}`}></i>
                       {pkg.btnText}
                     </button>
                   </div>
@@ -2432,8 +2444,13 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                         className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-semibold focus:outline-none focus:border-sky-400 transition cursor-pointer"
                       >
                         {PACKAGES.map(pkg => (
-                          <option key={pkg.id} value={pkg.id} className="bg-slate-900 text-white">
-                            {pkg.name} — {pkg.price}
+                          <option 
+                            key={pkg.id} 
+                            value={pkg.id} 
+                            disabled={pkg.isMaintenance}
+                            className={`bg-slate-900 ${pkg.isMaintenance ? 'text-slate-500' : 'text-white'}`}
+                          >
+                            {pkg.name} — {pkg.price} {pkg.isMaintenance ? '(🔒 Bảo trì vô thời hạn)' : ''}
                           </option>
                         ))}
                       </select>
@@ -2507,7 +2524,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                   <i className="fa-solid fa-cloud-arrow-down"></i> TẢI CẤU HÌNH & MODULE VIP
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black font-display text-white">CẤU HÌNH SHADOWROCKET & MODULE</h3>
-                <p className="text-xs text-slate-400 mt-1">Bản miễn phí: Locket Gold Config • Nhập Key để mở khóa trọn bộ Module 60s, YouTube, Spotify & DNS Vĩnh Viễn</p>
+                <p className="text-xs text-slate-400 mt-1">Bản miễn phí: Locket Gold Config • Module Locket 60s VIP • YouTube & Spotify đang bảo trì vô thời hạn 🔒</p>
               </div>
 
               {/* VIP KEY UNLOCK BANNER (DÙNG CHUNG KEY VỚI CAPTION & KHUNG VIỀN) */}
@@ -2619,28 +2636,30 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     file: 'youtubepremium.config',
                     icon: 'fa-brands fa-youtube',
                     color: 'red',
-                    isLocked: !keyVerified,
-                    lockNote: 'Dán Access Key để mở khóa cấu hình YouTube',
-                    badge: keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
-                    badgeColor: keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
-                    btnGrad: 'from-red-500 to-rose-600',
+                    isLocked: true,
+                    isMaintenance: true,
+                    lockNote: 'Cấu hình đang tạm ngưng bảo trì vô thời hạn',
+                    badge: 'BẢO TRÌ VÔ THỜI HẠN',
+                    badgeColor: 'bg-rose-600',
+                    btnGrad: 'from-slate-700 to-slate-800',
                     rawUrl: CONFIGS.youtubeConfigUrl,
-                    deepLink: `shadowrocket://config/add/${CONFIGS.youtubeConfigUrl}`,
-                    btnLabel: keyVerified ? 'MỞ TRONG SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
+                    deepLink: '#',
+                    btnLabel: 'BẢO TRÌ VÔ THỜI HẠN'
                   },
                   {
                     title: 'Spotify Premium',
                     file: 'spotify.config',
                     icon: 'fa-brands fa-spotify',
                     color: 'emerald',
-                    isLocked: !keyVerified,
-                    lockNote: 'Dán Access Key để mở khóa cấu hình Spotify',
-                    badge: keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
-                    badgeColor: keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
-                    btnGrad: 'from-emerald-500 to-teal-600',
+                    isLocked: true,
+                    isMaintenance: true,
+                    lockNote: 'Cấu hình đang tạm ngưng bảo trì vô thời hạn',
+                    badge: 'BẢO TRÌ VÔ THỜI HẠN',
+                    badgeColor: 'bg-rose-600',
+                    btnGrad: 'from-slate-700 to-slate-800',
                     rawUrl: CONFIGS.spotifyConfigUrl,
-                    deepLink: `shadowrocket://config/add/${CONFIGS.spotifyConfigUrl}`,
-                    btnLabel: keyVerified ? 'MỞ TRONG SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
+                    deepLink: '#',
+                    btnLabel: 'BẢO TRÌ VÔ THỜI HẠN'
                   }
                 ].map((cfg, idx) => (
                   <div key={idx} className={`glass-card rounded-2xl p-4 border transition relative overflow-hidden ${cfg.isLocked ? 'border-white/5 opacity-80' : 'border-sky-500/30 hover:border-sky-400/60 shadow-lg shadow-sky-500/10'}`}>
@@ -2658,7 +2677,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                         </div>
                       </div>
                       
-                      {!cfg.isLocked ? (
+                      {!cfg.isLocked && !cfg.isMaintenance ? (
                         <div className="flex items-center gap-1.5">
                           <button 
                             onClick={() => setQrConfigModal({ title: cfg.title, url: cfg.deepLink })}
@@ -2675,6 +2694,10 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                             <i className="fa-regular fa-copy text-xs"></i>
                           </button>
                         </div>
+                      ) : cfg.isMaintenance ? (
+                        <div className="text-[10px] font-bold text-rose-400 flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30">
+                          <i className="fa-solid fa-lock text-[9px]"></i> Bảo Trì
+                        </div>
                       ) : (
                         <div className="text-[10px] font-bold text-amber-400/90 flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-400/10 border border-amber-400/20">
                           <i className="fa-solid fa-lock text-[9px]"></i> Cần Key
@@ -2682,13 +2705,20 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                       )}
                     </div>
 
-                    {!cfg.isLocked ? (
+                    {!cfg.isLocked && !cfg.isMaintenance ? (
                       <a 
                         href={cfg.deepLink}
                         className={`keep-white w-full py-2.5 rounded-xl bg-gradient-to-r ${cfg.btnGrad} font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] transition`}
                       >
                         <i className="fa-solid fa-arrow-up-right-from-square"></i> {cfg.btnLabel}
                       </a>
+                    ) : cfg.isMaintenance ? (
+                      <button 
+                        onClick={() => showToast('Cấu hình này hiện đang tạm ngưng bảo trì vô thời hạn!', 'fa-screwdriver-wrench')}
+                        className="w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-rose-400 font-extrabold text-xs flex items-center justify-center gap-2 border border-rose-500/20 transition cursor-not-allowed"
+                      >
+                        <i className="fa-solid fa-lock text-rose-400"></i> BẢO TRÌ VÔ THỜI HẠN
+                      </button>
                     ) : (
                       <button 
                         onClick={() => {
