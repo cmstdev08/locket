@@ -438,7 +438,7 @@
       defaultGhToken: '', 
       bankNumber: '7898376962',
       bankName: 'Vietcombank',
-      bankOwner: 'ANH TUAN',
+      bankOwner: 'TRAN VAN ANH TUAN',
       momoNumber: '0898376962',
       paypalUrl: 'https://paypal.me/anhtuaan',
       locketGoldConfigUrl: _atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Ntc3RkZXYwOC9sb2NrZXQvcmVmcy9oZWFkcy9tYXN0ZXIvbG9ja2V0Z29sZGJ5YW5odHVhYW4uY29uZmln'),
@@ -919,7 +919,7 @@
 
       // MoMo QR Image URL (Auto-updates with discounted price)
       const momoQrUrl = useMemo(() => {
-        const payload = `2|99|${CONFIGS.momoNumber}|ANH TUAN||0|0|${finalPriceNum}|${transferMemo}|transfer_myqr`;
+        const payload = `2|99|${CONFIGS.momoNumber}|${CONFIGS.bankOwner}||0|0|${finalPriceNum}|${transferMemo}|transfer_myqr`;
         return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payload)}`;
       }, [finalPriceNum, transferMemo]);
 
@@ -2544,6 +2544,11 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                             <i className="fa-regular fa-copy"></i>
                           </button>
                         </div>
+                      </div>
+
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
+                        <span className="text-slate-400">Chủ tài khoản:</span>
+                        <span className="font-extrabold text-white uppercase tracking-wider">{CONFIGS.bankOwner}</span>
                       </div>
 
                       <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
