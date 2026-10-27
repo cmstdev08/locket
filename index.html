@@ -1096,6 +1096,16 @@ ${JSON.stringify(captionObj, null, 2)}
       };
 
       const handleDeployCaptionToGitHub = async () => {
+        // Bảo vệ bảo mật: Yêu cầu Key hợp lệ mới được tạo cấu hình
+        if (!keyVerified) {
+          const isValid = await verifyCustomerAccessKey();
+          if (!isValid) {
+            showToast('Vui lòng kích hoạt Access Key hợp lệ để tạo cấu hình!', 'fa-circle-xmark');
+            setDeploying(false);
+            return;
+          }
+        }
+
         // 1. Xác định định danh User / Key độc quyền
         let rawId = (ghCustomerUsername.trim() || '').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
         if (!rawId && accessKeyInput.trim()) {
@@ -1229,11 +1239,14 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
           let githubError = null;
 
           // Đoạn mã snippet chèn vào mảng MY_CAPTIONS / CUSTOM_CAPTIONS
+          const safeCaptionText = JSON.stringify(captionText || 'Caption VIP');
+          const safeTextColor = JSON.stringify(captionTextColor || '#FFFFFF');
+          const safeOverlayId = JSON.stringify(overlayId || ('caption:' + cleanUser + '_' + Date.now()));
           const newCaptionSnippet = `    ,{
-      overlay_id: "${overlayId}",
-      text: "${captionText.replace(/"/g, '\\"')}",
-      textColor: "${captionTextColor}",
-      colors: ${JSON.stringify(selectedGradient.colors)},
+      overlay_id: ${safeOverlayId},
+      text: ${safeCaptionText},
+      textColor: ${safeTextColor},
+      colors: ${JSON.stringify(selectedGradient.colors || ["#FC466B", "#3F5EFB"])},
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
@@ -1489,6 +1502,10 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
       const handleBillChange = (e) => {
         if (e.target.files && e.target.files[0]) {
           const file = e.target.files[0];
+          if (file.size > 15 * 1024 * 1024) {
+            showToast('Ảnh biên lai quá lớn (tối đa 15MB)!', 'fa-circle-exclamation');
+            return;
+          }
           setBillFile(file);
           setBillPreviewUrl(URL.createObjectURL(file));
           setOrderForm(p => ({ ...p, billImageName: file.name }));
@@ -1534,7 +1551,7 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
           if (billFile) {
             // Send real photo + caption via FormData
             const formData = new FormData();
-            formData.append('chat_id', CONFIGS.telegramChatId);
+            formData.append('chat_id', (teleChatId.trim() || CONFIGS.telegramChatId));
             formData.append('photo', billFile);
             formData.append('caption', telegramMessage);
             formData.append('parse_mode', 'HTML');
