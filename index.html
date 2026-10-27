@@ -430,6 +430,30 @@
       { name: 'Night City', url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=600&q=80' }
     ];
 
+    // Frame Presets (Khung viền Widget Locket)
+    const FRAME_PRESETS = [
+      {
+        name: 'Gốc Anh Tuấn 08',
+        url: 'https://i.ibb.co/0VJyfqCV/Thi-t-k-ch-a-c-t-n-2-1.png',
+        desc: 'Khung viền thiết kế màu hồng tím aesthetic'
+      },
+      {
+        name: 'Kitty Cute Baby',
+        url: 'https://i.ibb.co/RTm5P1n9/kitty-1.png',
+        desc: 'Họa tiết mèo Kitty đáng yêu góc widget'
+      },
+      {
+        name: 'VIP Gold Luxury',
+        url: 'https://i.ibb.co/vzG7QYg/gold-frame.png',
+        desc: 'Viền vàng vương miện hoàng gia sang trọng'
+      },
+      {
+        name: 'Cyber Neon Glow',
+        url: 'https://i.ibb.co/5G7J0jP/neon-frame.png',
+        desc: 'Viền ánh sáng neon công nghệ tương lai'
+      }
+    ];
+
     // FAQ Data
     const FAQS = [
       {
@@ -492,7 +516,8 @@
       const [orderSuccessModal, setOrderSuccessModal] = useState(false);
       const [lastOrderCode, setLastOrderCode] = useState('');
 
-      // Caption Studio State
+      // Caption & Frame Studio State
+      const [studioTab, setStudioTab] = useState('caption'); // 'caption' or 'frame'
       const [captionText, setCaptionText] = useState('👑Locket 60s by anhtuaan08');
       const [selectedGradient, setSelectedGradient] = useState(GRADIENT_LIST[0]);
       const [captionTextColor, setCaptionTextColor] = useState('#8C315F');
@@ -501,6 +526,17 @@
       const [currentPhoto, setCurrentPhoto] = useState(SAMPLE_PHOTOS[0].url);
       const [isVideoMode, setIsVideoMode] = useState(false);
       const [videoTimer, setVideoTimer] = useState(1);
+
+      // Frame Widget Custom State
+      const [selectedFrame, setSelectedFrame] = useState(FRAME_PRESETS[0]);
+      const [customFrameUrl, setCustomFrameUrl] = useState(FRAME_PRESETS[0].url);
+      const [framePlacement, setFramePlacement] = useState('below'); // 'below' or 'above'
+
+      // Access Key Check State (Yêu cầu Key để tạo Caption/Khung)
+      const [accessKeyInput, setAccessKeyInput] = useState(() => localStorage.getItem('at_customer_key') || '');
+      const [keyVerified, setKeyVerified] = useState(false);
+      const [verifiedKeyInfo, setVerifiedKeyInfo] = useState(null);
+      const [checkingKey, setCheckingKey] = useState(false);
 
       // Config QR Modal State
       const [qrConfigModal, setQrConfigModal] = useState(null); // { title, url }
@@ -520,6 +556,18 @@
       });
       const [contactSubmitting, setContactSubmitting] = useState(false);
       const [contactSuccess, setContactSuccess] = useState(false);
+
+      // GitHub Deploy Caption State
+      const [ghToken, setGhToken] = useState(() => localStorage.getItem('at_gh_token') || '');
+      const [ghRepo, setGhRepo] = useState(() => localStorage.getItem('at_gh_repo') || 'cmstdev08/locket');
+      const [ghBranch, setGhBranch] = useState(() => localStorage.getItem('at_gh_branch') || 'master');
+      const [ghCustomerUsername, setGhCustomerUsername] = useState('');
+      const [deploying, setDeploying] = useState(false);
+      const [deployResult, setDeployResult] = useState(null); // { success, message, url?, sgmoduleUrl?, sgmoduleDeepLink? }
+      const [showDeployModal, setShowDeployModal] = useState(false);
+      const [deployHistory, setDeployHistory] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('at_deploy_history') || '[]'); } catch(e) { return []; }
+      });
 
       // Init Theme
       useEffect(() => {
@@ -700,6 +748,346 @@
           setIsVideoMode(false);
           showToast('Đã tải ảnh cá nhân của bạn lên khung xem trước!');
         }
+      };
+
+      // ======================================================
+      // CHECK ACCESS KEY TỪ FILE access-keys.json
+      // ======================================================
+      const verifyCustomerAccessKey = async (keyToVerify = accessKeyInput) => {
+        const key = (keyToVerify || '').trim().toUpperCase();
+        if (!key) {
+          showToast('Vui lòng nhập Access Key do Anh Tuấn cấp!', 'fa-circle-exclamation');
+          return false;
+        }
+
+        setCheckingKey(true);
+        try {
+          // Thử đọc từ access-keys.json nội bộ hoặc raw GitHub
+          let keysData = null;
+          try {
+            const localRes = await fetch('./access-keys.json');
+            if (localRes.ok) keysData = await localRes.json();
+          } catch (_) {}
+
+          if (!keysData) {
+            const rawRes = await fetch(`https://raw.githubusercontent.com/${ghRepo}/${ghBranch}/access-keys.json?t=${Date.now()}`);
+            if (rawRes.ok) keysData = await rawRes.json();
+          }
+
+          if (!keysData) {
+            // Fallback cấu hình mặc định nếu chưa kịp fetch file
+            keysData = {
+              adminMasterKey: "ANHTUAN_ADMIN_2026",
+              keys: [
+                { key: "ATVIP-8888-DEMO", owner: "Demo VIP", allowedFeatures: ["caption", "frame"] },
+                { key: "LOCKET-60S-VIP1", owner: "Khách 60s", allowedFeatures: ["caption", "frame"] },
+                { key: "FRAME-VIP-2026", owner: "Khách Frame", allowedFeatures: ["frame"] }
+              ]
+            };
+          }
+
+          // Check Master Key hoặc Key trong danh sách
+          if (key === keysData.adminMasterKey) {
+            const info = { key, owner: 'Admin Quản Trị', allowedFeatures: ['caption', 'frame'], isMaster: true };
+            setKeyVerified(true);
+            setVerifiedKeyInfo(info);
+            localStorage.setItem('at_customer_key', key);
+            showToast('Xác thực Master Key thành công! Đã mở toàn bộ tính năng.');
+            setCheckingKey(false);
+            return true;
+          }
+
+          const matched = (keysData.keys || []).find(k => k.key.toUpperCase() === key);
+          if (matched) {
+            setKeyVerified(true);
+            setVerifiedKeyInfo(matched);
+            localStorage.setItem('at_customer_key', key);
+            showToast(`Key hợp lệ! Xin chào ${matched.owner || 'khách hàng'}.`);
+            setCheckingKey(false);
+            return true;
+          } else {
+            setKeyVerified(false);
+            setVerifiedKeyInfo(null);
+            showToast('Access Key không chính xác hoặc đã hết hạn!', 'fa-circle-xmark');
+            setCheckingKey(false);
+            return false;
+          }
+        } catch (err) {
+          showToast('Không thể kiểm tra Key: ' + err.message, 'fa-circle-xmark');
+          setCheckingKey(false);
+          return false;
+        }
+      };
+
+      // Tự động kiểm tra nếu trong localStorage đã có Key
+      useEffect(() => {
+        if (accessKeyInput) {
+          verifyCustomerAccessKey(accessKeyInput);
+        }
+      }, []);
+
+      // ======================================================
+      // DEPLOY CAPTION & FRAME TO GITHUB & TẠO SGMODULE RIÊNG
+      // ======================================================
+      const generateCaptionFileContent = () => {
+        const timestamp = Date.now();
+        const dateStr = new Date().toLocaleString('vi-VN');
+        const overlayIndex = deployHistory.length;
+        
+        // Build the caption-post.js content for this specific caption
+        const captionObj = {
+          overlay_id: `caption:anhtuaan08_personal${overlayIndex > 0 ? ':' + overlayIndex : ''}`,
+          text: captionText,
+          textColor: captionTextColor,
+          colors: selectedGradient.colors,
+          imageUrl: 'https://i.ibb.co/RTm5P1n9/kitty-1.png',
+          captionMinChars: 0
+        };
+
+        return `// Caption Custom by Anh Tuan iOS
+// Tạo tự động từ Website: ${dateStr}
+// Gradient: ${selectedGradient.name} | Font: ${captionFont} | Icon: ${captionIcon}
+// ─────────────────────────────────────────
+${JSON.stringify(captionObj, null, 2)}
+`;
+      };
+
+      const handleDeployCaptionToGitHub = async () => {
+        if (!ghToken.trim()) {
+          showToast('Vui lòng nhập GitHub Token để deploy!', 'fa-circle-exclamation');
+          return;
+        }
+        if (!ghRepo.trim()) {
+          showToast('Vui lòng nhập tên repo (VD: cmstdev08/locket)!', 'fa-circle-exclamation');
+          return;
+        }
+
+        setDeploying(true);
+        setDeployResult(null);
+
+        // Save settings
+        localStorage.setItem('at_gh_token', ghToken);
+        localStorage.setItem('at_gh_repo', ghRepo);
+        localStorage.setItem('at_gh_branch', ghBranch);
+
+        try {
+          const timestamp = Date.now();
+          const cleanUser = (ghCustomerUsername.trim() || 'user').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() || 'vip';
+          const safeText = captionText.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF]/g, '_').slice(0, 15) || 'caption';
+          const captionId = `${cleanUser}-${timestamp}`;
+
+          // 1. Tạo JSON caption độc lập trong thư mục captions/
+          const captionFileName = `captions/caption-${captionId}.json`;
+          const overlayId = `caption:anhtuaan08_personal:${deployHistory.length}`;
+          
+          const captionData = {
+            overlay_id: overlayId,
+            username: cleanUser,
+            text: captionText,
+            textColor: captionTextColor,
+            colors: selectedGradient.colors,
+            gradientName: selectedGradient.name,
+            gradientClass: selectedGradient.class,
+            icon: captionIcon,
+            font: captionFont,
+            imageUrl: 'https://i.ibb.co/RTm5P1n9/kitty-1.png',
+            captionMinChars: 0,
+            createdAt: new Date().toISOString(),
+            createdBy: 'Anh Tuan iOS Caption Studio'
+          };
+
+          const putGitHubFile = async (path, contentStr, commitMsg) => {
+            const getUrl = `https://api.github.com/repos/${ghRepo}/contents/${path}?ref=${ghBranch}`;
+            let sha = undefined;
+            try {
+              const checkRes = await fetch(getUrl, {
+                headers: {
+                  'Authorization': `Bearer ${ghToken}`,
+                  'Accept': 'application/vnd.github.v3+json'
+                }
+              });
+              if (checkRes.ok) {
+                const checkData = await checkRes.json();
+                sha = checkData.sha;
+              }
+            } catch (_) {}
+
+            const putUrl = `https://api.github.com/repos/${ghRepo}/contents/${path}`;
+            const b64 = btoa(unescape(encodeURIComponent(contentStr)));
+            const bodyPayload = {
+              message: commitMsg,
+              content: b64,
+              branch: ghBranch
+            };
+            if (sha) bodyPayload.sha = sha;
+
+            const res = await fetch(putUrl, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${ghToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
+              },
+              body: JSON.stringify(bodyPayload)
+            });
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({}));
+              throw new Error(errData.message || `Lỗi đẩy ${path} (${res.status})`);
+            }
+            return await res.json();
+          };
+
+          // --- Đẩy file JSON caption ---
+          await putGitHubFile(
+            captionFileName,
+            JSON.stringify(captionData, null, 2),
+            `✨ Thêm caption mới cho @${cleanUser}: "${captionText}"`
+          );
+
+          // 2. Cập nhật anhtuaan08-expiry-check.js (thêm caption vào MY_CAPTIONS & badge username)
+          try {
+            const expFileUrl = `https://api.github.com/repos/${ghRepo}/contents/locket60s/anhtuaan08-expiry-check.js?ref=${ghBranch}`;
+            const expRes = await fetch(expFileUrl, {
+              headers: {
+                'Authorization': `Bearer ${ghToken}`,
+                'Accept': 'application/vnd.github.v3+json'
+              }
+            });
+            if (expRes.ok) {
+              const expData = await expRes.json();
+              const expSha = expData.sha;
+              const expContent = decodeURIComponent(escape(atob(expData.content.replace(/\s/g, ''))));
+              
+              // New caption snippet to inject into MY_CAPTIONS
+              const newCaptionSnippet = `    ,{
+      overlay_id: "${overlayId}",
+      text: "${captionText.replace(/"/g, '\\"')}",
+      textColor: "${captionTextColor}",
+      colors: ${JSON.stringify(selectedGradient.colors)},
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    // Custom Caption by Anh Tuan iOS`;
+
+              let updatedExpContent = expContent;
+              if (updatedExpContent.includes('// Custom Caption by Anh Tuan iOS')) {
+                updatedExpContent = updatedExpContent.replace(
+                  '// Custom Caption by Anh Tuan iOS',
+                  newCaptionSnippet
+                );
+              }
+
+              // Cập nhật WIDGET_FRAME_URL nếu người dùng chọn khung viền
+              if (customFrameUrl && customFrameUrl.trim()) {
+                const targetFrame = customFrameUrl.trim();
+                updatedExpContent = updatedExpContent.replace(
+                  /var WIDGET_FRAME_URL = ".*?";/,
+                  `var WIDGET_FRAME_URL = "${targetFrame}";`
+                );
+              }
+
+              // Also add username to BADGE_USERNAMES if provided
+              if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip') {
+                const badgeMatch = updatedExpContent.match(/var BADGE_USERNAMES = \[(.*?)\];/);
+                if (badgeMatch && !badgeMatch[1].includes(`"${cleanUser}"`)) {
+                  const existingUsers = badgeMatch[1].trim();
+                  const newUsersList = existingUsers ? `${existingUsers}, "${cleanUser}"` : `"${cleanUser}"`;
+                  updatedExpContent = updatedExpContent.replace(
+                    /var BADGE_USERNAMES = \[.*?\];/,
+                    `var BADGE_USERNAMES = [${newUsersList}];`
+                  );
+                }
+              }
+
+              // Commit updated anhtuaan08-expiry-check.js
+              const putExpUrl = `https://api.github.com/repos/${ghRepo}/contents/locket60s/anhtuaan08-expiry-check.js`;
+              await fetch(putExpUrl, {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${ghToken}`,
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                  message: `🔥 Cập nhật expiry-check: thêm caption & VIP badge cho @${cleanUser}`,
+                  content: btoa(unescape(encodeURIComponent(updatedExpContent))),
+                  sha: expSha,
+                  branch: ghBranch
+                })
+              });
+            }
+          } catch (e) {
+            console.warn('Không thể tự động patch file expiry-check:', e);
+          }
+
+          // 3. Tạo file sgmodule riêng biệt cho người dùng này: locket60s-{username}.sgmodule
+          const sgmoduleFileName = `locket60s-${cleanUser}.sgmodule`;
+          const rawBase = `https://raw.githubusercontent.com/${ghRepo}/${ghBranch}`;
+          const sgmoduleContent = `#!name=Locket 60s VIP - @${cleanUser}
+#!desc=Module Locket Gold & 60s riêng biệt cho @${cleanUser} | Caption: "${captionText.replace(/"/g, '')}"
+#!author=anhtuaan08
+
+[Script]
+revenuecat = type=http-response, pattern=^https:\\/\\/api\\.revenuecat\\.com\\/.+\\/(receipts$|subscribers\\/[^/]+$), script-path=${rawBase}/locket60s/anhtuaan08-expiry-check.js, requires-body=true, max-size=-1, timeout=60
+deleteHeader = type=http-request, pattern=^https:\\/\\/api\\.revenuecat\\.com\\/.+\\/(receipts|subscribers), script-path=${rawBase}/locket60s/deleteHeader-expiry-check.js, timeout=60
+locket_rc = type=http-response, pattern=^https:\\/\\/firebaseremoteconfig\\.googleapis\\.com\\/v1\\/projects\\/locket-4252a\\/.+, script-path=${rawBase}/locket60s/anhtuaan08-expiry-check.js, requires-body=true, max-size=-1, timeout=60
+locket_profile_badge = type=http-response, pattern=^https:\\/\\/(api\\.locketcamera\\.com|us-central1-locket-4252a\\.cloudfunctions\\.net)\\/(?:[^?#]*\\/)?(fetchUserV2|getUserByUsername|changeProfileInfo|updateUser|createUser)(?:[/?#]|$), script-path=${rawBase}/locket60s/anhtuaan08-expiry-check.js, requires-body=true, max-size=-1, timeout=30
+locket_caption_post16 = type=http-request, pattern=^https:\\/\\/(api\\.locketcamera\\.com|us-central1-locket-4252a\\.cloudfunctions\\.net)\\/postMomentV2(?:\\?.*)?$, script-path=${rawBase}/locket60s/caption-post.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api.locketcamera.com, us-central1-locket-4252a.cloudfunctions.net
+`;
+
+          await putGitHubFile(
+            sgmoduleFileName,
+            sgmoduleContent,
+            `🚀 Tạo file sgmodule riêng cho khách hàng @${cleanUser}`
+          );
+
+          // Đường link sgmodule riêng để tải hoặc import vào ShadowRocket
+          const rawSgmoduleUrl = `${rawBase}/${sgmoduleFileName}`;
+          const shadowrocketDeepLink = `shadowrocket://install?module=${encodeURIComponent(rawSgmoduleUrl)}`;
+
+          const newEntry = {
+            fileName: captionFileName,
+            sgmoduleFile: sgmoduleFileName,
+            sgmoduleUrl: rawSgmoduleUrl,
+            deepLink: shadowrocketDeepLink,
+            username: cleanUser,
+            text: captionText,
+            gradient: selectedGradient.name,
+            textColor: captionTextColor,
+            timestamp: new Date().toISOString()
+          };
+
+          const updatedHistory = [newEntry, ...deployHistory].slice(0, 20);
+          setDeployHistory(updatedHistory);
+          localStorage.setItem('at_deploy_history', JSON.stringify(updatedHistory));
+
+          setDeployResult({
+            success: true,
+            message: `Deploy thành công! Đã tạo file sgmodule riêng cho @${cleanUser} và cập nhật hệ thống.`,
+            fileName: captionFileName,
+            sgmoduleFile: sgmoduleFileName,
+            sgmoduleUrl: rawSgmoduleUrl,
+            sgmoduleDeepLink: shadowrocketDeepLink,
+            username: cleanUser
+          });
+
+          if (window.confetti) {
+            window.confetti({ particleCount: 100, spread: 75, origin: { y: 0.65 } });
+          }
+          showToast(`🚀 Tạo Module SG cho @${cleanUser} thành công!`);
+
+        } catch (err) {
+          setDeployResult({
+            success: false,
+            message: `Lỗi kết nối / push GitHub: ${err.message}`
+          });
+          showToast(`Lỗi: ${err.message}`, 'fa-circle-xmark');
+        }
+
+        setDeploying(false);
       };
 
       // Handle Bill Image Selection
@@ -1119,6 +1507,17 @@
                           </div>
                         )}
 
+                        {/* WIDGET FRAME PREVIEW OVERLAY */}
+                        {customFrameUrl && (
+                          <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center p-2">
+                            <img 
+                              src={customFrameUrl} 
+                              alt="Widget Frame Overlay" 
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        )}
+
                         {/* THE CUSTOM CAPTION OVERLAY BAR */}
                         <div className="absolute bottom-4 left-3 right-3 z-20 flex justify-center">
                           <div 
@@ -1197,22 +1596,45 @@
                   {/* RIGHT: CONTROLS & STYLING STUDIO */}
                   <div className="lg:col-span-7 space-y-5">
                     
-                    {/* Input Caption Text */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                          <i className="fa-solid fa-pen text-pink-400"></i> Nội Dung Caption:
-                        </label>
-                        <span className="text-[10px] text-slate-400 font-mono">{captionText.length}/40 ký tự</span>
-                      </div>
-                      <input 
-                        type="text"
-                        value={captionText}
-                        onChange={(e) => setCaptionText(e.target.value.slice(0, 40))}
-                        placeholder="VD: 👑Locket 60s by anhtuaan08"
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-white/10 text-white text-xs font-semibold focus:outline-none focus:border-pink-500 transition"
-                      />
+                    {/* TABS CHỌN THIẾT KẾ: CAPTION HOẶC KHUNG VIỀN */}
+                    <div className="flex p-1 rounded-2xl bg-slate-900 border border-white/10 text-xs font-bold">
+                      <button
+                        onClick={() => setStudioTab('caption')}
+                        className={`flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 ${
+                          studioTab === 'caption' ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <i className="fa-solid fa-closed-captioning"></i> Thiết Kế Khung Caption
+                      </button>
+                      <button
+                        onClick={() => setStudioTab('frame')}
+                        className={`flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 ${
+                          studioTab === 'frame' ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black shadow-lg' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <i className="fa-solid fa-crop-simple"></i> Tạo Khung Viền Widget
+                      </button>
                     </div>
+
+                    {/* TAB 1: CAPTION DESIGNER */}
+                    {studioTab === 'caption' ? (
+                      <>
+                        {/* Input Caption Text */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                              <i className="fa-solid fa-pen text-pink-400"></i> Nội Dung Caption:
+                            </label>
+                            <span className="text-[10px] text-slate-400 font-mono">{captionText.length}/40 ký tự</span>
+                          </div>
+                          <input 
+                            type="text"
+                            value={captionText}
+                            onChange={(e) => setCaptionText(e.target.value.slice(0, 40))}
+                            placeholder="VD: 👑Locket 60s by anhtuaan08"
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-white/10 text-white text-xs font-semibold focus:outline-none focus:border-pink-500 transition"
+                          />
+                        </div>
 
                     {/* Caption Presets */}
                     <div>
@@ -1330,25 +1752,213 @@
                         </div>
                       </div>
                     </div>
+                  </>
+                ) : (
+                  /* TAB 2: FRAME WIDGET DESIGNER (anhtuaan08-expiry-check.js) */
+                  <div className="space-y-4">
+                    <div className="p-3.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-xs text-amber-200 flex items-start gap-2.5">
+                      <i className="fa-solid fa-crown text-amber-400 text-base mt-0.5"></i>
+                      <div>
+                        <b className="text-white">Khung Viền Widget (anhtuaan08-expiry-check.js):</b>
+                        <p className="text-[11px] text-slate-300 mt-0.5">Khung viền ảnh trang trí hiển thị xung quanh widget Locket ngoài màn hình khóa và màn hình chính iPhone của bạn bè.</p>
+                      </div>
+                    </div>
 
-                    {/* Action Buttons for Caption */}
-                    <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
-                      <button
-                        onClick={handleOrderWithCaption}
-                        className="keep-white flex-1 py-3.5 px-4 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25 transition hover:scale-[1.02]"
-                      >
-                        <i className="fa-solid fa-cart-plus"></i> Đặt Gói 60s Kèm Mẫu Caption Này
-                      </button>
+                    <div>
+                      <label className="text-xs font-bold text-slate-200 mb-2 block flex items-center gap-1.5">
+                        <i className="fa-solid fa-image text-amber-400"></i> Chọn Mẫu Khung Viền Có Sẵn:
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {FRAME_PRESETS.map((fr, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setSelectedFrame(fr);
+                              setCustomFrameUrl(fr.url);
+                              showToast(`Đã chọn khung: ${fr.name}`);
+                            }}
+                            className={`p-3 rounded-2xl border text-center transition flex flex-col items-center gap-2 ${
+                              customFrameUrl === fr.url ? 'bg-amber-400/15 border-amber-400 scale-[1.02] shadow-lg shadow-amber-400/10' : 'bg-white/5 border-white/10 opacity-70 hover:opacity-100'
+                            }`}
+                          >
+                            <div className="w-12 h-12 rounded-xl bg-slate-900 border border-white/10 p-1 flex items-center justify-center">
+                              <img src={fr.url} alt={fr.name} className="w-full h-full object-contain" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-white truncate w-24">{fr.name}</p>
+                              <p className="text-[9px] text-slate-400 line-clamp-1">{fr.desc}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                      <button
-                        onClick={() => {
-                          const configSnippet = `// Custom Caption by Anh Tuan iOS\n{\n  overlay_id: "caption:anhtuaan08_personal",\n  text: "${captionText}",\n  textColor: "${captionTextColor}",\n  colors: ${JSON.stringify(selectedGradient.colors)},\n  imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"\n}`;
-                          copyText(configSnippet, 'Đã sao chép mã cấu hình script Caption!');
-                        }}
-                        className="py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 border border-white/15 transition"
-                      >
-                        <i className="fa-solid fa-code text-sky-400"></i> Copy Mã Script
-                      </button>
+                    <div>
+                      <label className="text-xs font-bold text-slate-200 mb-1.5 block flex items-center gap-1.5">
+                        <i className="fa-solid fa-link text-sky-400"></i> Hoặc Nhập Link Ảnh Khung Viền Trong Suốt (PNG):
+                      </label>
+                      <input 
+                        type="url"
+                        value={customFrameUrl}
+                        onChange={(e) => setCustomFrameUrl(e.target.value)}
+                        placeholder="https://i.ibb.co/.../frame.png"
+                        className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400 transition"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1">Ảnh định dạng .PNG trong suốt tỉ lệ 1:1 sẽ hiển thị đẹp nhất trên Widget iPhone.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* SECTION: ACCESS KEY VERIFICATION (YÊU CẦU KEY MỚI ĐƯỢC TẠO) */}
+                <div className="p-4 rounded-2xl bg-slate-900/90 border border-pink-500/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-white flex items-center gap-2">
+                      <i className="fa-solid fa-key text-amber-400"></i> Nhập Access Key Do Anh Tuấn Cấp: <span className="text-pink-500">*</span>
+                    </label>
+                    {keyVerified && (
+                      <span className="text-[10px] font-black text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center gap-1">
+                        <i className="fa-solid fa-circle-check"></i> ĐÃ XÁC THỰC
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input 
+                      type="text"
+                      value={accessKeyInput}
+                      onChange={(e) => {
+                        setAccessKeyInput(e.target.value);
+                        setKeyVerified(false);
+                      }}
+                      placeholder="Nhập mã Key (VD: ATVIP-8888-DEMO hoặc mua gói 60s để nhận)"
+                      className={`flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border text-xs font-mono uppercase focus:outline-none transition ${
+                        keyVerified ? 'border-emerald-500 text-emerald-300' : 'border-white/15 text-white focus:border-amber-400'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => verifyCustomerAccessKey()}
+                      disabled={checkingKey}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black text-xs uppercase shadow transition hover:scale-105 disabled:opacity-50"
+                    >
+                      {checkingKey ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Kiểm Tra'}
+                    </button>
+                  </div>
+
+                  {!keyVerified ? (
+                    <p className="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
+                      <i className="fa-solid fa-circle-info text-sky-400"></i>
+                      <span>Key VIP mở khóa toàn quyền cả <b>Tạo Caption</b> và <b>Tạo Khung Viền</b>. Đặt mua <a href="#packages-section" className="text-pink-400 underline font-bold">Gói Locket 60s VIP</a> để nhận Key, hoặc thử key: <code className="text-amber-300 bg-white/5 px-1 py-0.5 rounded font-bold">ATVIP-8888-DEMO</code></span>
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1.5 font-semibold">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span>Key của bạn ({verifiedKeyInfo?.owner || 'Khách hàng VIP'}) được sử dụng đầy đủ cho cả 2 chức năng: <b>Tạo Caption</b> & <b>Tạo Khung Viền</b>!</span>
+                    </p>
+                  )}
+                </div>
+
+                {/* Action Buttons for Caption */}
+                <div className="pt-2 flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    <button
+                      onClick={handleOrderWithCaption}
+                      className="keep-white flex-1 py-3.5 px-4 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25 transition hover:scale-[1.02]"
+                    >
+                      <i className="fa-solid fa-cart-plus"></i> Đặt Mua Gói VIP Kèm Mẫu Này
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const configSnippet = studioTab === 'caption' ? 
+`// Custom Caption by Anh Tuan iOS
+{
+  overlay_id: "caption:anhtuaan08_personal",
+  text: "${captionText}",
+  textColor: "${captionTextColor}",
+  colors: ${JSON.stringify(selectedGradient.colors)},
+  imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
+}` :
+`// Custom Widget Frame (anhtuaan08-expiry-check.js)
+var WIDGET_FRAME_URL = "${customFrameUrl}";`;
+                        copyText(configSnippet, 'Đã sao chép mã cấu hình script!');
+                      }}
+                      className="py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 border border-white/15 transition"
+                    >
+                      <i className="fa-solid fa-code text-sky-400"></i> Copy Mã Script
+                    </button>
+                  </div>
+
+                  {/* Deploy Caption to GitHub Button (Có kiểm tra Key) */}
+                  <button
+                    onClick={async () => {
+                      if (!keyVerified) {
+                        const isValid = await verifyCustomerAccessKey();
+                        if (!isValid) return;
+                      }
+                      setShowDeployModal(true);
+                    }}
+                    className={`keep-white w-full py-3.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg transition hover:scale-[1.02] ${
+                      keyVerified 
+                        ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 shadow-emerald-500/25' 
+                        : 'bg-gradient-to-r from-amber-500 to-orange-600 shadow-amber-500/25'
+                    }`}
+                  >
+                    <i className={`fa-solid ${keyVerified ? 'fa-rocket' : 'fa-lock'}`}></i>
+                    {keyVerified 
+                      ? `🚀 Tạo & Deploy ${studioTab === 'caption' ? 'Caption' : 'Khung Viền'} Lên GitHub` 
+                      : `🔑 Nhập Key Để Mở Khóa Tạo ${studioTab === 'caption' ? 'Caption' : 'Khung Viền'}`
+                    }
+                  </button>
+
+                      {/* Deploy History Preview */}
+                      {deployHistory.length > 0 && (
+                        <div className="mt-1 p-3 rounded-xl bg-white/5 border border-white/10">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+                              <i className="fa-solid fa-clock-rotate-left text-emerald-400"></i> Module & Caption đã tạo gần đây:
+                            </p>
+                            <span className="text-[10px] text-slate-500">{deployHistory.length} cấu hình</span>
+                          </div>
+                          <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {deployHistory.slice(0, 5).map((item, idx) => (
+                              <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[10px] p-2 rounded-lg bg-slate-900/80 border border-white/5">
+                                <div className="truncate">
+                                  <div className="flex items-center gap-1.5 font-bold text-slate-200 truncate">
+                                    <span className="text-emerald-400">@{item.username || 'user'}</span>
+                                    <span>•</span>
+                                    <span className="truncate">"{item.text}"</span>
+                                  </div>
+                                  <div className="text-[9px] text-slate-400 truncate">
+                                    {item.sgmoduleFile || item.fileName}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-auto">
+                                  {item.deepLink && (
+                                    <a 
+                                      href={item.deepLink}
+                                      className="keep-white px-2 py-1 rounded bg-emerald-500 hover:bg-emerald-400 font-bold text-[9px] flex items-center gap-1"
+                                      title="Cài vào ShadowRocket"
+                                    >
+                                      <i className="fa-solid fa-download"></i> Cài Module
+                                    </a>
+                                  )}
+                                  {item.sgmoduleUrl && (
+                                    <button 
+                                      onClick={() => copyText(item.sgmoduleUrl, 'Đã copy link SGModule!')}
+                                      className="px-2 py-1 rounded bg-white/10 hover:bg-white/15 text-slate-300 font-semibold text-[9px]"
+                                      title="Copy Link Raw"
+                                    >
+                                      <i className="fa-regular fa-copy"></i> Copy
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1644,7 +2254,7 @@
                   <i className="fa-solid fa-cloud-arrow-down"></i> TẢI CẤU HÌNH MIỄN PHÍ
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black font-display text-white">CẤU HÌNH SHADOWROCKET & MODULE</h3>
-                <p className="text-xs text-slate-400 mt-1">Bấm nút để nhập tự động vào ShadowRocket hoặc bấm biểu tượng QR nếu bạn đang xem trên máy tính</p>
+                <p className="text-xs text-slate-400 mt-1">Bản miễn phí công khai: Locket Gold Config • Các gói cao cấp hơn yêu cầu mua bản quyền để kích hoạt</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -1654,6 +2264,9 @@
                     file: 'locketgoldbyanhtuaan.config',
                     icon: 'fa-lock',
                     color: 'sky',
+                    isLocked: false,
+                    badge: 'MIỄN PHÍ',
+                    badgeColor: 'bg-emerald-500',
                     btnGrad: 'from-sky-500 to-blue-600',
                     rawUrl: CONFIGS.locketGoldConfigUrl,
                     deepLink: `shadowrocket://config/add/${CONFIGS.locketGoldConfigUrl}`,
@@ -1664,99 +2277,132 @@
                     file: 'locket60s.sgmodule',
                     icon: 'fa-puzzle-piece',
                     color: 'fuchsia',
-                    badge: 'VIP',
-                    btnGrad: 'from-fuchsia-500 to-pink-600',
-                    rawUrl: CONFIGS.locket60sModuleUrl,
-                    deepLink: `shadowrocket://install?module=${CONFIGS.locket60sModuleUrl}`,
-                    btnLabel: 'CÀI ĐẶT MODULE 60S'
+                    isLocked: true,
+                    lockNote: 'Cần mua gói 60s VIP để nhận Module độc quyền',
+                    badge: 'VIP KHÓA',
+                    badgeColor: 'bg-rose-500',
+                    btnGrad: 'from-slate-700 to-slate-800',
+                    rawUrl: '',
+                    deepLink: '',
+                    btnLabel: 'MỞ KHÓA GÓI 60S'
                   },
                   {
                     title: 'Youtube Premium',
                     file: 'youtubepremium.config',
                     icon: 'fa-brands fa-youtube',
                     color: 'red',
-                    btnGrad: 'from-red-500 to-rose-600',
-                    rawUrl: CONFIGS.youtubeConfigUrl,
-                    deepLink: `shadowrocket://config/add/${CONFIGS.youtubeConfigUrl}`,
-                    btnLabel: 'MỞ TRONG SHADOWROCKET'
+                    isLocked: true,
+                    lockNote: 'Tính năng thuộc gói Super Combo All-In-One',
+                    badge: 'VIP KHÓA',
+                    badgeColor: 'bg-rose-500',
+                    btnGrad: 'from-slate-700 to-slate-800',
+                    rawUrl: '',
+                    deepLink: '',
+                    btnLabel: 'MỞ KHÓA COMBO'
                   },
                   {
                     title: 'Spotify Premium',
                     file: 'spotify.config',
                     icon: 'fa-brands fa-spotify',
                     color: 'emerald',
-                    btnGrad: 'from-emerald-500 to-teal-600',
-                    rawUrl: CONFIGS.spotifyConfigUrl,
-                    deepLink: `shadowrocket://config/add/${CONFIGS.spotifyConfigUrl}`,
-                    btnLabel: 'MỞ TRONG SHADOWROCKET'
+                    isLocked: true,
+                    lockNote: 'Tính năng thuộc gói Super Combo All-In-One',
+                    badge: 'VIP KHÓA',
+                    badgeColor: 'bg-rose-500',
+                    btnGrad: 'from-slate-700 to-slate-800',
+                    rawUrl: '',
+                    deepLink: '',
+                    btnLabel: 'MỞ KHÓA COMBO'
                   }
                 ].map((cfg, idx) => (
-                  <div key={idx} className="glass-card rounded-2xl p-4 border border-white/10 hover:border-sky-400/40 transition">
+                  <div key={idx} className={`glass-card rounded-2xl p-4 border transition relative overflow-hidden ${cfg.isLocked ? 'border-white/5 opacity-90' : 'border-sky-500/30 hover:border-sky-400/60 shadow-lg shadow-sky-500/10'}`}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center font-bold">
-                          <i className={`${cfg.icon.includes('fa-brands') ? cfg.icon : `fa-solid ${cfg.icon}`} text-sm`}></i>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${cfg.isLocked ? 'bg-slate-800 text-slate-400' : 'bg-sky-500/15 text-sky-400'}`}>
+                          <i className={`${cfg.isLocked ? 'fa-solid fa-lock text-amber-400' : cfg.icon.includes('fa-brands') ? cfg.icon : `fa-solid ${cfg.icon}`} text-sm`}></i>
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
                             <h5 className="font-extrabold text-sm text-white">{cfg.title}</h5>
-                            {cfg.badge && <span className="keep-white text-[8px] font-black px-1.5 py-0.5 rounded bg-fuchsia-500">{cfg.badge}</span>}
+                            {cfg.badge && <span className={`keep-white text-[8px] font-black px-1.5 py-0.5 rounded ${cfg.badgeColor}`}>{cfg.badge}</span>}
                           </div>
                           <p className="text-[10px] text-slate-400 font-mono">{cfg.file}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <button 
-                          onClick={() => setQrConfigModal({ title: cfg.title, url: cfg.deepLink })}
-                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-sky-400 flex items-center justify-center transition"
-                          title="Hiện mã QR cho iPhone quét"
-                        >
-                          <i className="fa-solid fa-qrcode text-xs"></i>
-                        </button>
-                        <button 
-                          onClick={() => copyText(cfg.rawUrl, `Đã copy link ${cfg.title}!`)} 
-                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
-                          title="Copy Link"
-                        >
-                          <i className="fa-regular fa-copy text-xs"></i>
-                        </button>
-                      </div>
+                      
+                      {!cfg.isLocked ? (
+                        <div className="flex items-center gap-1.5">
+                          <button 
+                            onClick={() => setQrConfigModal({ title: cfg.title, url: cfg.deepLink })}
+                            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-sky-400 flex items-center justify-center transition"
+                            title="Hiện mã QR cho iPhone quét"
+                          >
+                            <i className="fa-solid fa-qrcode text-xs"></i>
+                          </button>
+                          <button 
+                            onClick={() => copyText(cfg.rawUrl, `Đã copy link ${cfg.title}!`)} 
+                            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
+                            title="Copy Link"
+                          >
+                            <i className="fa-regular fa-copy text-xs"></i>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] font-bold text-amber-400/90 flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-400/10 border border-amber-400/20">
+                          <i className="fa-solid fa-lock text-[9px]"></i> Đã Khóa
+                        </div>
+                      )}
                     </div>
-                    <a 
-                      href={cfg.deepLink}
-                      className={`keep-white w-full py-2.5 rounded-xl bg-gradient-to-r ${cfg.btnGrad} font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] transition`}
-                    >
-                      <i className="fa-solid fa-arrow-up-right-from-square"></i> {cfg.btnLabel}
-                    </a>
+
+                    {!cfg.isLocked ? (
+                      <a 
+                        href={cfg.deepLink}
+                        className={`keep-white w-full py-2.5 rounded-xl bg-gradient-to-r ${cfg.btnGrad} font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] transition`}
+                      >
+                        <i className="fa-solid fa-arrow-up-right-from-square"></i> {cfg.btnLabel}
+                      </a>
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          const targetPkg = cfg.title.includes('60s') ? PACKAGES.find(p => p.id === 'locket-60s') : PACKAGES.find(p => p.id === 'allinone-super-vip');
+                          if (targetPkg) handleSelectPackage(targetPkg);
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-amber-300 font-extrabold text-xs flex items-center justify-center gap-2 border border-amber-400/20 transition hover:scale-[1.01]"
+                      >
+                        <i className="fa-solid fa-lock"></i> {cfg.btnLabel} (Xem Giá)
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
 
-              {/* DNS duy trì Locket vĩnh viễn */}
-              <div className="glass-card rounded-3xl p-5 border border-amber-400/40 relative overflow-hidden mb-6">
+              {/* DNS duy trì Locket vĩnh viễn (ĐÃ KHÓA THEO YÊU CẦU) */}
+              <div className="glass-card rounded-3xl p-5 border border-white/10 relative overflow-hidden mb-6 bg-slate-900/40">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
-                      <i className="fa-solid fa-shield-cat"></i>
+                    <div className="w-12 h-12 rounded-2xl bg-slate-800 text-amber-400 flex items-center justify-center text-xl flex-shrink-0 border border-amber-400/20">
+                      <i className="fa-solid fa-lock"></i>
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-base text-white">Cấu Hình DNS Duy Trì Locket Vĩnh Viễn</h4>
-                      <p className="text-xs text-slate-300">Giữ nguyên Locket Gold & 60s ngay cả khi tắt ShadowRocket VPN (tiết kiệm pin & mát máy)</p>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-extrabold text-base text-white">Cấu Hình DNS Duy Trì Locket Vĩnh Viễn</h4>
+                        <span className="keep-white text-[9px] font-black px-2 py-0.5 rounded bg-rose-500">ĐÃ KHÓA</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">Hồ sơ DNS MobileConfig chống trôi profile độc quyền — Được kích hoạt và cấp riêng khi mua gói Locket 5s, 60s hoặc Super Combo.</p>
                     </div>
                   </div>
+
                   <div className="flex gap-2 w-full sm:w-auto">
-                    <a 
-                      href={CONFIGS.dnsLocketGoldUrl}
-                      className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black text-xs text-center shadow-lg hover:scale-105 transition"
+                    <button 
+                      onClick={() => {
+                        const el = document.getElementById('packages-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        showToast('DNS chỉ dành riêng cho khách hàng mua gói VIP!', 'fa-lock');
+                      }}
+                      className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-black text-xs text-center border border-amber-400/30 shadow transition flex items-center justify-center gap-1.5"
                     >
-                      <i className="fa-solid fa-download mr-1"></i> Tải DNS Gold
-                    </a>
-                    <a 
-                      href={CONFIGS.dnsLocket60sUrl}
-                      className="keep-white flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 font-black text-xs text-center shadow-lg hover:scale-105 transition"
-                    >
-                      <i className="fa-solid fa-download mr-1"></i> Tải DNS 60s
-                    </a>
+                      <i className="fa-solid fa-lock text-xs"></i> Mua VIP Để Mở Khóa DNS
+                    </button>
                   </div>
                 </div>
               </div>
@@ -2022,6 +2668,176 @@
                 >
                   Đóng
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* MODAL: DEPLOY CAPTION TO GITHUB */}
+          {/* ======================================================== */}
+          {showDeployModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => { setShowDeployModal(false); setDeployResult(null); }}>
+              <div className="glass-card max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-emerald-500/40 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="keep-white w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-lg shadow-md">
+                    <i className="fa-brands fa-github"></i>
+                  </div>
+                  <div>
+                    <h4 className="font-black text-lg text-white">Deploy Caption Lên GitHub</h4>
+                    <p className="text-[11px] text-slate-400">Tạo file mới trên repo • File gốc caption-post.js giữ nguyên</p>
+                  </div>
+                </div>
+
+                {/* Caption Preview */}
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    <i className="fa-solid fa-eye text-pink-400 mr-1"></i> Caption sẽ được deploy
+                  </p>
+                  <div className={`px-4 py-2.5 rounded-xl bg-gradient-to-r ${selectedGradient.class} inline-flex items-center gap-2 shadow-lg`}>
+                    <span className="font-bold text-sm" style={{ color: captionTextColor }}>{captionText}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-3 text-[10px] text-slate-400">
+                    <span className="px-2 py-0.5 rounded-md bg-white/5">🎨 {selectedGradient.name}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-white/5">🔤 {captionFont}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-white/5">Colors: {selectedGradient.colors.join(', ')}</span>
+                  </div>
+                </div>
+
+                {/* GitHub Settings */}
+                <div className="space-y-3 mb-5">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 mb-1.5 block">
+                      <i className="fa-solid fa-user-tag text-pink-400 mr-1"></i> Tên người dùng / Khách hàng (Định danh riêng) <span className="text-pink-500">*</span>
+                    </label>
+                    <input 
+                      type="text"
+                      value={ghCustomerUsername}
+                      onChange={(e) => setGhCustomerUsername(e.target.value)}
+                      placeholder="VD: thuytien, hoanglong, khanhlinh..."
+                      className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-400 transition"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      Mỗi khách sẽ có file <code className="text-emerald-400">locket60s-{"<tên>"}.sgmodule</code> riêng biệt và được cập nhật vào <code className="text-sky-400">anhtuaan08-expiry-check.js</code>.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 mb-1.5 block">
+                      <i className="fa-solid fa-key text-amber-400 mr-1"></i> GitHub Personal Access Token <span className="text-pink-500">*</span>
+                    </label>
+                    <input 
+                      type="password"
+                      value={ghToken}
+                      onChange={(e) => setGhToken(e.target.value)}
+                      placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-400 transition"
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      Tạo token tại <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">github.com/settings/tokens</a> → cấp quyền "repo"
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-slate-300 mb-1.5 block">
+                        <i className="fa-brands fa-github text-white mr-1"></i> Repository
+                      </label>
+                      <input 
+                        type="text"
+                        value={ghRepo}
+                        onChange={(e) => setGhRepo(e.target.value)}
+                        placeholder="owner/repo"
+                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-400 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-300 mb-1.5 block">
+                        <i className="fa-solid fa-code-branch text-sky-400 mr-1"></i> Branch
+                      </label>
+                      <input 
+                        type="text"
+                        value={ghBranch}
+                        onChange={(e) => setGhBranch(e.target.value)}
+                        placeholder="master"
+                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-400 transition"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Deploy Result */}
+                {deployResult && (
+                  <div className={`p-4 rounded-xl mb-4 border ${deployResult.success ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+                    <div className="flex items-start gap-2">
+                      <i className={`fa-solid ${deployResult.success ? 'fa-circle-check text-emerald-400' : 'fa-circle-xmark text-red-400'} text-sm mt-0.5`}></i>
+                      <div className="w-full">
+                        <p className={`text-xs font-bold ${deployResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {deployResult.success ? `🎉 Đã Tạo Xong SGModule Riêng Cho @${deployResult.username}!` : 'Deploy Thất Bại'}
+                        </p>
+                        <p className="text-[11px] text-slate-300 mt-0.5">{deployResult.message}</p>
+                        
+                        {deployResult.sgmoduleUrl && (
+                          <div className="mt-3 p-3 rounded-xl bg-slate-900/90 border border-emerald-500/40 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">File SGModule Dành Riêng:</span>
+                              <span className="font-mono text-[10px] text-slate-300">{deployResult.sgmoduleFile}</span>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                              <a 
+                                href={deployResult.sgmoduleDeepLink}
+                                className="keep-white flex-1 py-2 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 font-extrabold text-[11px] text-center shadow-md flex items-center justify-center gap-1.5 transition"
+                              >
+                                <i className="fa-solid fa-download"></i> Cài Vào ShadowRocket
+                              </a>
+                              <button 
+                                onClick={() => copyText(deployResult.sgmoduleUrl, 'Đã copy link SGModule riêng!')}
+                                className="flex-1 py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-slate-200 font-bold text-[11px] text-center border border-white/15 flex items-center justify-center gap-1.5 transition"
+                              >
+                                <i className="fa-regular fa-copy"></i> Copy Link Cài Đặt
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Info Note */}
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-5">
+                  <p className="text-[11px] text-amber-300 flex items-start gap-2">
+                    <i className="fa-solid fa-circle-info mt-0.5"></i>
+                    <span>
+                      Mỗi lần deploy sẽ tạo <b>file mới</b> trong thư mục <code className="text-amber-400 bg-black/30 px-1 rounded">captions/</code> trên GitHub. 
+                      File gốc <code className="text-amber-400 bg-black/30 px-1 rounded">caption-post.js</code> sẽ <b>không bị thay đổi</b>. 
+                      Nếu repo kết nối Vercel, trang web sẽ tự động deploy lại.
+                    </span>
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2.5">
+                  <button
+                    onClick={() => { setShowDeployModal(false); setDeployResult(null); }}
+                    className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition"
+                  >
+                    Đóng
+                  </button>
+                  <button
+                    onClick={handleDeployCaptionToGitHub}
+                    disabled={deploying || !ghToken.trim()}
+                    className="keep-white flex-[2] py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 font-black text-xs uppercase tracking-wider shadow-lg hover:scale-[1.01] transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {deploying ? (
+                      <><i className="fa-solid fa-spinner fa-spin"></i> ĐANG DEPLOY...</>
+                    ) : (
+                      <><i className="fa-solid fa-rocket"></i> DEPLOY NGAY</>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}

@@ -1,0 +1,30 @@
+{
+  "description": "Danh sách Access Key được phép tạo Caption và Khung Viền trên Website Anh Tuấn iOS. Mọi key đều mở khóa toàn quyền cả 2 chức năng (Caption + Khung Viền).",
+  "adminMasterKey": "ANHTUAN_ADMIN_2026",
+  "keys": [
+    {
+      "key": "ATVIP-8888-DEMO",
+      "owner": "Admin Demo",
+      "allowedFeatures": ["caption", "frame"],
+      "maxUses": 9999,
+      "usedCount": 0,
+      "expiresAt": "2099-12-31"
+    },
+    {
+      "key": "LOCKET-60S-VIP1",
+      "owner": "Khách Mua Gói 60s",
+      "allowedFeatures": ["caption", "frame"],
+      "maxUses": 100,
+      "usedCount": 0,
+      "expiresAt": "2026-12-31"
+    },
+    {
+      "key": "LOCKET-VIP-2026",
+      "owner": "Khách Hàng VIP",
+      "allowedFeatures": ["caption", "frame"],
+      "maxUses": 100,
+      "usedCount": 0,
+      "expiresAt": "2026-12-31"
+    }
+  ]
+}
