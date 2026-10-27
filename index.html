@@ -2369,48 +2369,65 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     }
                   </button>
 
-                      {/* Deploy History Preview */}
+                      {/* Deploy History Carousel (Dạng cuộn tròn ngang siêu gọn) */}
                       {deployHistory.length > 0 && (
-                        <div className="mt-1 p-3 rounded-xl bg-white/5 border border-white/10">
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
-                              <i className="fa-solid fa-clock-rotate-left text-emerald-400"></i> Module & Caption đã tạo gần đây:
+                        <div className="mt-2 p-3 rounded-2xl bg-slate-900/60 border border-white/10 backdrop-blur-md">
+                          <div className="flex items-center justify-between mb-2.5 px-1">
+                            <p className="text-[11px] font-extrabold text-slate-300 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                              <i className="fa-solid fa-clock-rotate-left text-emerald-400"></i> Module & Caption Mới Tạo:
                             </p>
-                            <span className="text-[10px] text-slate-500">{deployHistory.length} cấu hình</span>
+                            <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                              <span className="bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono text-[9px] font-bold text-emerald-400">
+                                {deployHistory.length} cấu hình
+                              </span>
+                              <span className="text-[9px] text-slate-500 hidden sm:inline">↔ Cuộn ngang</span>
+                            </div>
                           </div>
-                          <div className="space-y-2 max-h-48 overflow-y-auto">
-                            {deployHistory.slice(0, 5).map((item, idx) => (
-                              <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-[10px] p-2 rounded-lg bg-slate-900/80 border border-white/5">
-                                <div className="truncate">
-                                  <div className="flex items-center gap-1.5 font-bold text-slate-200 truncate">
-                                    <span className="text-emerald-400">@{item.username || 'user'}</span>
-                                    <span>•</span>
-                                    <span className="truncate">"{item.text}"</span>
+                          
+                          {/* Horizontal Scrolling Round Cards */}
+                          <div className="flex gap-2.5 overflow-x-auto pb-1.5 pt-0.5 scrollbar-thin snap-x">
+                            {deployHistory.map((item, idx) => (
+                              <div 
+                                key={idx} 
+                                className="snap-start flex-shrink-0 w-60 p-2.5 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-white/10 hover:border-emerald-500/40 shadow-sm transition flex flex-col justify-between gap-2"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-500/20 to-teal-500/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-xs flex-shrink-0">
+                                    {(item.username || 'U')[0].toUpperCase()}
                                   </div>
-                                  <div className="text-[9px] text-slate-400 truncate">
-                                    {item.sgmoduleFile || item.fileName}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1">
+                                      <span className="font-extrabold text-xs text-emerald-400 truncate">@{item.username || 'user'}</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-300 truncate font-medium">"{item.text || 'Caption VIP'}"</p>
                                   </div>
                                 </div>
-                                
-                                <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-auto">
-                                  {item.deepLink && (
-                                    <a 
-                                      href={item.deepLink}
-                                      className="keep-white px-2 py-1 rounded bg-emerald-500 hover:bg-emerald-400 font-bold text-[9px] flex items-center gap-1"
-                                      title="Cài vào ShadowRocket"
-                                    >
-                                      <i className="fa-solid fa-download"></i> Cài Module
-                                    </a>
-                                  )}
-                                  {item.sgmoduleUrl && (
-                                    <button 
-                                      onClick={() => copyText(item.sgmoduleUrl, 'Đã copy link SGModule!')}
-                                      className="px-2 py-1 rounded bg-white/10 hover:bg-white/15 text-slate-300 font-semibold text-[9px]"
-                                      title="Copy Link Raw"
-                                    >
-                                      <i className="fa-regular fa-copy"></i> Copy
-                                    </button>
-                                  )}
+
+                                <div className="flex items-center justify-between pt-1.5 border-t border-white/5 gap-1.5">
+                                  <span className="text-[8px] font-mono text-slate-400 truncate max-w-[100px]" title={item.sgmoduleFile || item.fileName}>
+                                    {(item.sgmoduleFile || item.fileName || '').split('/').pop()}
+                                  </span>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    {item.deepLink && (
+                                      <a 
+                                        href={item.deepLink}
+                                        className="keep-white px-2.5 py-1 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-[9px] flex items-center gap-1 shadow-sm transition"
+                                        title="Cài vào ShadowRocket"
+                                      >
+                                        <i className="fa-solid fa-download text-[8px]"></i> Cài
+                                      </a>
+                                    )}
+                                    {item.sgmoduleUrl && (
+                                      <button 
+                                        onClick={() => copyText(item.sgmoduleUrl, 'Đã copy link SGModule!')}
+                                        className="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-[9px] transition"
+                                        title="Copy Link Raw"
+                                      >
+                                        <i className="fa-regular fa-copy text-[8px]"></i>
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ))}
