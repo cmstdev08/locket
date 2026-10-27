@@ -256,9 +256,9 @@
       youtubeConfigUrl: 'https://raw.githubusercontent.com/cmstdev08/locket/refs/heads/master/youtubepremium.config',
       spotifyConfigUrl: 'https://raw.githubusercontent.com/cmstdev08/locket/refs/heads/master/spotify.config',
       allinoneConfigUrl: 'https://raw.githubusercontent.com/cmstdev08/locket/refs/heads/master/allinone.config',
-      dnsLocketGoldUrl: 'https://crackapppre.netlify.app/dns/locketgold.mobileconfig',
-      dnsLocket60sUrl: 'https://crackapppre.netlify.app/dns/locket60s.mobileconfig',
-      dnsRootCaUrl: 'https://crackapppre.netlify.app/dns/rootca.mobileconfig',
+      dnsLocketGoldUrl: './dns/locketgold.mobileconfig',
+      dnsLocket60sUrl: './dns/locket60s.mobileconfig',
+      dnsRootCaUrl: './dns/rootca.mobileconfig',
       shadowrocketDirectDownload: 'itms-services://?action=download-manifest&url=https://dl.3u.com/plist/2025/09/28/1759023053857_696086.plist'
     };
 
@@ -789,7 +789,7 @@
           // Thử đọc từ access-keys.json nội bộ hoặc raw GitHub
           let keysData = null;
           try {
-            const localRes = await fetch('./access-keys.json');
+            const localRes = await fetch('./access-keys.json?_t=' + Date.now());
             if (localRes.ok) keysData = await localRes.json();
           } catch (_) {}
 
@@ -803,16 +803,15 @@
             keysData = {
               adminMasterKey: "ANHTUAN_ADMIN_2026",
               keys: [
-                { key: "ATVIP-8888-DEMO", owner: "Demo VIP", allowedFeatures: ["caption", "frame"] },
-                { key: "LOCKET-60S-VIP1", owner: "Khách 60s", allowedFeatures: ["caption", "frame"] },
-                { key: "FRAME-VIP-2026", owner: "Khách Frame", allowedFeatures: ["frame"] }
+                { key: "Locket60s-0934956647", owner: "0934956647", allowedFeatures: ["all"] },
+                { key: "Locket60s-0898376962", owner: "0898376962", allowedFeatures: ["all"] }
               ]
             };
           }
 
           // Check Master Key hoặc Key trong danh sách
           if (key === keysData.adminMasterKey) {
-            const info = { key, owner: 'Admin Quản Trị', allowedFeatures: ['caption', 'frame'], isMaster: true };
+            const info = { key, owner: 'Admin Quản Trị', allowedFeatures: ['all'], isMaster: true };
             setKeyVerified(true);
             setVerifiedKeyInfo(info);
             localStorage.setItem('at_customer_key', key);
@@ -903,17 +902,45 @@ ${JSON.stringify(captionObj, null, 2)}
           let rawExpText = '';
           let rawCapText = '';
 
-          try {
-            let expRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/anhtuaan08-expiry-check.js?_t=${Date.now()}`);
-            if (!expRes.ok) expRes = await fetch('./locket60s/anhtuaan08-expiry-check.js');
-            if (expRes.ok) rawExpText = await expRes.text();
-          } catch (_) {}
+          // Tải từ GitHub Contents API trực tiếp nếu có token (Real-time 100% không bị delay cache 5 phút)
+          if (effectiveToken) {
+            try {
+              const expApiRes = await fetch(`https://api.github.com/repos/${effectiveRepo}/contents/locket60s/anhtuaan08-expiry-check.js?ref=${effectiveBranch}`, {
+                headers: { 'Authorization': `Bearer ${effectiveToken}`, 'Accept': 'application/vnd.github.v3+json' }
+              });
+              if (expApiRes.ok) {
+                const expApiData = await expApiRes.json();
+                rawExpText = decodeURIComponent(escape(atob(expApiData.content.replace(/\s/g, ''))));
+              }
+            } catch (_) {}
 
-          try {
-            let capRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/caption-post.js?_t=${Date.now()}`);
-            if (!capRes.ok) capRes = await fetch('./locket60s/caption-post.js');
-            if (capRes.ok) rawCapText = await capRes.text();
-          } catch (_) {}
+            try {
+              const capApiRes = await fetch(`https://api.github.com/repos/${effectiveRepo}/contents/locket60s/caption-post.js?ref=${effectiveBranch}`, {
+                headers: { 'Authorization': `Bearer ${effectiveToken}`, 'Accept': 'application/vnd.github.v3+json' }
+              });
+              if (capApiRes.ok) {
+                const capApiData = await capApiRes.json();
+                rawCapText = decodeURIComponent(escape(atob(capApiData.content.replace(/\s/g, ''))));
+              }
+            } catch (_) {}
+          }
+
+          // Fallback nếu không có token hoặc API chưa lấy được
+          if (!rawExpText) {
+            try {
+              let expRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/anhtuaan08-expiry-check.js?_t=${Date.now()}`);
+              if (!expRes.ok) expRes = await fetch('./locket60s/anhtuaan08-expiry-check.js?_t=' + Date.now());
+              if (expRes.ok) rawExpText = await expRes.text();
+            } catch (_) {}
+          }
+
+          if (!rawCapText) {
+            try {
+              let capRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/caption-post.js?_t=${Date.now()}`);
+              if (!capRes.ok) capRes = await fetch('./locket60s/caption-post.js?_t=' + Date.now());
+              if (capRes.ok) rawCapText = await capRes.text();
+            } catch (_) {}
+          }
 
           // Tự động tìm số thứ tự lớn nhất trong code hiện tại (bỏ qua các dòng comment // để không bị nhận nhầm ví dụ mẫu)
           const stripComments = (str) => (str || '').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
@@ -977,10 +1004,12 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
           // 2. Sửa nội dung anhtuaan08-expiry-check.js
           if (rawExpText) {
             let text = rawExpText;
-            if (customFrameUrl && customFrameUrl.trim()) {
+            // Chỉ cập nhật khung viền khi đang ở tab frame
+            if (studioTab === 'frame' && customFrameUrl && customFrameUrl.trim()) {
               text = text.replace(/var WIDGET_FRAME_URL = ".*?";/, `var WIDGET_FRAME_URL = "${customFrameUrl.trim()}";`);
             }
-            if (captionText && text.includes('// Custom Caption by Anh Tuan iOS')) {
+            // Chỉ chèn caption khi đang ở tab caption
+            if (studioTab === 'caption' && captionText && text.includes('// Custom Caption by Anh Tuan iOS')) {
               text = text.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
             }
             if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip') {
@@ -994,8 +1023,8 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             updatedExpContent = text;
           }
 
-          // 3. Sửa nội dung caption-post.js
-          if (rawCapText) {
+          // 3. Sửa nội dung caption-post.js (chỉ khi tạo Caption)
+          if (rawCapText && studioTab === 'caption') {
             let capText = rawCapText;
             if (captionText && capText.includes('// Custom Caption by Anh Tuan iOS')) {
               capText = capText.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
@@ -2071,7 +2100,7 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                   {!keyVerified ? (
                     <p className="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
                       <i className="fa-solid fa-circle-info text-sky-400"></i>
-                      <span>Key VIP mở khóa toàn quyền cả <b>Tạo Caption</b> và <b>Tạo Khung Viền</b>. Đặt mua <a href="#packages-section" className="text-pink-400 underline font-bold">Gói Locket 60s VIP</a> để nhận Key, hoặc thử key: <code className="text-amber-300 bg-white/5 px-1 py-0.5 rounded font-bold">ATVIP-8888-DEMO</code></span>
+                      <span>Key VIP mở khóa toàn quyền cả <b>Tạo Caption</b> và <b>Tạo Khung Viền</b>. Đặt mua <a href="#packages-section" className="text-pink-400 underline font-bold">Gói Locket 60s VIP</a> để nhận Key</span>
                     </p>
                   ) : (
                     <p className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1.5 font-semibold">

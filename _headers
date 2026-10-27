@@ -1,2 +1,10 @@
+/dns/*
+  Content-Type: application/x-apple-aspen-config
 /dns/locketgold.mobileconfig
   Content-Type: application/x-apple-aspen-config
+/dns/locket60s.mobileconfig
+  Content-Type: application/x-apple-aspen-config
+/dns/rootca.mobileconfig
+  Content-Type: application/x-apple-aspen-config
+/access-keys.json
+  Cache-Control: no-cache, no-store, must-revalidate
