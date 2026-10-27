@@ -12,6 +12,14 @@
       captionMinChars: 0                             // 0 = không pad
     }
 
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:2",
+      text: "Thảo đáng iu hămm",
+      textColor: "#8C315F",
+      colors: ["#7dd3fc","#f472b6","#a5b4fc"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
 
 ];
