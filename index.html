@@ -917,8 +917,64 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 `;
 
           let syncedToGithub = false;
+          let githubError = null;
 
-          // Nếu có Token GitHub (Admin cấu hình trước hoặc lưu trong máy), tự động push lên GitHub
+          // Đoạn mã snippet chèn vào mảng MY_CAPTIONS / CUSTOM_CAPTIONS
+          const newCaptionSnippet = `    ,{
+      overlay_id: "${overlayId}",
+      text: "${captionText.replace(/"/g, '\\"')}",
+      textColor: "${captionTextColor}",
+      colors: ${JSON.stringify(selectedGradient.colors)},
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    // Custom Caption by Anh Tuan iOS`;
+
+          let updatedExpContent = null;
+          let updatedCaptionPostContent = null;
+
+          // 1. Tải và sửa nội dung anhtuaan08-expiry-check.js
+          try {
+            let expRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/anhtuaan08-expiry-check.js?_t=${Date.now()}`);
+            if (!expRes.ok) expRes = await fetch('./locket60s/anhtuaan08-expiry-check.js');
+            if (expRes.ok) {
+              let text = await expRes.text();
+              if (customFrameUrl && customFrameUrl.trim()) {
+                text = text.replace(/var WIDGET_FRAME_URL = ".*?";/, `var WIDGET_FRAME_URL = "${customFrameUrl.trim()}";`);
+              }
+              if (captionText && text.includes('// Custom Caption by Anh Tuan iOS')) {
+                text = text.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
+              }
+              if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip') {
+                const badgeMatch = text.match(/var BADGE_USERNAMES = \[(.*?)\];/);
+                if (badgeMatch && !badgeMatch[1].includes(`"${cleanUser}"`)) {
+                  const existingUsers = badgeMatch[1].trim();
+                  const newUsersList = existingUsers ? `${existingUsers}, "${cleanUser}"` : `"${cleanUser}"`;
+                  text = text.replace(/var BADGE_USERNAMES = \[.*?\];/, `var BADGE_USERNAMES = [${newUsersList}];`);
+                }
+              }
+              updatedExpContent = text;
+            }
+          } catch (eExp) {
+            console.warn('Lỗi chuẩn bị expiry-check:', eExp);
+          }
+
+          // 2. Tải và sửa nội dung caption-post.js
+          try {
+            let capRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/caption-post.js?_t=${Date.now()}`);
+            if (!capRes.ok) capRes = await fetch('./locket60s/caption-post.js');
+            if (capRes.ok) {
+              let capText = await capRes.text();
+              if (captionText && capText.includes('// Custom Caption by Anh Tuan iOS')) {
+                capText = capText.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
+              }
+              updatedCaptionPostContent = capText;
+            }
+          } catch (eCap) {
+            console.warn('Lỗi chuẩn bị caption-post:', eCap);
+          }
+
+          // 3. Nếu có Token GitHub của Admin, tự động commit đồng bộ lên GitHub repo
           if (effectiveToken) {
             try {
               const captionFileName = `captions/caption-${captionId}.json`;
@@ -972,7 +1028,11 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                   },
                   body: JSON.stringify(bodyPayload)
                 });
-                return res.ok;
+                if (!res.ok) {
+                  const errJson = await res.json().catch(() => ({}));
+                  throw new Error(errJson.message || `Lỗi HTTP ${res.status}`);
+                }
+                return true;
               };
 
               // Đẩy JSON caption
@@ -982,78 +1042,23 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                 `✨ Thêm caption cho @${cleanUser}: "${captionText}"`
               );
 
-              // Cập nhật file anhtuaan08-expiry-check.js
-              try {
-                const expFileUrl = `https://api.github.com/repos/${effectiveRepo}/contents/locket60s/anhtuaan08-expiry-check.js?ref=${effectiveBranch}`;
-                const expRes = await fetch(expFileUrl, {
-                  headers: {
-                    'Authorization': `Bearer ${effectiveToken}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                  }
-                });
-                if (expRes.ok) {
-                  const expData = await expRes.json();
-                  const expSha = expData.sha;
-                  const expContent = decodeURIComponent(escape(atob(expData.content.replace(/\s/g, ''))));
-                  
-                  let updatedExpContent = expContent;
-                  
-                  // Cập nhật WIDGET_FRAME_URL nếu có khung viền
-                  if (customFrameUrl && customFrameUrl.trim()) {
-                    updatedExpContent = updatedExpContent.replace(
-                      /var WIDGET_FRAME_URL = ".*?";/,
-                      `var WIDGET_FRAME_URL = "${customFrameUrl.trim()}";`
-                    );
-                  }
+              // Cập nhật file anhtuaan08-expiry-check.js trên GitHub
+              if (updatedExpContent) {
+                await putGitHubFile(
+                  'locket60s/anhtuaan08-expiry-check.js',
+                  updatedExpContent,
+                  `🔥 Cập nhật expiry-check (frame & caption) cho @${cleanUser}`
+                );
+              }
 
-                  // Chèn caption
-                  const newCaptionSnippet = `    ,{
-        overlay_id: "${overlayId}",
-        text: "${captionText.replace(/"/g, '\\"')}",
-        textColor: "${captionTextColor}",
-        colors: ${JSON.stringify(selectedGradient.colors)},
-        imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-        captionMinChars: 0
-      }
-      // Custom Caption by Anh Tuan iOS`;
-
-                  if (updatedExpContent.includes('// Custom Caption by Anh Tuan iOS')) {
-                    updatedExpContent = updatedExpContent.replace(
-                      '// Custom Caption by Anh Tuan iOS',
-                      newCaptionSnippet
-                    );
-                  }
-
-                  // Gắn badge username
-                  if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip') {
-                    const badgeMatch = updatedExpContent.match(/var BADGE_USERNAMES = \[(.*?)\];/);
-                    if (badgeMatch && !badgeMatch[1].includes(`"${cleanUser}"`)) {
-                      const existingUsers = badgeMatch[1].trim();
-                      const newUsersList = existingUsers ? `${existingUsers}, "${cleanUser}"` : `"${cleanUser}"`;
-                      updatedExpContent = updatedExpContent.replace(
-                        /var BADGE_USERNAMES = \[.*?\];/,
-                        `var BADGE_USERNAMES = [${newUsersList}];`
-                      );
-                    }
-                  }
-
-                  const putExpUrl = `https://api.github.com/repos/${effectiveRepo}/contents/locket60s/anhtuaan08-expiry-check.js`;
-                  await fetch(putExpUrl, {
-                    method: 'PUT',
-                    headers: {
-                      'Authorization': `Bearer ${effectiveToken}`,
-                      'Content-Type': 'application/json',
-                      'Accept': 'application/vnd.github.v3+json'
-                    },
-                    body: JSON.stringify({
-                      message: `🔥 Cập nhật expiry-check (frame & caption) cho @${cleanUser}`,
-                      content: btoa(unescape(encodeURIComponent(updatedExpContent))),
-                      sha: expSha,
-                      branch: effectiveBranch
-                    })
-                  });
-                }
-              } catch (_) {}
+              // Cập nhật file caption-post.js trên GitHub
+              if (updatedCaptionPostContent) {
+                await putGitHubFile(
+                  'locket60s/caption-post.js',
+                  updatedCaptionPostContent,
+                  `✨ Cập nhật caption-post cho @${cleanUser}`
+                );
+              }
 
               // Đẩy file SGModule cá nhân
               await putGitHubFile(
@@ -1064,8 +1069,11 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 
               syncedToGithub = true;
             } catch (errGh) {
-              console.warn('Lỗi push GitHub (vẫn tiếp tục tạo file cục bộ):', errGh);
+              console.warn('Lỗi push GitHub:', errGh);
+              githubError = errGh.message;
             }
+          } else {
+            githubError = 'Chưa có Token GitHub Admin';
           }
 
           // Gửi thông báo về Telegram Admin để bạn biết khách vừa tạo cấu hình gì
@@ -1111,12 +1119,20 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 
           setDeployResult({
             success: true,
-            message: `Cấu hình Locket VIP đã được kích hoạt thành công cho @${cleanUser}.`,
+            syncedToGithub,
+            githubError,
+            message: syncedToGithub 
+              ? `Cấu hình Locket VIP đã được tự động lưu lên GitHub repo cho @${cleanUser}.`
+              : `Cấu hình Locket VIP đã tạo thành công cho @${cleanUser} (Chưa lưu lên GitHub cloud do chưa có token admin).`,
             sgmoduleFile: sgmoduleFileName,
             sgmoduleUrl: rawSgmoduleUrl,
             sgmoduleDeepLink: shadowrocketDeepLink,
             sgmoduleContent: sgmoduleContent,
-            username: cleanUser
+            username: cleanUser,
+            updatedExpContent,
+            updatedCaptionPostContent,
+            captionSnippet: newCaptionSnippet,
+            customFrameUrl
           });
 
           if (window.confetti) {
@@ -3056,20 +3072,40 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
 
                   {/* Cài đặt nâng cao dành riêng cho Admin (Chỉ mở khi Admin bấm icon bánh răng) */}
                   {showAdminConfig && (
-                    <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-400/30 space-y-2.5">
+                    <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-400/40 space-y-2.5">
                       <div className="flex items-center justify-between text-amber-300 font-bold text-[11px]">
                         <span><i className="fa-solid fa-user-shield mr-1"></i> Tùy chọn Admin Repo GitHub</span>
-                        <span className="text-[9px] font-normal text-slate-400">Khách hàng thông thường không cần nhập</span>
+                        <span className="text-[9px] font-normal text-slate-400">Chỉ Admin cần cấu hình 1 lần</span>
                       </div>
+                      <p className="text-[10px] text-slate-300">
+                        Cung cấp GitHub Personal Access Token (PAT) với quyền <b>repo</b> để website tự động commit và lưu file <code>anhtuaan08-expiry-check.js</code> & <code>caption-post.js</code> lên GitHub cho mọi khách hàng:
+                      </p>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 block mb-1">GitHub Personal Access Token:</label>
-                        <input 
-                          type="password"
-                          value={ghToken}
-                          onChange={(e) => setGhToken(e.target.value)}
-                          placeholder="ghp_xxxx (để tự động sync commit lên repo)"
-                          className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
-                        />
+                        <label className="text-[10px] font-bold text-slate-400 block mb-1">GitHub Personal Access Token (ghp_...):</label>
+                        <div className="flex gap-2">
+                          <input 
+                            type="password"
+                            value={ghToken}
+                            onChange={(e) => setGhToken(e.target.value)}
+                            placeholder="ghp_xxxx..."
+                            className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (ghToken.trim()) {
+                                localStorage.setItem('at_gh_token', ghToken.trim());
+                                showToast('Đã lưu GitHub Token của Admin!');
+                              } else {
+                                localStorage.removeItem('at_gh_token');
+                                showToast('Đã xóa GitHub Token');
+                              }
+                            }}
+                            className="px-3 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/30 transition flex items-center gap-1"
+                          >
+                            <i className="fa-solid fa-floppy-disk"></i> Lưu
+                          </button>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
@@ -3097,25 +3133,45 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
 
                 {/* Kết quả tạo cấu hình */}
                 {deployResult && (
-                  <div className={`p-4 rounded-2xl mb-5 border ${deployResult.success ? 'bg-emerald-500/10 border-emerald-500/30 shadow-lg shadow-emerald-500/10' : 'bg-red-500/10 border-red-500/30'}`}>
+                  <div className={`p-4 rounded-2xl mb-5 border ${deployResult.success ? 'bg-slate-900/90 border-slate-700/60 shadow-2xl' : 'bg-red-500/10 border-red-500/30'}`}>
                     <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm flex-shrink-0 mt-0.5">
-                        <i className={`fa-solid ${deployResult.success ? 'fa-check' : 'fa-xmark'}`}></i>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 mt-0.5 ${deployResult.syncedToGithub ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                        <i className={`fa-solid ${deployResult.syncedToGithub ? 'fa-cloud-arrow-up' : 'fa-triangle-exclamation'}`}></i>
                       </div>
                       <div className="w-full">
-                        <p className={`text-sm font-black ${deployResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {deployResult.success ? `🎉 Đã Tạo Cấu Hình Cho @${deployResult.username}!` : 'Tạo Cấu Hình Thất Bại'}
+                        <p className={`text-sm font-black ${deployResult.syncedToGithub ? 'text-emerald-400' : 'text-amber-400'}`}>
+                          {deployResult.syncedToGithub ? `🎉 Đã Tự Động Đồng Bộ Lên GitHub Cho @${deployResult.username}!` : `⚡ Đã Khởi Tạo Cấu Hình Cho @${deployResult.username}`}
                         </p>
-                        <p className="text-[11px] text-slate-300 mt-0.5">{deployResult.message}</p>
+
+                        {/* Banner trạng thái đồng bộ GitHub */}
+                        {deployResult.syncedToGithub ? (
+                          <div className="mt-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-300 flex items-center gap-2">
+                            <i className="fa-solid fa-circle-check text-emerald-400"></i>
+                            <span>Đã cập nhật tự động vào <b>anhtuaan08-expiry-check.js</b> và <b>caption-post.js</b> trên GitHub!</span>
+                          </div>
+                        ) : (
+                          <div className="mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 space-y-1.5">
+                            <div className="flex items-center gap-1.5 font-bold text-amber-300">
+                              <i className="fa-solid fa-circle-exclamation text-amber-400"></i>
+                              <span>Chưa đồng bộ lên GitHub: {deployResult.githubError}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-300 leading-relaxed">
+                              👉 <b>Cách tự động 100%:</b> Nhấn biểu tượng <b className="text-amber-300">⚙️</b> ở góc trên bên phải popup này, dán <b>GitHub Token</b> (PAT quyền repo) của bạn vào và bấm Lưu. Sau đó web sẽ tự động commit lên GitHub cho mọi khách hàng!
+                            </p>
+                            <p className="text-[10px] text-slate-300 leading-relaxed">
+                              👉 <b>Cách cập nhật vào máy:</b> Bạn có thể bấm các nút tải file bên dưới để lưu vào thư mục dự án trên máy tính rồi <code>git push</code>.
+                            </p>
+                          </div>
+                        )}
                         
                         {deployResult.success && (
-                          <div className="mt-3 p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 space-y-3">
+                          <div className="mt-3 p-3.5 rounded-xl bg-black/50 border border-white/10 space-y-3">
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">File Cấu Hình Riêng:</span>
+                              <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider">File Cấu Hình Riêng:</span>
                               <span className="font-mono text-[10px] text-slate-200 bg-white/10 px-2 py-0.5 rounded">{deployResult.sgmoduleFile}</span>
                             </div>
 
-                            {/* 3 Nút cài đặt & tải về */}
+                            {/* Cài đặt Shadowrocket & tải file sgmodule */}
                             <div className="flex flex-col sm:flex-row gap-2 pt-1">
                               <a 
                                 href={deployResult.sgmoduleDeepLink}
@@ -3131,11 +3187,34 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                               </button>
                             </div>
 
+                            {/* Nút tải các file JS đã cập nhật nếu muốn lưu vào máy */}
+                            <div className="pt-2 border-t border-white/10 space-y-2">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Tải file JS đã cập nhật (để lưu vào máy / repo):</span>
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                {deployResult.updatedExpContent && (
+                                  <button 
+                                    onClick={() => downloadTextFile('anhtuaan08-expiry-check.js', deployResult.updatedExpContent)}
+                                    className="flex-1 py-2 px-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-bold text-[10px] border border-indigo-500/30 flex items-center justify-center gap-1.5 transition"
+                                  >
+                                    <i className="fa-solid fa-download"></i> Tải anhtuaan08-expiry-check.js
+                                  </button>
+                                )}
+                                {deployResult.updatedCaptionPostContent && (
+                                  <button 
+                                    onClick={() => downloadTextFile('caption-post.js', deployResult.updatedCaptionPostContent)}
+                                    className="flex-1 py-2 px-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-bold text-[10px] border border-purple-500/30 flex items-center justify-center gap-1.5 transition"
+                                  >
+                                    <i className="fa-solid fa-download"></i> Tải caption-post.js
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
                             <button 
-                              onClick={() => copyText(deployResult.sgmoduleUrl, 'Đã copy link cấu hình!')}
-                              className="w-full py-2 px-3 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 font-medium text-[10px] text-center border border-white/10 flex items-center justify-center gap-1.5 transition"
+                              onClick={() => copyText(deployResult.captionSnippet, 'Đã copy đoạn mã Script!')}
+                              className="w-full py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-medium text-[10px] text-center border border-white/10 flex items-center justify-center gap-1.5 transition"
                             >
-                              <i className="fa-regular fa-copy"></i> Sao chép link cài đặt trực tuyến
+                              <i className="fa-regular fa-copy text-amber-400"></i> Copy đoạn mã Caption / Khung Viền
                             </button>
 
                             {/* Hướng dẫn cài đặt 2 bước cho người dùng */}
@@ -3143,7 +3222,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                               <div className="font-bold text-slate-300 mb-1 flex items-center gap-1">
                                 <i className="fa-solid fa-circle-question text-amber-400"></i> Cách kích hoạt trong ShadowRocket:
                               </div>
-                              <p><b>Bước 1:</b> Bấm nút "Cài Vào ShadowRocket" (hoặc tải file về mở bằng ShadowRocket).</p>
+                              <p><b>Bước 1:</b> Bấm nút "Cài Vào ShadowRocket" (hoặc tải file .sgmodule về rồi mở bằng ShadowRocket).</p>
                               <p><b>Bước 2:</b> Vào mục <b>Cấu hình (Config)</b> -> <b>Module</b> -> Bật module riêng của bạn lên là xong!</p>
                             </div>
                           </div>
