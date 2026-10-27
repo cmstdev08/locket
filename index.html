@@ -242,6 +242,10 @@
       adminTelegram: 'https://t.me/anhtuaan',
       adminInstagram: 'https://www.instagram.com/anhtuaan.08',
       adminZalo: 'https://zalo.me/0898376962',
+      defaultGhRepo: 'cmstdev08/locket',
+      defaultGhBranch: 'master',
+      // Token GitHub của Admin dùng để tự động đẩy file thay khách hàng (không bắt khách nhập)
+      defaultGhToken: '', 
       bankNumber: '7898376962',
       bankName: 'Vietcombank',
       bankOwner: 'ANH TUAN',
@@ -558,13 +562,14 @@
       const [contactSuccess, setContactSuccess] = useState(false);
 
       // GitHub Deploy Caption State
-      const [ghToken, setGhToken] = useState(() => localStorage.getItem('at_gh_token') || '');
-      const [ghRepo, setGhRepo] = useState(() => localStorage.getItem('at_gh_repo') || 'cmstdev08/locket');
-      const [ghBranch, setGhBranch] = useState(() => localStorage.getItem('at_gh_branch') || 'master');
+      const [ghToken, setGhToken] = useState(() => localStorage.getItem('at_gh_token') || CONFIGS.defaultGhToken || '');
+      const [ghRepo, setGhRepo] = useState(() => localStorage.getItem('at_gh_repo') || CONFIGS.defaultGhRepo || 'cmstdev08/locket');
+      const [ghBranch, setGhBranch] = useState(() => localStorage.getItem('at_gh_branch') || CONFIGS.defaultGhBranch || 'master');
       const [ghCustomerUsername, setGhCustomerUsername] = useState('');
       const [deploying, setDeploying] = useState(false);
-      const [deployResult, setDeployResult] = useState(null); // { success, message, url?, sgmoduleUrl?, sgmoduleDeepLink? }
+      const [deployResult, setDeployResult] = useState(null); // { success, message, url?, sgmoduleUrl?, sgmoduleDeepLink?, sgmoduleContent? }
       const [showDeployModal, setShowDeployModal] = useState(false);
+      const [showAdminConfig, setShowAdminConfig] = useState(false);
       const [deployHistory, setDeployHistory] = useState(() => {
         try { return JSON.parse(localStorage.getItem('at_deploy_history') || '[]'); } catch(e) { return []; }
       });
@@ -636,6 +641,24 @@
           document.execCommand('copy');
           document.body.removeChild(ta);
           showToast(message);
+        }
+      };
+
+      // Tải file trực tiếp về thiết bị (File .sgmodule hoặc script)
+      const downloadTextFile = (filename, text) => {
+        try {
+          const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast(`Đã tải xuống file ${filename}!`);
+        } catch (e) {
+          showToast('Lỗi khi tải file: ' + e.message, 'fa-circle-xmark');
         }
       };
 
@@ -853,178 +876,32 @@ ${JSON.stringify(captionObj, null, 2)}
       };
 
       const handleDeployCaptionToGitHub = async () => {
-        if (!ghToken.trim()) {
-          showToast('Vui lòng nhập GitHub Token để deploy!', 'fa-circle-exclamation');
-          return;
-        }
-        if (!ghRepo.trim()) {
-          showToast('Vui lòng nhập tên repo (VD: cmstdev08/locket)!', 'fa-circle-exclamation');
-          return;
-        }
+        const cleanUser = (ghCustomerUsername.trim() || 'user').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() || 'vip';
+        const effectiveToken = ghToken.trim() || CONFIGS.defaultGhToken;
+        const effectiveRepo = ghRepo.trim() || CONFIGS.defaultGhRepo || 'cmstdev08/locket';
+        const effectiveBranch = ghBranch.trim() || CONFIGS.defaultGhBranch || 'master';
 
+        // Bắt đầu tạo cấu hình riêng cho khách
         setDeploying(true);
         setDeployResult(null);
 
-        // Save settings
-        localStorage.setItem('at_gh_token', ghToken);
-        localStorage.setItem('at_gh_repo', ghRepo);
-        localStorage.setItem('at_gh_branch', ghBranch);
+        // Lưu setting nếu có nhập từ tab Admin
+        if (ghToken.trim()) localStorage.setItem('at_gh_token', ghToken.trim());
+        if (ghRepo.trim()) localStorage.setItem('at_gh_repo', ghRepo.trim());
+        if (ghBranch.trim()) localStorage.setItem('at_gh_branch', ghBranch.trim());
 
         try {
           const timestamp = Date.now();
-          const cleanUser = (ghCustomerUsername.trim() || 'user').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase() || 'vip';
-          const safeText = captionText.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF]/g, '_').slice(0, 15) || 'caption';
           const captionId = `${cleanUser}-${timestamp}`;
-
-          // 1. Tạo JSON caption độc lập trong thư mục captions/
-          const captionFileName = `captions/caption-${captionId}.json`;
           const overlayId = `caption:anhtuaan08_personal:${deployHistory.length}`;
-          
-          const captionData = {
-            overlay_id: overlayId,
-            username: cleanUser,
-            text: captionText,
-            textColor: captionTextColor,
-            colors: selectedGradient.colors,
-            gradientName: selectedGradient.name,
-            gradientClass: selectedGradient.class,
-            icon: captionIcon,
-            font: captionFont,
-            imageUrl: 'https://i.ibb.co/RTm5P1n9/kitty-1.png',
-            captionMinChars: 0,
-            createdAt: new Date().toISOString(),
-            createdBy: 'Anh Tuan iOS Caption Studio'
-          };
-
-          const putGitHubFile = async (path, contentStr, commitMsg) => {
-            const getUrl = `https://api.github.com/repos/${ghRepo}/contents/${path}?ref=${ghBranch}`;
-            let sha = undefined;
-            try {
-              const checkRes = await fetch(getUrl, {
-                headers: {
-                  'Authorization': `Bearer ${ghToken}`,
-                  'Accept': 'application/vnd.github.v3+json'
-                }
-              });
-              if (checkRes.ok) {
-                const checkData = await checkRes.json();
-                sha = checkData.sha;
-              }
-            } catch (_) {}
-
-            const putUrl = `https://api.github.com/repos/${ghRepo}/contents/${path}`;
-            const b64 = btoa(unescape(encodeURIComponent(contentStr)));
-            const bodyPayload = {
-              message: commitMsg,
-              content: b64,
-              branch: ghBranch
-            };
-            if (sha) bodyPayload.sha = sha;
-
-            const res = await fetch(putUrl, {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${ghToken}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/vnd.github.v3+json'
-              },
-              body: JSON.stringify(bodyPayload)
-            });
-            if (!res.ok) {
-              const errData = await res.json().catch(() => ({}));
-              throw new Error(errData.message || `Lỗi đẩy ${path} (${res.status})`);
-            }
-            return await res.json();
-          };
-
-          // --- Đẩy file JSON caption ---
-          await putGitHubFile(
-            captionFileName,
-            JSON.stringify(captionData, null, 2),
-            `✨ Thêm caption mới cho @${cleanUser}: "${captionText}"`
-          );
-
-          // 2. Cập nhật anhtuaan08-expiry-check.js (thêm caption vào MY_CAPTIONS & badge username)
-          try {
-            const expFileUrl = `https://api.github.com/repos/${ghRepo}/contents/locket60s/anhtuaan08-expiry-check.js?ref=${ghBranch}`;
-            const expRes = await fetch(expFileUrl, {
-              headers: {
-                'Authorization': `Bearer ${ghToken}`,
-                'Accept': 'application/vnd.github.v3+json'
-              }
-            });
-            if (expRes.ok) {
-              const expData = await expRes.json();
-              const expSha = expData.sha;
-              const expContent = decodeURIComponent(escape(atob(expData.content.replace(/\s/g, ''))));
-              
-              // New caption snippet to inject into MY_CAPTIONS
-              const newCaptionSnippet = `    ,{
-      overlay_id: "${overlayId}",
-      text: "${captionText.replace(/"/g, '\\"')}",
-      textColor: "${captionTextColor}",
-      colors: ${JSON.stringify(selectedGradient.colors)},
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0
-    }
-    // Custom Caption by Anh Tuan iOS`;
-
-              let updatedExpContent = expContent;
-              if (updatedExpContent.includes('// Custom Caption by Anh Tuan iOS')) {
-                updatedExpContent = updatedExpContent.replace(
-                  '// Custom Caption by Anh Tuan iOS',
-                  newCaptionSnippet
-                );
-              }
-
-              // Cập nhật WIDGET_FRAME_URL nếu người dùng chọn khung viền
-              if (customFrameUrl && customFrameUrl.trim()) {
-                const targetFrame = customFrameUrl.trim();
-                updatedExpContent = updatedExpContent.replace(
-                  /var WIDGET_FRAME_URL = ".*?";/,
-                  `var WIDGET_FRAME_URL = "${targetFrame}";`
-                );
-              }
-
-              // Also add username to BADGE_USERNAMES if provided
-              if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip') {
-                const badgeMatch = updatedExpContent.match(/var BADGE_USERNAMES = \[(.*?)\];/);
-                if (badgeMatch && !badgeMatch[1].includes(`"${cleanUser}"`)) {
-                  const existingUsers = badgeMatch[1].trim();
-                  const newUsersList = existingUsers ? `${existingUsers}, "${cleanUser}"` : `"${cleanUser}"`;
-                  updatedExpContent = updatedExpContent.replace(
-                    /var BADGE_USERNAMES = \[.*?\];/,
-                    `var BADGE_USERNAMES = [${newUsersList}];`
-                  );
-                }
-              }
-
-              // Commit updated anhtuaan08-expiry-check.js
-              const putExpUrl = `https://api.github.com/repos/${ghRepo}/contents/locket60s/anhtuaan08-expiry-check.js`;
-              await fetch(putExpUrl, {
-                method: 'PUT',
-                headers: {
-                  'Authorization': `Bearer ${ghToken}`,
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/vnd.github.v3+json'
-                },
-                body: JSON.stringify({
-                  message: `🔥 Cập nhật expiry-check: thêm caption & VIP badge cho @${cleanUser}`,
-                  content: btoa(unescape(encodeURIComponent(updatedExpContent))),
-                  sha: expSha,
-                  branch: ghBranch
-                })
-              });
-            }
-          } catch (e) {
-            console.warn('Không thể tự động patch file expiry-check:', e);
-          }
-
-          // 3. Tạo file sgmodule riêng biệt cho người dùng này: locket60s-{username}.sgmodule
           const sgmoduleFileName = `locket60s-${cleanUser}.sgmodule`;
-          const rawBase = `https://raw.githubusercontent.com/${ghRepo}/${ghBranch}`;
+          const rawBase = `https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}`;
+          const rawSgmoduleUrl = `${rawBase}/${sgmoduleFileName}`;
+          const shadowrocketDeepLink = `shadowrocket://install?module=${encodeURIComponent(rawSgmoduleUrl)}`;
+
+          // Nội dung File SGModule cá nhân hóa cho khách hàng
           const sgmoduleContent = `#!name=Locket 60s VIP - @${cleanUser}
-#!desc=Module Locket Gold & 60s riêng biệt cho @${cleanUser} | Caption: "${captionText.replace(/"/g, '')}"
+#!desc=Module Locket Gold & 60s dành riêng cho @${cleanUser} | Caption & Khung Viền Widget Màn Hình Chính
 #!author=anhtuaan08
 
 [Script]
@@ -1038,25 +915,192 @@ locket_caption_post16 = type=http-request, pattern=^https:\\/\\/(api\\.locketcam
 hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api.locketcamera.com, us-central1-locket-4252a.cloudfunctions.net
 `;
 
-          await putGitHubFile(
-            sgmoduleFileName,
-            sgmoduleContent,
-            `🚀 Tạo file sgmodule riêng cho khách hàng @${cleanUser}`
-          );
+          let syncedToGithub = false;
 
-          // Đường link sgmodule riêng để tải hoặc import vào ShadowRocket
-          const rawSgmoduleUrl = `${rawBase}/${sgmoduleFileName}`;
-          const shadowrocketDeepLink = `shadowrocket://install?module=${encodeURIComponent(rawSgmoduleUrl)}`;
+          // Nếu có Token GitHub (Admin cấu hình trước hoặc lưu trong máy), tự động push lên GitHub
+          if (effectiveToken) {
+            try {
+              const captionFileName = `captions/caption-${captionId}.json`;
+              const captionData = {
+                overlay_id: overlayId,
+                username: cleanUser,
+                text: captionText,
+                textColor: captionTextColor,
+                colors: selectedGradient.colors,
+                gradientName: selectedGradient.name,
+                gradientClass: selectedGradient.class,
+                icon: captionIcon,
+                font: captionFont,
+                widgetFrameUrl: customFrameUrl,
+                imageUrl: 'https://i.ibb.co/RTm5P1n9/kitty-1.png',
+                captionMinChars: 0,
+                createdAt: new Date().toISOString()
+              };
+
+              const putGitHubFile = async (path, contentStr, commitMsg) => {
+                const getUrl = `https://api.github.com/repos/${effectiveRepo}/contents/${path}?ref=${effectiveBranch}`;
+                let sha = undefined;
+                try {
+                  const checkRes = await fetch(getUrl, {
+                    headers: {
+                      'Authorization': `Bearer ${effectiveToken}`,
+                      'Accept': 'application/vnd.github.v3+json'
+                    }
+                  });
+                  if (checkRes.ok) {
+                    const checkData = await checkRes.json();
+                    sha = checkData.sha;
+                  }
+                } catch (_) {}
+
+                const putUrl = `https://api.github.com/repos/${effectiveRepo}/contents/${path}`;
+                const b64 = btoa(unescape(encodeURIComponent(contentStr)));
+                const bodyPayload = {
+                  message: commitMsg,
+                  content: b64,
+                  branch: effectiveBranch
+                };
+                if (sha) bodyPayload.sha = sha;
+
+                const res = await fetch(putUrl, {
+                  method: 'PUT',
+                  headers: {
+                    'Authorization': `Bearer ${effectiveToken}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                  },
+                  body: JSON.stringify(bodyPayload)
+                });
+                return res.ok;
+              };
+
+              // Đẩy JSON caption
+              await putGitHubFile(
+                captionFileName,
+                JSON.stringify(captionData, null, 2),
+                `✨ Thêm caption cho @${cleanUser}: "${captionText}"`
+              );
+
+              // Cập nhật file anhtuaan08-expiry-check.js
+              try {
+                const expFileUrl = `https://api.github.com/repos/${effectiveRepo}/contents/locket60s/anhtuaan08-expiry-check.js?ref=${effectiveBranch}`;
+                const expRes = await fetch(expFileUrl, {
+                  headers: {
+                    'Authorization': `Bearer ${effectiveToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                  }
+                });
+                if (expRes.ok) {
+                  const expData = await expRes.json();
+                  const expSha = expData.sha;
+                  const expContent = decodeURIComponent(escape(atob(expData.content.replace(/\s/g, ''))));
+                  
+                  let updatedExpContent = expContent;
+                  
+                  // Cập nhật WIDGET_FRAME_URL nếu có khung viền
+                  if (customFrameUrl && customFrameUrl.trim()) {
+                    updatedExpContent = updatedExpContent.replace(
+                      /var WIDGET_FRAME_URL = ".*?";/,
+                      `var WIDGET_FRAME_URL = "${customFrameUrl.trim()}";`
+                    );
+                  }
+
+                  // Chèn caption
+                  const newCaptionSnippet = `    ,{
+        overlay_id: "${overlayId}",
+        text: "${captionText.replace(/"/g, '\\"')}",
+        textColor: "${captionTextColor}",
+        colors: ${JSON.stringify(selectedGradient.colors)},
+        imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+        captionMinChars: 0
+      }
+      // Custom Caption by Anh Tuan iOS`;
+
+                  if (updatedExpContent.includes('// Custom Caption by Anh Tuan iOS')) {
+                    updatedExpContent = updatedExpContent.replace(
+                      '// Custom Caption by Anh Tuan iOS',
+                      newCaptionSnippet
+                    );
+                  }
+
+                  // Gắn badge username
+                  if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip') {
+                    const badgeMatch = updatedExpContent.match(/var BADGE_USERNAMES = \[(.*?)\];/);
+                    if (badgeMatch && !badgeMatch[1].includes(`"${cleanUser}"`)) {
+                      const existingUsers = badgeMatch[1].trim();
+                      const newUsersList = existingUsers ? `${existingUsers}, "${cleanUser}"` : `"${cleanUser}"`;
+                      updatedExpContent = updatedExpContent.replace(
+                        /var BADGE_USERNAMES = \[.*?\];/,
+                        `var BADGE_USERNAMES = [${newUsersList}];`
+                      );
+                    }
+                  }
+
+                  const putExpUrl = `https://api.github.com/repos/${effectiveRepo}/contents/locket60s/anhtuaan08-expiry-check.js`;
+                  await fetch(putExpUrl, {
+                    method: 'PUT',
+                    headers: {
+                      'Authorization': `Bearer ${effectiveToken}`,
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                      message: `🔥 Cập nhật expiry-check (frame & caption) cho @${cleanUser}`,
+                      content: btoa(unescape(encodeURIComponent(updatedExpContent))),
+                      sha: expSha,
+                      branch: effectiveBranch
+                    })
+                  });
+                }
+              } catch (_) {}
+
+              // Đẩy file SGModule cá nhân
+              await putGitHubFile(
+                sgmoduleFileName,
+                sgmoduleContent,
+                `🚀 Tạo module sg riêng cho @${cleanUser}`
+              );
+
+              syncedToGithub = true;
+            } catch (errGh) {
+              console.warn('Lỗi push GitHub (vẫn tiếp tục tạo file cục bộ):', errGh);
+            }
+          }
+
+          // Gửi thông báo về Telegram Admin để bạn biết khách vừa tạo cấu hình gì
+          try {
+            const notifMsg = `🎨 <b>YÊU CẦU TẠO CẤU HÌNH MỚI!</b>
+━━━━━━━━━━━━━━━━━━━━
+👤 <b>Khách hàng:</b> @${cleanUser}
+🔑 <b>Key sử dụng:</b> <code>${accessKeyInput}</code>
+🏷️ <b>Caption:</b> "${captionText}"
+🎨 <b>Màu nền:</b> ${selectedGradient.name}
+🖼️ <b>Khung viền Widget:</b> ${customFrameUrl ? `<a href="${customFrameUrl}">Xem ảnh khung</a>` : 'Không có'}
+📦 <b>File SGModule:</b> <code>${sgmoduleFileName}</code>
+🌐 <b>Đồng bộ GitHub:</b> ${syncedToGithub ? '✅ Thành công' : '⚡ Tạo file trực tiếp'}
+━━━━━━━━━━━━━━━━━━━━
+⏰ <i>${new Date().toLocaleString('vi-VN')}</i>`;
+
+            await fetch(`https://api.telegram.org/bot${CONFIGS.telegramBotToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: CONFIGS.telegramChatId,
+                text: notifMsg,
+                parse_mode: 'HTML'
+              })
+            }).catch(() => {});
+          } catch (_) {}
 
           const newEntry = {
-            fileName: captionFileName,
+            fileName: `captions/caption-${captionId}.json`,
             sgmoduleFile: sgmoduleFileName,
             sgmoduleUrl: rawSgmoduleUrl,
             deepLink: shadowrocketDeepLink,
             username: cleanUser,
             text: captionText,
+            frameUrl: customFrameUrl,
             gradient: selectedGradient.name,
-            textColor: captionTextColor,
             timestamp: new Date().toISOString()
           };
 
@@ -1066,26 +1110,29 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 
           setDeployResult({
             success: true,
-            message: `Deploy thành công! Đã tạo file sgmodule riêng cho @${cleanUser} và cập nhật hệ thống.`,
-            fileName: captionFileName,
+            message: `Cấu hình Locket VIP đã được kích hoạt thành công cho @${cleanUser}.`,
             sgmoduleFile: sgmoduleFileName,
             sgmoduleUrl: rawSgmoduleUrl,
             sgmoduleDeepLink: shadowrocketDeepLink,
+            sgmoduleContent: sgmoduleContent,
             username: cleanUser
           });
 
           if (window.confetti) {
             window.confetti({ particleCount: 100, spread: 75, origin: { y: 0.65 } });
           }
-          showToast(`🚀 Tạo Module SG cho @${cleanUser} thành công!`);
+          showToast(`🚀 Tạo cấu hình cho @${cleanUser} thành công!`);
 
         } catch (err) {
           setDeployResult({
             success: false,
-            message: `Lỗi kết nối / push GitHub: ${err.message}`
+            message: `Lỗi khởi tạo: ${err.message}`
           });
           showToast(`Lỗi: ${err.message}`, 'fa-circle-xmark');
         }
+
+        setDeploying(false);
+      };
 
         setDeploying(false);
       };
@@ -1437,160 +1484,292 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             <section id="caption-studio" className="mb-14 scroll-mt-20">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-1.5 text-xs font-black tracking-widest uppercase text-pink-400 mb-1">
-                  <i className="fa-solid fa-wand-magic-sparkles"></i> LOCKET CAPTION STUDIO
+                  <i className="fa-solid fa-wand-magic-sparkles"></i> LOCKET VIP STUDIO
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-black font-display text-white">TẠO KHUNG CAPTION LOCKET ĐỘC QUYỀN</h3>
-                <p className="text-xs text-slate-400 mt-1">Tải ảnh của bạn lên để thử trực tiếp - Chuyển chế độ Video 60s hoặc đặt gói kèm mẫu Caption vừa tạo</p>
+                <h3 className="text-2xl sm:text-3xl font-black font-display text-white">
+                  {studioTab === 'caption' ? 'THIẾT KẾ KHUNG CAPTION LOCKET ĐỘC QUYỀN' : 'TẠO KHUNG VIỀN WIDGET MÀN HÌNH CHÍNH'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  {studioTab === 'caption'
+                    ? 'Tùy biến chữ, icon, gradient hiển thị trên bài đăng Locket • Hỗ trợ quay 60s'
+                    : 'Khung viền trang trí hiển thị trên Tiện ích Locket (Widget) ngoài Màn Hình Chính iPhone của bạn bè'
+                  }
+                </p>
               </div>
 
               <div className="glass-card rounded-3xl p-5 sm:p-7 border border-pink-500/30">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                   
-                  {/* LEFT: INTERACTIVE PHONE VIEWFINDER PREVIEW */}
+                  {/* LEFT: INTERACTIVE PREVIEW (SWITCHES ACCORDING TO CAPTION VS WIDGET FRAME) */}
                   <div className="lg:col-span-5 flex flex-col items-center">
-                    <div className="flex items-center justify-between w-full max-w-[300px] mb-2">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i className="fa-solid fa-mobile-screen-button text-pink-400"></i> Mô Phỏng Locket
-                      </span>
-                      {/* Toggle Photo vs 60s Video Mode */}
-                      <button
-                        onClick={() => setIsVideoMode(!isVideoMode)}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1 transition ${
-                          isVideoMode ? 'keep-white bg-red-500 shadow-lg shadow-red-500/30' : 'bg-white/10 text-slate-300'
-                        }`}
-                      >
-                        <i className="fa-solid fa-video"></i>
-                        {isVideoMode ? 'Đang Quay 60s' : 'Thử Quay 60s'}
-                      </button>
-                    </div>
-
-                    {/* Phone Frame */}
-                    <div className="phone-mockup w-[280px] sm:w-[310px] h-[520px] rounded-[44px] bg-slate-950 p-3 shadow-2xl border-4 border-slate-700/60 relative overflow-hidden flex flex-col justify-between">
-                      {/* Dynamic Island */}
-                      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-30 flex items-center justify-end pr-2">
-                        {isVideoMode && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>}
-                      </div>
-
-                      {/* Photo/Video Viewfinder Area */}
-                      <div className="relative w-full h-[370px] rounded-[32px] overflow-hidden bg-slate-900 mt-5 border border-white/10 shadow-inner">
-                        <img 
-                          src={currentPhoto} 
-                          alt="Locket Viewfinder Preview" 
-                          className={`w-full h-full object-cover transition-transform duration-700 ${isVideoMode ? 'scale-105' : 'scale-100'}`}
-                        />
-
-                        {/* Top Locket Controls */}
-                        <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-white drop-shadow-md z-20">
-                          {isVideoMode ? (
-                            <div className="flex items-center gap-2 bg-red-600/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-mono font-bold">
-                              <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                              <span>REC 00:{String(videoTimer).padStart(2, '0')} / 01:00</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold">
-                              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                              <span>Bạn bè • Vừa xong</span>
-                            </div>
-                          )}
-                          <div className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-xs">
-                            <i className="fa-solid fa-ellipsis"></i>
-                          </div>
-                        </div>
-
-                        {/* Video Recording Progress Bar */}
-                        {isVideoMode && (
-                          <div className="absolute top-0 left-0 right-0 h-1 bg-black/40 z-20">
-                            <div 
-                              className="h-full bg-gradient-to-r from-amber-400 to-red-500 transition-all duration-1000"
-                              style={{ width: `${(videoTimer / 60) * 100}%` }}
-                            />
-                          </div>
-                        )}
-
-                        {/* WIDGET FRAME PREVIEW OVERLAY */}
-                        {customFrameUrl && (
-                          <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center p-2">
-                            <img 
-                              src={customFrameUrl} 
-                              alt="Widget Frame Overlay" 
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        )}
-
-                        {/* THE CUSTOM CAPTION OVERLAY BAR */}
-                        <div className="absolute bottom-4 left-3 right-3 z-20 flex justify-center">
-                          <div 
-                            className={`px-3.5 py-2 rounded-2xl bg-gradient-to-r ${selectedGradient.class} shadow-2xl backdrop-blur-md border border-white/20 flex items-center gap-2 max-w-full transition-all duration-300`}
+                    {studioTab === 'caption' ? (
+                      /* ================= PREVIEW 1: CAMERA LOCKET TRONG APP (CHO CAPTION) ================= */
+                      <>
+                        <div className="flex items-center justify-between w-full max-w-[300px] mb-2">
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i className="fa-solid fa-camera text-pink-400"></i> Camera Locket Trong App
+                          </span>
+                          {/* Toggle Photo vs 60s Video Mode */}
+                          <button
+                            onClick={() => setIsVideoMode(!isVideoMode)}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1 transition ${
+                              isVideoMode ? 'keep-white bg-red-500 shadow-lg shadow-red-500/30' : 'bg-white/10 text-slate-300'
+                            }`}
                           >
-                            {captionIcon === 'kitty' && (
-                              <img src="https://i.ibb.co/RTm5P1n9/kitty-1.png" alt="Kitty" className="w-6 h-6 object-contain flex-shrink-0" />
-                            )}
-                            {captionIcon === 'crown' && <span className="text-base filter drop-shadow">👑</span>}
-                            {captionIcon === 'heart' && <span className="text-base heart-pulse-anim">💗</span>}
-                            {captionIcon === 'fire' && <span className="text-base">🔥</span>}
-                            {captionIcon === 'sparkles' && <span className="text-base">✨</span>}
-                            {captionIcon === 'star' && <span className="text-base">⭐</span>}
-                            {captionIcon === 'music' && <span className="text-base">🎵</span>}
+                            <i className="fa-solid fa-video"></i>
+                            {isVideoMode ? 'Đang Quay 60s' : 'Thử Quay 60s'}
+                          </button>
+                        </div>
 
-                            <span 
-                              style={{ color: captionTextColor }}
-                              className={`text-xs font-black truncate max-w-[190px] drop-shadow-sm ${
-                                captionFont === 'display' ? 'font-display' :
-                                captionFont === 'cute' ? 'font-cute text-sm' :
-                                captionFont === 'mono' ? 'font-mono' : 'font-sans'
-                              }`}
+                        {/* Phone Frame - Camera View */}
+                        <div className="phone-mockup w-[280px] sm:w-[310px] h-[520px] rounded-[44px] bg-slate-950 p-3 shadow-2xl border-4 border-slate-700/60 relative overflow-hidden flex flex-col justify-between">
+                          {/* Dynamic Island */}
+                          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-30 flex items-center justify-end pr-2">
+                            {isVideoMode && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>}
+                          </div>
+
+                          {/* Photo/Video Viewfinder Area */}
+                          <div className="relative w-full h-[370px] rounded-[32px] overflow-hidden bg-slate-900 mt-5 border border-white/10 shadow-inner">
+                            <img 
+                              src={currentPhoto} 
+                              alt="Locket Viewfinder Preview" 
+                              className={`w-full h-full object-cover transition-transform duration-700 ${isVideoMode ? 'scale-105' : 'scale-100'}`}
+                            />
+
+                            {/* Top Locket Controls */}
+                            <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-white drop-shadow-md z-20">
+                              {isVideoMode ? (
+                                <div className="flex items-center gap-2 bg-red-600/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-mono font-bold">
+                                  <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                                  <span>REC 00:{String(videoTimer).padStart(2, '0')} / 01:00</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold">
+                                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                  <span>Bạn bè • Vừa xong</span>
+                                </div>
+                              )}
+                              <div className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-xs">
+                                <i className="fa-solid fa-ellipsis"></i>
+                              </div>
+                            </div>
+
+                            {/* Video Recording Progress Bar */}
+                            {isVideoMode && (
+                              <div className="absolute top-0 left-0 right-0 h-1 bg-black/40 z-20">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-amber-400 to-red-500 transition-all duration-1000"
+                                  style={{ width: `${(videoTimer / 60) * 100}%` }}
+                                />
+                              </div>
+                            )}
+
+                            {/* THE CUSTOM CAPTION OVERLAY BAR */}
+                            <div className="absolute bottom-4 left-3 right-3 z-20 flex justify-center">
+                              <div 
+                                className={`px-3.5 py-2 rounded-2xl bg-gradient-to-r ${selectedGradient.class} shadow-2xl backdrop-blur-md border border-white/20 flex items-center gap-2 max-w-full transition-all duration-300`}
+                              >
+                                {captionIcon === 'kitty' && (
+                                  <img src="https://i.ibb.co/RTm5P1n9/kitty-1.png" alt="Kitty" className="w-6 h-6 object-contain flex-shrink-0" />
+                                )}
+                                {captionIcon === 'crown' && <span className="text-base filter drop-shadow">👑</span>}
+                                {captionIcon === 'heart' && <span className="text-base heart-pulse-anim">💗</span>}
+                                {captionIcon === 'fire' && <span className="text-base">🔥</span>}
+                                {captionIcon === 'sparkles' && <span className="text-base">✨</span>}
+                                {captionIcon === 'star' && <span className="text-base">⭐</span>}
+                                {captionIcon === 'music' && <span className="text-base">🎵</span>}
+
+                                <span 
+                                  style={{ color: captionTextColor }}
+                                  className={`text-xs font-black truncate max-w-[190px] drop-shadow-sm ${
+                                    captionFont === 'display' ? 'font-display' :
+                                    captionFont === 'cute' ? 'font-cute text-sm' :
+                                    captionFont === 'mono' ? 'font-mono' : 'font-sans'
+                                  }`}
+                                >
+                                  {captionText || 'Nhập nội dung caption...'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Bottom Shutter & Controls Mock */}
+                          <div className="flex items-center justify-around py-2 px-4 text-white">
+                            <label className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs text-slate-300 cursor-pointer transition" title="Tải ảnh của bạn lên">
+                              <i className="fa-solid fa-upload"></i>
+                              <input type="file" accept="image/*" className="hidden" onChange={handleUserPhotoUpload} />
+                            </label>
+                            <button 
+                              onClick={() => setIsVideoMode(!isVideoMode)}
+                              className={`w-14 h-14 rounded-full border-4 ${isVideoMode ? 'border-red-500' : 'border-white'} flex items-center justify-center transition`}
                             >
-                              {captionText || 'Nhập nội dung caption...'}
-                            </span>
+                              <div className={`w-11 h-11 rounded-full ${isVideoMode ? 'bg-red-500 animate-pulse' : 'bg-amber-400'} flex items-center justify-center text-slate-950 font-black text-xs`}>
+                                60s
+                              </div>
+                            </button>
+                            <button 
+                              onClick={() => {
+                                const nextIdx = (SAMPLE_PHOTOS.findIndex(p => p.url === currentPhoto) + 1) % SAMPLE_PHOTOS.length;
+                                setCurrentPhoto(SAMPLE_PHOTOS[nextIdx].url);
+                              }}
+                              className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs text-slate-300 transition"
+                              title="Đổi ảnh mẫu"
+                            >
+                              <i className="fa-solid fa-rotate"></i>
+                            </button>
                           </div>
                         </div>
-                      </div>
+                      </>
+                    ) : (
+                      /* ================= PREVIEW 2: TIỆN ÍCH LOCKET MÀN HÌNH CHÍNH IPHONE (IOS WIDGET) ================= */
+                      <>
+                        <div className="flex items-center justify-between w-full max-w-[300px] mb-2">
+                          <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i className="fa-brands fa-apple text-sm"></i> Tiện Ích Màn Hình Chính iOS
+                          </span>
+                          <span className="text-[10px] text-slate-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/10 font-mono">
+                            Widget 2x2 Square
+                          </span>
+                        </div>
 
-                      {/* Bottom Shutter & Controls Mock */}
-                      <div className="flex items-center justify-around py-2 px-4 text-white">
-                        <label className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs text-slate-300 cursor-pointer transition" title="Tải ảnh của bạn lên">
-                          <i className="fa-solid fa-upload"></i>
-                          <input type="file" accept="image/*" className="hidden" onChange={handleUserPhotoUpload} />
-                        </label>
-                        <button 
-                          onClick={() => setIsVideoMode(!isVideoMode)}
-                          className={`w-14 h-14 rounded-full border-4 ${isVideoMode ? 'border-red-500' : 'border-white'} flex items-center justify-center transition`}
-                        >
-                          <div className={`w-11 h-11 rounded-full ${isVideoMode ? 'bg-red-500 animate-pulse' : 'bg-amber-400'} flex items-center justify-center text-slate-950 font-black text-xs`}>
-                            60s
-                          </div>
-                        </button>
-                        <button 
-                          onClick={() => {
-                            const nextIdx = (SAMPLE_PHOTOS.findIndex(p => p.url === currentPhoto) + 1) % SAMPLE_PHOTOS.length;
-                            setCurrentPhoto(SAMPLE_PHOTOS[nextIdx].url);
+                        {/* Realistic iPhone Home Screen View */}
+                        <div 
+                          className="phone-mockup w-[280px] sm:w-[310px] h-[520px] rounded-[44px] bg-slate-950 p-3 shadow-2xl border-4 border-slate-700/60 relative overflow-hidden flex flex-col justify-between"
+                          style={{
+                            background: 'linear-gradient(150deg, #0f172a 0%, #1e1b4b 45%, #090d16 100%)'
                           }}
-                          className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs text-slate-300 transition"
-                          title="Đổi ảnh mẫu"
                         >
-                          <i className="fa-solid fa-rotate"></i>
-                        </button>
-                      </div>
-                    </div>
+                          {/* Aesthetic iOS Blurred Glow Effect */}
+                          <div className="absolute inset-0 pointer-events-none opacity-40">
+                            <div className="absolute -top-10 -left-10 w-44 h-44 rounded-full bg-pink-500/25 blur-3xl"></div>
+                            <div className="absolute top-1/2 -right-10 w-48 h-48 rounded-full bg-indigo-500/30 blur-3xl"></div>
+                            <div className="absolute -bottom-10 left-1/4 w-44 h-44 rounded-full bg-amber-500/20 blur-3xl"></div>
+                          </div>
+
+                          {/* Dynamic Island */}
+                          <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-30 flex items-center justify-center">
+                            <div className="w-2.5 h-2.5 rounded-full bg-slate-900/90 ml-auto mr-1.5 border border-white/10"></div>
+                          </div>
+
+                          {/* iOS Status Bar */}
+                          <div className="relative z-20 flex items-center justify-between px-3 pt-1 text-white text-[11px] font-semibold tracking-tight">
+                            <span>09:41</span>
+                            <div className="flex items-center gap-1.5 text-[10px]">
+                              <i className="fa-solid fa-signal"></i>
+                              <i className="fa-solid fa-wifi"></i>
+                              <i className="fa-solid fa-battery-full text-xs"></i>
+                            </div>
+                          </div>
+
+                          {/* Home Screen Content: Widget Centerpiece */}
+                          <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2">
+                            
+                            {/* THE LOCKET HOME SCREEN WIDGET CARD */}
+                            <div className="relative w-[230px] sm:w-[250px] aspect-square rounded-[36px] bg-slate-900 border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden transition-all duration-300 group">
+                              
+                              {/* Widget Photo Fill */}
+                              <img 
+                                src={currentPhoto} 
+                                alt="Locket Home Screen Photo" 
+                                className="w-full h-full object-cover"
+                              />
+
+                              {/* THE WIDGET FRAME OVERLAY (PNG TRONG SUỐT) */}
+                              {customFrameUrl ? (
+                                <div className="absolute inset-0 pointer-events-none z-10">
+                                  <img 
+                                    src={customFrameUrl} 
+                                    alt="Locket Widget Frame" 
+                                    className="w-full h-full object-fill pointer-events-none"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="absolute inset-0 border-2 border-dashed border-amber-400/40 rounded-[36px] pointer-events-none z-10 flex items-center justify-center bg-black/20">
+                                  <span className="text-[10px] text-amber-300 font-bold bg-black/70 px-2 py-1 rounded-lg backdrop-blur-md">
+                                    Chưa chọn khung viền
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Bottom Gradient Scrim & Locket Meta info */}
+                              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none z-20 flex items-end justify-between p-3">
+                                <div className="flex items-center gap-1.5">
+                                  <img 
+                                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" 
+                                    alt="Friend Avatar" 
+                                    className="w-6 h-6 rounded-full border-1.5 border-white shadow-md object-cover"
+                                  />
+                                  <div>
+                                    <div className="text-[11px] font-black text-white leading-tight drop-shadow-md flex items-center gap-1">
+                                      @{ghCustomerUsername.trim() || 'anhtuaan08'}
+                                      <span className="text-amber-400 text-[10px]">👑</span>
+                                    </div>
+                                    <div className="text-[9px] text-slate-300 font-medium">Vừa xong • Tiện ích ngoài</div>
+                                  </div>
+                                </div>
+
+                                <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-pink-400 text-[10px] shadow">
+                                  <i className="fa-solid fa-heart"></i>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* iOS App Label under Widget */}
+                            <div className="text-[11px] font-semibold text-white/90 drop-shadow-md mt-2 tracking-tight flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
+                              <span>Locket</span>
+                            </div>
+
+                            {/* Context: iOS Apps Row beneath widget to show authentic home screen */}
+                            <div className="grid grid-cols-4 gap-3.5 mt-5 px-3">
+                              {[
+                                { name: 'Tin nhắn', icon: 'fa-solid fa-message', bg: 'bg-emerald-500' },
+                                { name: 'Ảnh', icon: 'fa-solid fa-images', bg: 'bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-500' },
+                                { name: 'Nhạc', icon: 'fa-solid fa-music', bg: 'bg-red-500' },
+                                { name: 'Cài đặt', icon: 'fa-solid fa-gear', bg: 'bg-slate-500' }
+                              ].map((app, i) => (
+                                <div key={i} className="flex flex-col items-center gap-1 opacity-70">
+                                  <div className={`w-10 h-10 rounded-2xl ${app.bg} flex items-center justify-center text-white text-xs shadow-md border border-white/10`}>
+                                    <i className={app.icon}></i>
+                                  </div>
+                                  <span className="text-[9px] text-slate-300 font-medium tracking-tight truncate w-12 text-center">{app.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* iPhone Bottom Home Indicator Bar */}
+                          <div className="relative z-20 pb-1">
+                            <div className="w-28 h-1 bg-white/70 rounded-full mx-auto"></div>
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     {/* Change Sample Photo OR Upload Custom Photo */}
                     <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
-                      <span className="text-[10px] text-slate-400">Ảnh mẫu:</span>
+                      <span className="text-[10px] text-slate-400">Đổi ảnh xem thử:</span>
                       {SAMPLE_PHOTOS.map((p, i) => (
                         <button 
                           key={i}
                           onClick={() => setCurrentPhoto(p.url)}
-                          className={`w-6 h-6 rounded-full border-2 ${currentPhoto === p.url ? 'border-pink-400 scale-110' : 'border-transparent opacity-60'}`}
+                          className={`w-6 h-6 rounded-full border-2 ${currentPhoto === p.url ? 'border-amber-400 scale-110' : 'border-transparent opacity-60'}`}
                           style={{ backgroundImage: `url(${p.url})`, backgroundSize: 'cover' }}
                           title={p.name}
                         />
                       ))}
-                      <label className="px-2.5 py-1 rounded-lg bg-pink-500/20 text-pink-400 border border-pink-500/30 text-[10px] font-bold cursor-pointer hover:bg-pink-500/30 transition flex items-center gap-1">
-                        <i className="fa-solid fa-camera"></i> Tải ảnh của bạn
+                      <label className="px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/15 text-[10px] font-bold cursor-pointer hover:bg-white/20 transition flex items-center gap-1">
+                        <i className="fa-solid fa-camera text-pink-400"></i> Tải ảnh của bạn
                         <input type="file" accept="image/*" className="hidden" onChange={handleUserPhotoUpload} />
                       </label>
                     </div>
+
+                    <p className="text-[10px] text-slate-400 text-center mt-2 max-w-[280px]">
+                      {studioTab === 'caption' 
+                        ? '📸 Mô phỏng giao diện bài đăng Locket trong app khi gửi cho bạn bè.'
+                        : '📱 Mô phỏng Tiện ích Locket ngoài màn hình chính iPhone (Home Screen Widget).'
+                      }
+                    </p>
                   </div>
 
                   {/* RIGHT: CONTROLS & STYLING STUDIO */}
@@ -1906,7 +2085,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                   >
                     <i className={`fa-solid ${keyVerified ? 'fa-rocket' : 'fa-lock'}`}></i>
                     {keyVerified 
-                      ? `🚀 Tạo & Deploy ${studioTab === 'caption' ? 'Caption' : 'Khung Viền'} Lên GitHub` 
+                      ? `🚀 Kích Hoạt & Lấy File Cấu Hình ${studioTab === 'caption' ? 'Caption' : 'Khung Viền'} Cho iPhone` 
                       : `🔑 Nhập Key Để Mở Khóa Tạo ${studioTab === 'caption' ? 'Caption' : 'Khung Viền'}`
                     }
                   </button>
@@ -2673,131 +2852,183 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
           )}
 
           {/* ======================================================== */}
-          {/* MODAL: DEPLOY CAPTION TO GITHUB */}
+          {/* MODAL: KÍCH HOẠT CẤU HÌNH LOCKET VIP (CAPTION & KHUNG VIỀN) */}
           {/* ======================================================== */}
           {showDeployModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => { setShowDeployModal(false); setDeployResult(null); }}>
-              <div className="glass-card max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-emerald-500/40 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="glass-card max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-pink-500/30 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 
                 {/* Header */}
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="keep-white w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-lg shadow-md">
-                    <i className="fa-brands fa-github"></i>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="keep-white w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 via-rose-500 to-amber-500 flex items-center justify-center text-lg shadow-lg shadow-pink-500/25">
+                      <i className="fa-solid fa-crown text-white"></i>
+                    </div>
+                    <div>
+                      <h4 className="font-black text-lg text-white">Kích Hoạt Cấu Hình Locket VIP</h4>
+                      <p className="text-[11px] text-slate-400">Tạo file Module Shadowrocket cho riêng iPhone của bạn</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-black text-lg text-white">Deploy Caption Lên GitHub</h4>
-                    <p className="text-[11px] text-slate-400">Tạo file mới trên repo • File gốc caption-post.js giữ nguyên</p>
-                  </div>
+
+                  {/* Nút cài đặt Admin kín đáo */}
+                  <button 
+                    type="button"
+                    onClick={() => setShowAdminConfig(!showAdminConfig)} 
+                    className={`p-2 rounded-xl border text-xs transition ${showAdminConfig ? 'bg-amber-400/20 border-amber-400 text-amber-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+                    title="Cấu hình nâng cao (Dành cho Admin)"
+                  >
+                    <i className="fa-solid fa-gear"></i>
+                  </button>
                 </div>
 
-                {/* Caption Preview */}
+                {/* Preview Box */}
                 <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-5">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    <i className="fa-solid fa-eye text-pink-400 mr-1"></i> Caption sẽ được deploy
-                  </p>
-                  <div className={`px-4 py-2.5 rounded-xl bg-gradient-to-r ${selectedGradient.class} inline-flex items-center gap-2 shadow-lg`}>
-                    <span className="font-bold text-sm" style={{ color: captionTextColor }}>{captionText}</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <i className="fa-solid fa-sparkles text-amber-400 mr-1"></i> 
+                      {studioTab === 'caption' ? 'Caption Được Áp Dụng:' : 'Khung Viền Widget Màn Hình Chính:'}
+                    </p>
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                      Key VIP: {accessKeyInput || 'Hợp lệ'}
+                    </span>
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-3 text-[10px] text-slate-400">
-                    <span className="px-2 py-0.5 rounded-md bg-white/5">🎨 {selectedGradient.name}</span>
-                    <span className="px-2 py-0.5 rounded-md bg-white/5">🔤 {captionFont}</span>
-                    <span className="px-2 py-0.5 rounded-md bg-white/5">Colors: {selectedGradient.colors.join(', ')}</span>
-                  </div>
+
+                  {studioTab === 'caption' ? (
+                    <div>
+                      <div className={`px-4 py-2.5 rounded-xl bg-gradient-to-r ${selectedGradient.class} inline-flex items-center gap-2 shadow-lg max-w-full`}>
+                        <span className="font-bold text-sm truncate" style={{ color: captionTextColor }}>{captionText}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-3 text-[10px] text-slate-400">
+                        <span className="px-2 py-0.5 rounded-md bg-white/5">🎨 {selectedGradient.name}</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/5">🔤 Font: {captionFont}</span>
+                        <span className="px-2 py-0.5 rounded-md bg-white/5">Icon: {captionIcon}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-white/15 p-1 flex items-center justify-center flex-shrink-0 shadow-inner">
+                        <img src={customFrameUrl} alt="Khung Viền" className="w-full h-full object-contain" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-white">{selectedFrame?.name || 'Khung viền tùy chỉnh'}</div>
+                        <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{selectedFrame?.desc || customFrameUrl}</p>
+                        <span className="inline-block mt-1 text-[9px] font-semibold text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                          Hiển thị ngoài Widget màn hình chính
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* GitHub Settings */}
+                {/* Customer Settings */}
                 <div className="space-y-3 mb-5">
                   <div>
-                    <label className="text-xs font-bold text-slate-300 mb-1.5 block">
-                      <i className="fa-solid fa-user-tag text-pink-400 mr-1"></i> Tên người dùng / Khách hàng (Định danh riêng) <span className="text-pink-500">*</span>
+                    <label className="text-xs font-bold text-slate-200 mb-1.5 block flex items-center gap-1.5">
+                      <i className="fa-solid fa-user-tag text-pink-400"></i> Tên người dùng / Username Locket của bạn: <span className="text-pink-500">*</span>
                     </label>
                     <input 
                       type="text"
                       value={ghCustomerUsername}
                       onChange={(e) => setGhCustomerUsername(e.target.value)}
-                      placeholder="VD: thuytien, hoanglong, khanhlinh..."
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-400 transition"
+                      placeholder="VD: thuytien, hoanglong, minhanh..."
+                      className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-semibold focus:outline-none focus:border-pink-500 transition shadow-inner"
                     />
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Mỗi khách sẽ có file <code className="text-emerald-400">locket60s-{"<tên>"}.sgmodule</code> riêng biệt và được cập nhật vào <code className="text-sky-400">anhtuaan08-expiry-check.js</code>.
+                      Hệ thống sẽ tạo riêng cho bạn file cấu hình mang tên <code className="text-pink-400 font-mono font-bold bg-white/5 px-1 py-0.5 rounded">locket60s-{ghCustomerUsername.trim() || 'username'}.sgmodule</code>.
                     </p>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-slate-300 mb-1.5 block">
-                      <i className="fa-solid fa-key text-amber-400 mr-1"></i> GitHub Personal Access Token <span className="text-pink-500">*</span>
-                    </label>
-                    <input 
-                      type="password"
-                      value={ghToken}
-                      onChange={(e) => setGhToken(e.target.value)}
-                      placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                      className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-400 transition"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      Tạo token tại <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">github.com/settings/tokens</a> → cấp quyền "repo"
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-bold text-slate-300 mb-1.5 block">
-                        <i className="fa-brands fa-github text-white mr-1"></i> Repository
-                      </label>
-                      <input 
-                        type="text"
-                        value={ghRepo}
-                        onChange={(e) => setGhRepo(e.target.value)}
-                        placeholder="owner/repo"
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-400 transition"
-                      />
+                  {/* Cài đặt nâng cao dành riêng cho Admin (Chỉ mở khi Admin bấm icon bánh răng) */}
+                  {showAdminConfig && (
+                    <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-400/30 space-y-2.5">
+                      <div className="flex items-center justify-between text-amber-300 font-bold text-[11px]">
+                        <span><i className="fa-solid fa-user-shield mr-1"></i> Tùy chọn Admin Repo GitHub</span>
+                        <span className="text-[9px] font-normal text-slate-400">Khách hàng thông thường không cần nhập</span>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 block mb-1">GitHub Personal Access Token:</label>
+                        <input 
+                          type="password"
+                          value={ghToken}
+                          onChange={(e) => setGhToken(e.target.value)}
+                          placeholder="ghp_xxxx (để tự động sync commit lên repo)"
+                          className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 block mb-1">Repo:</label>
+                          <input 
+                            type="text"
+                            value={ghRepo}
+                            onChange={(e) => setGhRepo(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 block mb-1">Branch:</label>
+                          <input 
+                            type="text"
+                            value={ghBranch}
+                            onChange={(e) => setGhBranch(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-xs font-bold text-slate-300 mb-1.5 block">
-                        <i className="fa-solid fa-code-branch text-sky-400 mr-1"></i> Branch
-                      </label>
-                      <input 
-                        type="text"
-                        value={ghBranch}
-                        onChange={(e) => setGhBranch(e.target.value)}
-                        placeholder="master"
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-400 transition"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* Deploy Result */}
+                {/* Kết quả tạo cấu hình */}
                 {deployResult && (
-                  <div className={`p-4 rounded-xl mb-4 border ${deployResult.success ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
-                    <div className="flex items-start gap-2">
-                      <i className={`fa-solid ${deployResult.success ? 'fa-circle-check text-emerald-400' : 'fa-circle-xmark text-red-400'} text-sm mt-0.5`}></i>
+                  <div className={`p-4 rounded-2xl mb-5 border ${deployResult.success ? 'bg-emerald-500/10 border-emerald-500/30 shadow-lg shadow-emerald-500/10' : 'bg-red-500/10 border-red-500/30'}`}>
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm flex-shrink-0 mt-0.5">
+                        <i className={`fa-solid ${deployResult.success ? 'fa-check' : 'fa-xmark'}`}></i>
+                      </div>
                       <div className="w-full">
-                        <p className={`text-xs font-bold ${deployResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {deployResult.success ? `🎉 Đã Tạo Xong SGModule Riêng Cho @${deployResult.username}!` : 'Deploy Thất Bại'}
+                        <p className={`text-sm font-black ${deployResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {deployResult.success ? `🎉 Đã Tạo Cấu Hình Cho @${deployResult.username}!` : 'Tạo Cấu Hình Thất Bại'}
                         </p>
                         <p className="text-[11px] text-slate-300 mt-0.5">{deployResult.message}</p>
                         
-                        {deployResult.sgmoduleUrl && (
-                          <div className="mt-3 p-3 rounded-xl bg-slate-900/90 border border-emerald-500/40 space-y-2">
+                        {deployResult.success && (
+                          <div className="mt-3 p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 space-y-3">
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">File SGModule Dành Riêng:</span>
-                              <span className="font-mono text-[10px] text-slate-300">{deployResult.sgmoduleFile}</span>
+                              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">File Cấu Hình Riêng:</span>
+                              <span className="font-mono text-[10px] text-slate-200 bg-white/10 px-2 py-0.5 rounded">{deployResult.sgmoduleFile}</span>
                             </div>
 
+                            {/* 3 Nút cài đặt & tải về */}
                             <div className="flex flex-col sm:flex-row gap-2 pt-1">
                               <a 
                                 href={deployResult.sgmoduleDeepLink}
-                                className="keep-white flex-1 py-2 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 font-extrabold text-[11px] text-center shadow-md flex items-center justify-center gap-1.5 transition"
+                                className="keep-white flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 font-extrabold text-[11px] text-center shadow-md flex items-center justify-center gap-1.5 transition"
                               >
-                                <i className="fa-solid fa-download"></i> Cài Vào ShadowRocket
+                                <i className="fa-solid fa-bolt"></i> Cài Vào ShadowRocket
                               </a>
                               <button 
-                                onClick={() => copyText(deployResult.sgmoduleUrl, 'Đã copy link SGModule riêng!')}
-                                className="flex-1 py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-slate-200 font-bold text-[11px] text-center border border-white/15 flex items-center justify-center gap-1.5 transition"
+                                onClick={() => downloadTextFile(deployResult.sgmoduleFile, deployResult.sgmoduleContent)}
+                                className="flex-1 py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-bold text-[11px] text-center border border-white/15 flex items-center justify-center gap-1.5 transition"
                               >
-                                <i className="fa-regular fa-copy"></i> Copy Link Cài Đặt
+                                <i className="fa-solid fa-file-arrow-down text-sky-400"></i> Tải File .sgmodule
                               </button>
+                            </div>
+
+                            <button 
+                              onClick={() => copyText(deployResult.sgmoduleUrl, 'Đã copy link cấu hình!')}
+                              className="w-full py-2 px-3 rounded-lg bg-black/40 hover:bg-black/60 text-slate-300 font-medium text-[10px] text-center border border-white/10 flex items-center justify-center gap-1.5 transition"
+                            >
+                              <i className="fa-regular fa-copy"></i> Sao chép link cài đặt trực tuyến
+                            </button>
+
+                            {/* Hướng dẫn cài đặt 2 bước cho người dùng */}
+                            <div className="pt-2 border-t border-white/10 text-[10px] text-slate-400 space-y-1">
+                              <div className="font-bold text-slate-300 mb-1 flex items-center gap-1">
+                                <i className="fa-solid fa-circle-question text-amber-400"></i> Cách kích hoạt trong ShadowRocket:
+                              </div>
+                              <p><b>Bước 1:</b> Bấm nút "Cài Vào ShadowRocket" (hoặc tải file về mở bằng ShadowRocket).</p>
+                              <p><b>Bước 2:</b> Vào mục <b>Cấu hình (Config)</b> -> <b>Module</b> -> Bật module riêng của bạn lên là xong!</p>
                             </div>
                           </div>
                         )}
@@ -2805,18 +3036,6 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     </div>
                   </div>
                 )}
-
-                {/* Info Note */}
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-5">
-                  <p className="text-[11px] text-amber-300 flex items-start gap-2">
-                    <i className="fa-solid fa-circle-info mt-0.5"></i>
-                    <span>
-                      Mỗi lần deploy sẽ tạo <b>file mới</b> trong thư mục <code className="text-amber-400 bg-black/30 px-1 rounded">captions/</code> trên GitHub. 
-                      File gốc <code className="text-amber-400 bg-black/30 px-1 rounded">caption-post.js</code> sẽ <b>không bị thay đổi</b>. 
-                      Nếu repo kết nối Vercel, trang web sẽ tự động deploy lại.
-                    </span>
-                  </p>
-                </div>
 
                 {/* Action Buttons */}
                 <div className="flex gap-2.5">
@@ -2828,16 +3047,19 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                   </button>
                   <button
                     onClick={handleDeployCaptionToGitHub}
-                    disabled={deploying || !ghToken.trim()}
-                    className="keep-white flex-[2] py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 font-black text-xs uppercase tracking-wider shadow-lg hover:scale-[1.01] transition flex items-center justify-center gap-2 disabled:opacity-50"
+                    disabled={deploying}
+                    className="keep-white flex-[2] py-3 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 font-black text-xs uppercase tracking-wider shadow-lg shadow-pink-500/25 hover:scale-[1.01] transition flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {deploying ? (
-                      <><i className="fa-solid fa-spinner fa-spin"></i> ĐANG DEPLOY...</>
+                      <><i className="fa-solid fa-spinner fa-spin"></i> ĐANG KHỞI TẠO CẤU HÌNH...</>
                     ) : (
-                      <><i className="fa-solid fa-rocket"></i> DEPLOY NGAY</>
+                      <><i className="fa-solid fa-rocket"></i> XÁC NHẬN TẠO CẤU HÌNH</>
                     )}
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
               </div>
             </div>
           )}
