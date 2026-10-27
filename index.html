@@ -7,8 +7,10 @@
   <title>Anh Tuấn iOS | Locket 60s VIP & YouTube Premium | ShadowRocket</title>
   <meta name="description" content="Kích hoạt Locket Gold, Locket 60s VIP, YouTube Premium, Spotify Premium chất lượng cao và uy tín bởi Anh Tuấn iOS.">
 
-  <!-- Fonts & Icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <!-- Performance Optimization: DNS Prefetch & Preconnect -->
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@600;800;900&family=Pacifico&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
@@ -43,13 +45,13 @@
     };
   </script>
 
-  <!-- React 18 & Babel CDN -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js"></script>
+  <!-- React 18 & Babel CDN (Cloudflare CDN Edge - Tối ưu tốc độ cao tại VN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.0/babel.min.js"></script>
 
-  <!-- Canvas Confetti for Celebration effects -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <!-- Canvas Confetti (Defer non-blocking) -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
 
   <style>
     :root {
@@ -409,7 +411,19 @@
   <div class="fixed inset-0 grid-pattern pointer-events-none -z-9"></div>
 
   <!-- React Root Container -->
-  <div id="root"></div>
+  <div id="root">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#030509;color:#fff;font-family:system-ui,-apple-system,sans-serif;">
+      <div style="position:relative;width:56px;height:56px;display:flex;align-items:center;justify-content:center;">
+        <div style="position:absolute;inset:0;border:3px solid rgba(16,185,129,0.15);border-top-color:#10b981;border-radius:50%;animation:atSpin 0.75s cubic-bezier(0.4,0,0.2,1) infinite;"></div>
+        <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);box-shadow:0 0 16px rgba(16,185,129,0.6);"></div>
+      </div>
+      <p style="margin-top:20px;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;animation:atPulse 1.5s ease-in-out infinite;">Đang Tải Anh Tuấn iOS...</p>
+    </div>
+    <style>
+      @keyframes atSpin { to { transform: rotate(360deg); } }
+      @keyframes atPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+    </style>
+  </div>
 
   <!-- React Babel Script -->
   <script type="text/babel">
