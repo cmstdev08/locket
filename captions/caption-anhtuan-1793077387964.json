@@ -1,0 +1,19 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:0",
+  "username": "anhtuan",
+  "text": "Iu vợ Thảo",
+  "textColor": "#8C315F",
+  "colors": [
+    "#c026d3",
+    "#9333ea",
+    "#4f46e5"
+  ],
+  "gradientName": "Neon Cyber",
+  "gradientClass": "from-fuchsia-600 via-purple-600 to-indigo-600",
+  "icon": "kitty",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/0VJyfqCV/Thi-t-k-ch-a-c-t-n-2-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "createdAt": "2026-10-27T05:03:09.583Z"
+}

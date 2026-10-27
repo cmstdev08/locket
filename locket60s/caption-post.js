@@ -11,6 +11,7 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0                             // 0 = không pad
     }
+
     // Custom Caption by Anh Tuan iOS
 
 ];
