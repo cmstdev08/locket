@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:1",
+  "username": "anhtuaan08",
+  "userKey": "LOCKET60S-0898376962",
+  "text": "Anh iu vợ",
+  "textColor": "#000000",
+  "colors": [
+    "#FFAFCC",
+    "#FFC8DD",
+    "#CDB4DB"
+  ],
+  "gradientName": "Kitty Pink",
+  "gradientClass": "from-pink-400 via-pink-300 to-purple-300",
+  "icon": "heart",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/0VJyfqCV/Thi-t-k-ch-a-c-t-n-2-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-anhtuaan08-expiry-check.js",
+  "userCapFilePath": "locket60s/caption-anhtuaan08.js",
+  "sgmoduleFilePath": "modules/locket60s-anhtuaan08.sgmodule",
+  "createdAt": "2026-10-27T10:39:45.665Z"
+}
