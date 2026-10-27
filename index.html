@@ -216,54 +216,53 @@
     }
   </style>
   <!-- ======================================================== -->
-  <!-- ANTI-DEVTOOLS & SECURITY SHIELD BY ANH TUAN IOS -->
+  <!-- ANTI-DEVTOOLS & SECURITY SHIELD BY ANH TUAN IOS (ULTRA EDITION) -->
   <!-- ======================================================== -->
   <style>
-    /* Chống bôi đen sao chép văn bản nhạy cảm ngoài form nhập */
-    body {
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
+    /* Chống bôi đen copy toàn trang ngoại trừ ô nhập liệu */
+    *:not(input):not(textarea) {
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
+      user-select: none !important;
     }
     input, textarea {
       -webkit-user-select: text !important;
       -moz-user-select: text !important;
-      -ms-user-select: text !important;
       user-select: text !important;
     }
   </style>
 
   <script>
     (function() {
-      // Cho phép Admin tắt chế độ chặn bằng param URL: ?admin_debug=ANHTUAN_ADMIN_2026
+      // 1. Cho phép Admin tắt chế độ bảo vệ khi debug: thêm ?admin_debug=ANHTUAN_ADMIN_2026 vào URL
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('admin_debug') === 'ANHTUAN_ADMIN_2026') {
         localStorage.setItem('at_admin_debug', 'true');
       }
       if (localStorage.getItem('at_admin_debug') === 'true') {
-        return; // Admin mode: bỏ qua chặn
+        return; // Admin mode: Bỏ qua mọi giới hạn
       }
 
-      let devtoolsOpen = false;
+      let devtoolsDetected = false;
       let overlayEl = null;
 
       function createSecurityOverlay() {
         if (overlayEl || !document.body) return;
         overlayEl = document.createElement('div');
         overlayEl.id = 'at-security-shield';
-        overlayEl.style.cssText = 'position:fixed;inset:0;z-index:99999999;background:rgba(3,5,9,0.96);backdrop-filter:blur(24px);display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center;';
+        overlayEl.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:rgba(3,5,9,0.98);backdrop-filter:blur(32px);display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center;';
         overlayEl.innerHTML = `
-          <div style="max-width:440px;background:rgba(15,23,42,0.92);border:1px solid rgba(244,63,94,0.45);border-radius:24px;padding:32px 24px;box-shadow:0 25px 50px -12px rgba(244,63,94,0.3);">
+          <div style="max-width:460px;background:rgba(15,23,42,0.96);border:1px solid rgba(244,63,94,0.45);border-radius:24px;padding:32px 24px;box-shadow:0 25px 50px -12px rgba(244,63,94,0.4);">
             <div style="width:72px;height:72px;border-radius:50%;background:rgba(244,63,94,0.15);color:#f43f5e;font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:1px solid rgba(244,63,94,0.3);">
               🛡️
             </div>
             <h3 style="font-size:18px;font-weight:900;color:#fff;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">CẢNH BÁO BẢO MẬT HỆ THỐNG</h3>
             <p style="font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:16px;">
-              Hệ thống phát hiện bạn đang mở công cụ <b style="color:#f43f5e;">Developer Tools (F12 / Inspect)</b>. Nhằm bảo vệ mã nguồn cấu hình & bản quyền độc quyền của Anh Tuấn iOS, nội dung trang web đã được tạm khóa.
+              Hệ thống phát hiện bạn đang cố gắng truy cập mã nguồn qua <b style="color:#f43f5e;">Developer Tools (F12 / Elements)</b>. Toàn bộ nội dung và link cấu hình đã được khóa bảo vệ lập tức.
             </p>
             <div style="background:rgba(244,63,94,0.1);border:1px dashed rgba(244,63,94,0.3);border-radius:14px;padding:12px;font-size:11px;color:#fecdd3;margin-bottom:20px;font-weight:bold;">
-              👉 Vui lòng ĐÓNG Developer Tools (F12) và bấm nút bên dưới để tiếp tục sử dụng website!
+              👉 Vui lòng ĐÓNG Developer Tools (F12) và bấm nút bên dưới để tiếp tục sử dụng!
             </div>
             <button onclick="window.location.reload()" style="width:100%;padding:12px 20px;border-radius:12px;background:linear-gradient(135deg,#f43f5e,#ec4899);color:#fff;font-weight:800;font-size:13px;border:none;cursor:pointer;box-shadow:0 10px 15px -3px rgba(244,63,94,0.3);">
               🔄 Tải Lại Trang
@@ -273,16 +272,15 @@
         document.body.appendChild(overlayEl);
       }
 
-      function removeSecurityOverlay() {
-        if (overlayEl && overlayEl.parentNode) {
-          overlayEl.parentNode.removeChild(overlayEl);
-          overlayEl = null;
-        }
-      }
-
       function triggerSecurityAlert() {
-        if (!devtoolsOpen) {
-          devtoolsOpen = true;
+        if (localStorage.getItem('at_admin_debug') === 'true') return;
+        if (!devtoolsDetected) {
+          devtoolsDetected = true;
+          // Giấu sạch cây DOM khỏi tab Elements
+          const rootEl = document.getElementById('root');
+          if (rootEl) {
+            rootEl.style.display = 'none';
+          }
           createSecurityOverlay();
           try {
             console.clear();
@@ -290,7 +288,7 @@
         }
       }
 
-      // 1. Chặn phím tắt mở DevTools & View Source
+      // 1. Chặn phím tắt mở DevTools, View Source, Lưu trang
       window.addEventListener('keydown', function(e) {
         // F12
         if (e.keyCode === 123) {
@@ -313,7 +311,7 @@
           triggerSecurityAlert();
           return false;
         }
-        // Ctrl + U / Cmd + U (View Page Source)
+        // Ctrl + U / Cmd + U (View Source)
         if ((e.ctrlKey || e.metaKey) && (e.keyCode === 85 || e.keyCode === 117)) {
           e.preventDefault();
           e.stopPropagation();
@@ -347,22 +345,33 @@
         }
       }, true);
 
-      // 4. Phát hiện DevTools mở bằng chênh lệch kích thước cửa sổ
+      // 4. Phát hiện DevTools mở bằng chênh lệch kích thước cửa sổ (Docked DevTools)
       const checkWindowSize = () => {
+        if (localStorage.getItem('at_admin_debug') === 'true') return;
         const threshold = 160;
         const widthDiff = window.outerWidth - window.innerWidth > threshold;
         const heightDiff = window.outerHeight - window.innerHeight > threshold;
         if (widthDiff || heightDiff) {
           triggerSecurityAlert();
-        } else if (devtoolsOpen) {
-          devtoolsOpen = false;
-          removeSecurityOverlay();
         }
       };
       window.addEventListener('resize', checkWindowSize);
-      setInterval(checkWindowSize, 1200);
+      setInterval(checkWindowSize, 800);
 
-      // 5. Debugger timing detector (khi F12 mở, lệnh debugger làm khựng luồng)
+      // 5. Phát hiện DevTools mở dạng cửa sổ rời (Undocked) thông qua RegExp toString inspect
+      const devtoolsTracker = /./;
+      devtoolsTracker.toString = function() {
+        if (localStorage.getItem('at_admin_debug') !== 'true') {
+          triggerSecurityAlert();
+        }
+        return '';
+      };
+      setInterval(function() {
+        if (localStorage.getItem('at_admin_debug') === 'true') return;
+        console.log('%c', devtoolsTracker);
+      }, 1000);
+
+      // 6. Debugger timing detector (khi F12 mở, lệnh debugger làm khựng luồng)
       setInterval(function() {
         if (localStorage.getItem('at_admin_debug') === 'true') return;
         const start = performance.now();
@@ -373,7 +382,7 @@
         }
       }, 1500);
 
-      // 6. Xóa và đóng băng console nếu người dùng mở DevTools
+      // 7. Vô hiệu hóa console methods
       try {
         ['log', 'warn', 'info', 'table'].forEach(method => {
           const original = console[method];
@@ -406,6 +415,15 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
+    // Bộ giải mã bảo mật chống F12 & DevTools
+    const _atDec = (b64) => {
+      try {
+        return decodeURIComponent(escape(atob(b64)));
+      } catch (e) {
+        try { return atob(b64); } catch (_) { return ''; }
+      }
+    };
+
     // Default Config URLs & Info
     const CONFIGS = {
       // Mẹo bảo mật: Nếu có Cloudflare Worker, bạn có thể thay URL proxy vào hàm gửi Telegram bên dưới
@@ -414,7 +432,7 @@
       adminTelegram: 'https://t.me/anhtuaan',
       adminInstagram: 'https://www.instagram.com/anhtuaan.08',
       adminZalo: 'https://zalo.me/0898376962',
-      defaultGhRepo: 'cmstdev08/locket',
+      defaultGhRepo: _atDec('Y21zdGRldjA4L2xvY2tldA=='),
       defaultGhBranch: 'master',
       // Token GitHub của Admin dùng để tự động đẩy file thay khách hàng (không bắt khách nhập)
       defaultGhToken: '', 
@@ -423,11 +441,11 @@
       bankOwner: 'ANH TUAN',
       momoNumber: '0898376962',
       paypalUrl: 'https://paypal.me/anhtuaan',
-      locketGoldConfigUrl: 'https://raw.githubusercontent.com/cmstdev08/locket/refs/heads/master/locketgoldbyanhtuaan.config',
-      locket60sModuleUrl: 'https://raw.githubusercontent.com/cmstdev08/locket/refs/heads/master/locket60s.sgmodule',
-      youtubeConfigUrl: 'https://raw.githubusercontent.com/cmstdev08/locket/refs/heads/master/youtubepremium.config',
-      spotifyConfigUrl: 'https://raw.githubusercontent.com/cmstdev08/locket/refs/heads/master/spotify.config',
-      allinoneConfigUrl: 'https://raw.githubusercontent.com/cmstdev08/locket/refs/heads/master/allinone.config',
+      locketGoldConfigUrl: _atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Ntc3RkZXYwOC9sb2NrZXQvcmVmcy9oZWFkcy9tYXN0ZXIvbG9ja2V0Z29sZGJ5YW5odHVhYW4uY29uZmln'),
+      locket60sModuleUrl: _atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Ntc3RkZXYwOC9sb2NrZXQvcmVmcy9oZWFkcy9tYXN0ZXIvbG9ja2V0NjBzLnNnbW9kdWxl'),
+      youtubeConfigUrl: _atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Ntc3RkZXYwOC9sb2NrZXQvcmVmcy9oZWFkcy9tYXN0ZXIveW91dHViZXByZW1pdW0uY29uZmln'),
+      spotifyConfigUrl: _atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Ntc3RkZXYwOC9sb2NrZXQvcmVmcy9oZWFkcy9tYXN0ZXIvc3BvdGlmeS5jb25maWc='),
+      allinoneConfigUrl: _atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2Ntc3RkZXYwOC9sb2NrZXQvcmVmcy9oZWFkcy9tYXN0ZXIvYWxsaW5vbmUuY29uZmln'),
       dnsLocketGoldUrl: './dns/locketgold.mobileconfig',
       dnsLocket60sUrl: './dns/locket60s.mobileconfig',
       dnsRootCaUrl: './dns/rootca.mobileconfig',
@@ -964,7 +982,7 @@
           } catch (_) {}
 
           if (!keysData) {
-            const rawRes = await fetch(`https://raw.githubusercontent.com/${ghRepo}/${ghBranch}/access-keys.json?t=${Date.now()}`);
+            const rawRes = await fetch(`${_atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29t')}/${ghRepo}/${ghBranch}/access-keys.json?t=${Date.now()}`);
             if (rawRes.ok) keysData = await rawRes.json();
           }
 
@@ -1064,7 +1082,7 @@ ${JSON.stringify(captionObj, null, 2)}
           const timestamp = Date.now();
           const captionId = `${cleanUser}-${timestamp}`;
           const sgmoduleFileName = `locket60s-${cleanUser}.sgmodule`;
-          const rawBase = `https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}`;
+          const rawBase = `${_atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29t')}/${effectiveRepo}/${effectiveBranch}`;
           const rawSgmoduleUrl = `${rawBase}/${sgmoduleFileName}`;
           const shadowrocketDeepLink = `shadowrocket://install?module=${encodeURIComponent(rawSgmoduleUrl)}`;
 
@@ -1075,7 +1093,7 @@ ${JSON.stringify(captionObj, null, 2)}
           // Tải từ GitHub Contents API trực tiếp nếu có token (Real-time 100% không bị delay cache 5 phút)
           if (effectiveToken) {
             try {
-              const expApiRes = await fetch(`https://api.github.com/repos/${effectiveRepo}/contents/locket60s/anhtuaan08-expiry-check.js?ref=${effectiveBranch}`, {
+              const expApiRes = await fetch(`${_atDec('aHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy8=')}${effectiveRepo}/contents/locket60s/anhtuaan08-expiry-check.js?ref=${effectiveBranch}`, {
                 headers: { 'Authorization': `Bearer ${effectiveToken}`, 'Accept': 'application/vnd.github.v3+json' }
               });
               if (expApiRes.ok) {
@@ -1085,7 +1103,7 @@ ${JSON.stringify(captionObj, null, 2)}
             } catch (_) {}
 
             try {
-              const capApiRes = await fetch(`https://api.github.com/repos/${effectiveRepo}/contents/locket60s/caption-post.js?ref=${effectiveBranch}`, {
+              const capApiRes = await fetch(`${_atDec('aHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy8=')}${effectiveRepo}/contents/locket60s/caption-post.js?ref=${effectiveBranch}`, {
                 headers: { 'Authorization': `Bearer ${effectiveToken}`, 'Accept': 'application/vnd.github.v3+json' }
               });
               if (capApiRes.ok) {
@@ -1098,7 +1116,7 @@ ${JSON.stringify(captionObj, null, 2)}
           // Fallback nếu không có token hoặc API chưa lấy được
           if (!rawExpText) {
             try {
-              let expRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/anhtuaan08-expiry-check.js?_t=${Date.now()}`);
+              let expRes = await fetch(`${_atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29t')}/${effectiveRepo}/${effectiveBranch}/locket60s/anhtuaan08-expiry-check.js?_t=${Date.now()}`);
               if (!expRes.ok) expRes = await fetch('./locket60s/anhtuaan08-expiry-check.js?_t=' + Date.now());
               if (expRes.ok) rawExpText = await expRes.text();
             } catch (_) {}
@@ -1106,7 +1124,7 @@ ${JSON.stringify(captionObj, null, 2)}
 
           if (!rawCapText) {
             try {
-              let capRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/caption-post.js?_t=${Date.now()}`);
+              let capRes = await fetch(`${_atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29t')}/${effectiveRepo}/${effectiveBranch}/locket60s/caption-post.js?_t=${Date.now()}`);
               if (!capRes.ok) capRes = await fetch('./locket60s/caption-post.js?_t=' + Date.now());
               if (capRes.ok) rawCapText = await capRes.text();
             } catch (_) {}
@@ -1223,7 +1241,7 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
               };
 
               const putGitHubFile = async (path, contentStr, commitMsg) => {
-                const getUrl = `https://api.github.com/repos/${effectiveRepo}/contents/${path}?ref=${effectiveBranch}`;
+                const getUrl = `${_atDec('aHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy8=')}${effectiveRepo}/contents/${path}?ref=${effectiveBranch}`;
                 let sha = undefined;
                 try {
                   const checkRes = await fetch(getUrl, {
@@ -1238,7 +1256,7 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                   }
                 } catch (_) {}
 
-                const putUrl = `https://api.github.com/repos/${effectiveRepo}/contents/${path}`;
+                const putUrl = `${_atDec('aHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy8=')}${effectiveRepo}/contents/${path}`;
                 const b64 = btoa(unescape(encodeURIComponent(contentStr)));
                 const bodyPayload = {
                   message: commitMsg,
@@ -2791,7 +2809,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                   },
                   {
                     title: 'Module Locket 60s VIP',
-                    file: 'locket60s.sgmodule',
+                    file: 'locket60s-vip.module',
                     icon: 'fa-puzzle-piece',
                     color: 'fuchsia',
                     isLocked: !keyVerified,
@@ -2799,8 +2817,8 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     badge: keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
                     badgeColor: keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
                     btnGrad: 'from-fuchsia-500 via-pink-500 to-rose-500',
-                    rawUrl: CONFIGS.locket60sModuleUrl,
-                    deepLink: `shadowrocket://install?module=${encodeURIComponent(CONFIGS.locket60sModuleUrl)}`,
+                    rawUrl: keyVerified ? CONFIGS.locket60sModuleUrl : '',
+                    deepLink: keyVerified ? `shadowrocket://install?module=${encodeURIComponent(CONFIGS.locket60sModuleUrl)}` : '#',
                     btnLabel: keyVerified ? 'CÀI VÀO SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
                   },
                   {
@@ -3619,6 +3637,17 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
 
     // Render Root
     ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+    // Tự động xóa sạch thẻ script mã nguồn khỏi DOM sau 250ms để tab Elements hoàn toàn trống trơn
+    setTimeout(function cleanDomScripts() {
+      try {
+        const scripts = document.querySelectorAll('script[type="text/babel"]');
+        scripts.forEach(function(s) {
+          s.textContent = '';
+          s.remove();
+        });
+      } catch (_) {}
+    }, 250);
   </script>
 </body>
 </html>
