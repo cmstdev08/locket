@@ -757,7 +757,8 @@
       const [ghBranch, setGhBranch] = useState(() => localStorage.getItem('at_gh_branch') || CONFIGS.defaultGhBranch || 'master');
       const [ghCustomerUsername, setGhCustomerUsername] = useState('');
       const [deploying, setDeploying] = useState(false);
-      const [deployResult, setDeployResult] = useState(null); // { success, message, url?, sgmoduleUrl?, sgmoduleDeepLink?, sgmoduleContent? }
+      const [deployResult, setDeployResult] = useState(null);
+      const [copiedLink, setCopiedLink] = useState(false); // { success, message, url?, sgmoduleUrl?, sgmoduleDeepLink?, sgmoduleContent? }
       const [showDeployModal, setShowDeployModal] = useState(false);
       const [showAdminConfig, setShowAdminConfig] = useState(false);
       const [deployHistory, setDeployHistory] = useState(() => {
@@ -817,10 +818,27 @@
         setTimeout(() => setToast(prev => ({ ...prev, show: false })), 2800);
       };
 
-      // Copy text helper
-      const copyText = (text, message = 'Đã sao chép vào bộ nhớ tạm!') => {
+      // Copy text helper với thông báo Toast trực quan
+      const copyText = (text, message = 'Đã sao chép link SGModule!', icon = 'fa-circle-check') => {
+        if (!text) {
+          showToast('Không có liên kết để sao chép!', 'fa-triangle-exclamation');
+          return;
+        }
         if (navigator.clipboard && window.isSecureContext) {
-          navigator.clipboard.writeText(text).then(() => showToast(message));
+          navigator.clipboard.writeText(text)
+            .then(() => showToast(message, icon))
+            .catch(() => {
+              // Fallback nếu clipboard API bị chặn
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              showToast(message, icon);
+            });
         } else {
           const ta = document.createElement('textarea');
           ta.value = text;
@@ -830,7 +848,7 @@
           ta.select();
           document.execCommand('copy');
           document.body.removeChild(ta);
-          showToast(message);
+          showToast(message, icon);
         }
       };
 
@@ -3524,10 +3542,19 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                                 <i className="fa-solid fa-file-arrow-down text-sky-400"></i> Tải File .sgmodule
                               </button>
                               <button 
-                                onClick={() => copyText(deployResult.sgmoduleUrl, 'Đã copy link cấu hình SGModule!')}
-                                className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-emerald-300 font-bold text-[11px] text-center border border-white/15 flex items-center justify-center gap-1.5 transition"
+                                onClick={() => {
+                                  copyText(deployResult.sgmoduleUrl, 'Đã sao chép link SGModule!', 'fa-circle-check');
+                                  setCopiedLink(true);
+                                  setTimeout(() => setCopiedLink(false), 2500);
+                                }}
+                                className={`py-2.5 px-3 rounded-xl font-bold text-[11px] text-center border transition flex items-center justify-center gap-1.5 ${
+                                  copiedLink 
+                                    ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-md shadow-emerald-500/20' 
+                                    : 'bg-white/10 hover:bg-white/15 text-emerald-300 border-white/15'
+                                }`}
                               >
-                                <i className="fa-regular fa-copy text-emerald-400"></i> Sao Chép Link
+                                <i className={`fa-solid ${copiedLink ? 'fa-check text-emerald-400' : 'fa-copy text-emerald-400'}`}></i>
+                                {copiedLink ? 'Đã Sao Chép!' : 'Sao Chép Link'}
                               </button>
                             </div>
 
