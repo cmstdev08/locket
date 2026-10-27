@@ -856,11 +856,11 @@
       const generateCaptionFileContent = () => {
         const timestamp = Date.now();
         const dateStr = new Date().toLocaleString('vi-VN');
-        const overlayIndex = deployHistory.length;
+        const overlayIndex = (parseInt(localStorage.getItem('at_last_caption_idx') || '7', 10)) + 1;
         
         // Build the caption-post.js content for this specific caption
         const captionObj = {
-          overlay_id: `caption:anhtuaan08_personal${overlayIndex > 0 ? ':' + overlayIndex : ''}`,
+          overlay_id: `caption:anhtuaan08_personal:${overlayIndex}`,
           text: captionText,
           textColor: captionTextColor,
           colors: selectedGradient.colors,
@@ -894,11 +894,52 @@ ${JSON.stringify(captionObj, null, 2)}
         try {
           const timestamp = Date.now();
           const captionId = `${cleanUser}-${timestamp}`;
-          const overlayId = `caption:anhtuaan08_personal:${deployHistory.length}`;
           const sgmoduleFileName = `locket60s-${cleanUser}.sgmodule`;
           const rawBase = `https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}`;
           const rawSgmoduleUrl = `${rawBase}/${sgmoduleFileName}`;
           const shadowrocketDeepLink = `shadowrocket://install?module=${encodeURIComponent(rawSgmoduleUrl)}`;
+
+          // 1. Tải trước nội dung file anhtuaan08-expiry-check.js & caption-post.js để dò tìm số thứ tự lớn nhất
+          let rawExpText = '';
+          let rawCapText = '';
+
+          try {
+            let expRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/anhtuaan08-expiry-check.js?_t=${Date.now()}`);
+            if (!expRes.ok) expRes = await fetch('./locket60s/anhtuaan08-expiry-check.js');
+            if (expRes.ok) rawExpText = await expRes.text();
+          } catch (_) {}
+
+          try {
+            let capRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/caption-post.js?_t=${Date.now()}`);
+            if (!capRes.ok) capRes = await fetch('./locket60s/caption-post.js');
+            if (capRes.ok) rawCapText = await capRes.text();
+          } catch (_) {}
+
+          // Tự động tìm số thứ tự lớn nhất trong code hiện tại (bỏ qua các dòng comment // để không bị nhận nhầm ví dụ mẫu)
+          const stripComments = (str) => (str || '').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+          const cleanExp = stripComments(rawExpText);
+          const cleanCap = stripComments(rawCapText);
+
+          let maxIndex = 0;
+          const idRegex = /caption:anhtuaan08_personal:(\d+)/g;
+          let m;
+          while ((m = idRegex.exec(cleanExp)) !== null) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > maxIndex) maxIndex = num;
+          }
+          while ((m = idRegex.exec(cleanCap)) !== null) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > maxIndex) maxIndex = num;
+          }
+
+          // Kiểm tra thêm lịch sử lưu trong localStorage để luôn tăng dần không bao giờ bị trùng lặp
+          const savedLastIdx = parseInt(localStorage.getItem('at_last_caption_idx') || '0', 10);
+          if (savedLastIdx > maxIndex) maxIndex = savedLastIdx;
+
+          // Số thứ tự mới bắt buộc phải TĂNG LÊN (+1) để không bị trùng lặp code
+          const nextIndex = maxIndex + 1;
+          localStorage.setItem('at_last_caption_idx', String(nextIndex));
+          const overlayId = `caption:anhtuaan08_personal:${nextIndex}`;
 
           // Nội dung File SGModule cá nhân hóa cho khách hàng
           const sgmoduleContent = `#!name=Locket 60s VIP - @${cleanUser}
@@ -933,45 +974,33 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
           let updatedExpContent = null;
           let updatedCaptionPostContent = null;
 
-          // 1. Tải và sửa nội dung anhtuaan08-expiry-check.js
-          try {
-            let expRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/anhtuaan08-expiry-check.js?_t=${Date.now()}`);
-            if (!expRes.ok) expRes = await fetch('./locket60s/anhtuaan08-expiry-check.js');
-            if (expRes.ok) {
-              let text = await expRes.text();
-              if (customFrameUrl && customFrameUrl.trim()) {
-                text = text.replace(/var WIDGET_FRAME_URL = ".*?";/, `var WIDGET_FRAME_URL = "${customFrameUrl.trim()}";`);
-              }
-              if (captionText && text.includes('// Custom Caption by Anh Tuan iOS')) {
-                text = text.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
-              }
-              if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip') {
-                const badgeMatch = text.match(/var BADGE_USERNAMES = \[(.*?)\];/);
-                if (badgeMatch && !badgeMatch[1].includes(`"${cleanUser}"`)) {
-                  const existingUsers = badgeMatch[1].trim();
-                  const newUsersList = existingUsers ? `${existingUsers}, "${cleanUser}"` : `"${cleanUser}"`;
-                  text = text.replace(/var BADGE_USERNAMES = \[.*?\];/, `var BADGE_USERNAMES = [${newUsersList}];`);
-                }
-              }
-              updatedExpContent = text;
+          // 2. Sửa nội dung anhtuaan08-expiry-check.js
+          if (rawExpText) {
+            let text = rawExpText;
+            if (customFrameUrl && customFrameUrl.trim()) {
+              text = text.replace(/var WIDGET_FRAME_URL = ".*?";/, `var WIDGET_FRAME_URL = "${customFrameUrl.trim()}";`);
             }
-          } catch (eExp) {
-            console.warn('Lỗi chuẩn bị expiry-check:', eExp);
+            if (captionText && text.includes('// Custom Caption by Anh Tuan iOS')) {
+              text = text.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
+            }
+            if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip') {
+              const badgeMatch = text.match(/var BADGE_USERNAMES = \[(.*?)\];/);
+              if (badgeMatch && !badgeMatch[1].includes(`"${cleanUser}"`)) {
+                const existingUsers = badgeMatch[1].trim();
+                const newUsersList = existingUsers ? `${existingUsers}, "${cleanUser}"` : `"${cleanUser}"`;
+                text = text.replace(/var BADGE_USERNAMES = \[.*?\];/, `var BADGE_USERNAMES = [${newUsersList}];`);
+              }
+            }
+            updatedExpContent = text;
           }
 
-          // 2. Tải và sửa nội dung caption-post.js
-          try {
-            let capRes = await fetch(`https://raw.githubusercontent.com/${effectiveRepo}/${effectiveBranch}/locket60s/caption-post.js?_t=${Date.now()}`);
-            if (!capRes.ok) capRes = await fetch('./locket60s/caption-post.js');
-            if (capRes.ok) {
-              let capText = await capRes.text();
-              if (captionText && capText.includes('// Custom Caption by Anh Tuan iOS')) {
-                capText = capText.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
-              }
-              updatedCaptionPostContent = capText;
+          // 3. Sửa nội dung caption-post.js
+          if (rawCapText) {
+            let capText = rawCapText;
+            if (captionText && capText.includes('// Custom Caption by Anh Tuan iOS')) {
+              capText = capText.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
             }
-          } catch (eCap) {
-            console.warn('Lỗi chuẩn bị caption-post:', eCap);
+            updatedCaptionPostContent = capText;
           }
 
           // 3. Nếu có Token GitHub của Admin, tự động commit đồng bộ lên GitHub repo
@@ -1107,6 +1136,7 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             sgmoduleUrl: rawSgmoduleUrl,
             deepLink: shadowrocketDeepLink,
             username: cleanUser,
+            overlayId: overlayId,
             text: captionText,
             frameUrl: customFrameUrl,
             gradient: selectedGradient.name,
@@ -2063,10 +2093,11 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 
                     <button
                       onClick={() => {
+                        const nextIdx = (parseInt(localStorage.getItem('at_last_caption_idx') || '7', 10)) + 1;
                         const configSnippet = studioTab === 'caption' ? 
 `// Custom Caption by Anh Tuan iOS
 {
-  overlay_id: "caption:anhtuaan08_personal",
+  overlay_id: "caption:anhtuaan08_personal:${nextIdx}",
   text: "${captionText}",
   textColor: "${captionTextColor}",
   colors: ${JSON.stringify(selectedGradient.colors)},

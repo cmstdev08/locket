@@ -10,65 +10,11 @@
   var MY_CAPTIONS = [
     {
       overlay_id: "caption:anhtuaan08_personal",       // index 0
-      text: "💗Thảo có đáng iu hăm?",
-      textColor: "#8C315F",
-      colors: ["#FBC2EB", "#FAD0C4", "#FFD1FF"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
-    }
-    ,{
-      overlay_id: "caption:anhtuaan08_personal:1",       // index 0
-      text: "💗Dthw zaaaa💗",
-      textColor: "#7B2454",
-      colors: ["#FFAFCC", "#FFC8DD", "#CDB4DB"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
-    }
-    ,{
-      overlay_id: "caption:anhtuaan08_personal:2",       // index 0
-      text: "iu hămm💕",
-      textColor: "#000000",
-      colors: ["#FF00CC", "#FF4D6D", "#7A00FF"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
-    }
-    ,{
-      overlay_id: "caption:anhtuaan08_personal:3",       // index 0
       text: "👑Locket 60s by anhtuaan08",
       textColor: "#000000",
       colors: ["#FC466B", "#FCA311", "#FFDD00"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0                             // 0 = không pad
-    }
-    ,{
-      overlay_id: "caption:anhtuaan08_personal:4",       // index 0
-      text: "👑Thảo có đẹp gái hăm💗",
-      textColor: "#000000",
-      colors: ["#FC466B", "#FCA311", "#FFDD00"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
-    }
-    ,{
-      overlay_id: "caption:anhtuaan08_personal:5",       // index 0
-      text: "Thảo có xinh gái hăm💗",
-      textColor: "#000000",
-      colors: ["#FC466B", "#FCA311", "#FFDD00"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
-    }
-    ,{
-      overlay_id: "caption:anhtuaan08_personal:6",
-      text: "LGBT🏳️‍🌈",
-      textColor: "#8C315F",
-      colors: ["#7dd3fc","#f472b6","#a5b4fc"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
-    }
-    ,{
-     overlay_id: "caption:anhtuaan08_personal:7",
-     text: "✨Ngon hămm",
-     textColor: "#ffffff",
-     colors: ["#c026d3","#9333ea","#4f46e5"],
-     imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
     }
     // Custom Caption by Anh Tuan iOS
     // Thêm caption khác ở đây:
