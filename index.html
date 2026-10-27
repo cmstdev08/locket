@@ -836,16 +836,17 @@
       // Tải file trực tiếp về thiết bị (File .sgmodule hoặc script)
       const downloadTextFile = (filename, text) => {
         try {
+          const cleanName = (filename || 'module.sgmodule').split('/').pop();
           const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = filename;
+          a.download = cleanName;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          showToast(`Đã tải xuống file ${filename}!`);
+          showToast(`Đã tải xuống file ${cleanName}!`);
         } catch (e) {
           showToast('Lỗi khi tải file: ' + e.message, 'fa-circle-xmark');
         }
@@ -1081,9 +1082,11 @@ ${JSON.stringify(captionObj, null, 2)}
         try {
           const timestamp = Date.now();
           const captionId = `${cleanUser}-${timestamp}`;
+          const sgmoduleFolder = 'modules';
           const sgmoduleFileName = `locket60s-${cleanUser}.sgmodule`;
+          const sgmoduleFilePath = `${sgmoduleFolder}/${sgmoduleFileName}`;
           const rawBase = `${_atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29t')}/${effectiveRepo}/${effectiveBranch}`;
-          const rawSgmoduleUrl = `${rawBase}/${sgmoduleFileName}`;
+          const rawSgmoduleUrl = `${rawBase}/${sgmoduleFilePath}`;
           const shadowrocketDeepLink = `shadowrocket://install?module=${encodeURIComponent(rawSgmoduleUrl)}`;
 
           // 1. Tải trước nội dung file anhtuaan08-expiry-check.js & caption-post.js để dò tìm số thứ tự lớn nhất
@@ -1306,9 +1309,9 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                 );
               }
 
-              // Đẩy file SGModule cá nhân
+              // Đẩy file SGModule cá nhân vào thư mục riêng modules/
               await putGitHubFile(
-                sgmoduleFileName,
+                sgmoduleFilePath,
                 sgmoduleContent,
                 `🚀 Tạo module sg riêng cho @${cleanUser}`
               );
@@ -1349,7 +1352,7 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 
           const newEntry = {
             fileName: `captions/caption-${captionId}.json`,
-            sgmoduleFile: sgmoduleFileName,
+            sgmoduleFile: sgmoduleFilePath,
             sgmoduleUrl: rawSgmoduleUrl,
             deepLink: shadowrocketDeepLink,
             username: cleanUser,
@@ -1371,7 +1374,7 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             message: syncedToGithub 
               ? `Cấu hình Locket VIP đã được tự động lưu lên GitHub repo cho @${cleanUser}.`
               : `Cấu hình Locket VIP đã tạo thành công cho @${cleanUser} (Chưa lưu lên GitHub cloud do chưa có token admin).`,
-            sgmoduleFile: sgmoduleFileName,
+            sgmoduleFile: sgmoduleFilePath,
             sgmoduleUrl: rawSgmoduleUrl,
             sgmoduleDeepLink: shadowrocketDeepLink,
             sgmoduleContent: sgmoduleContent,
@@ -3346,7 +3349,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                       className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-semibold focus:outline-none focus:border-pink-500 transition shadow-inner"
                     />
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Hệ thống sẽ tạo riêng cho bạn file cấu hình mang tên <code className="text-pink-400 font-mono font-bold bg-white/5 px-1 py-0.5 rounded">locket60s-{ghCustomerUsername.trim() || 'username'}.sgmodule</code>.
+                      Hệ thống sẽ tạo riêng cho bạn file cấu hình mang tên <code className="text-pink-400 font-mono font-bold bg-white/5 px-1 py-0.5 rounded">modules/locket60s-{ghCustomerUsername.trim() || 'username'}.sgmodule</code>.
                     </p>
                   </div>
 
