@@ -1,11 +1,11 @@
 {
-  "description": "Danh sách Access Key được phép tạo Caption và Khung Viền trên Website Anh Tuấn iOS. Mọi key đều mở khóa toàn quyền cả 2 chức năng (Caption + Khung Viền).",
+  "description": "Danh sách Access Key mở khóa TOÀN BỘ hệ thống (Full Access): Mở khóa tạo Caption, Khung Viền Widget, Module 60s, YouTube Premium, Spotify Premium và DNS Duy Trì Vĩnh Viễn.",
   "adminMasterKey": "ANHTUAN_ADMIN_2026",
   "keys": [
     {
       "key": "ATVIP-8888-DEMO",
       "owner": "Admin Demo",
-      "allowedFeatures": ["caption", "frame"],
+      "allowedFeatures": ["all"],
       "maxUses": 9999,
       "usedCount": 0,
       "expiresAt": "2099-12-31"
@@ -13,7 +13,7 @@
     {
       "key": "LOCKET-60S-VIP1",
       "owner": "Khách Mua Gói 60s",
-      "allowedFeatures": ["caption", "frame"],
+      "allowedFeatures": ["all"],
       "maxUses": 100,
       "usedCount": 0,
       "expiresAt": "2026-12-31"
@@ -21,7 +21,7 @@
     {
       "key": "Locket60s-0898376962",
       "owner": "0898376962",
-      "allowedFeatures": ["caption", "frame"],
+      "allowedFeatures": ["all"],
       "maxUses": 100,
       "usedCount": 0,
       "expiresAt": "2026-12-31"

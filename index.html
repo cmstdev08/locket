@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#030509">
-  <title>Anh Tuấn iOS | Locket 5s & 60s VIP | ShadowRocket Premium</title>
-  <meta name="description" content="Kích hoạt Locket Gold, Locket 5s, Locket 60s VIP, Youtube Premium, Spotify Premium miễn phí và hỗ trợ chuyên nghiệp bởi Anh Tuấn iOS.">
+  <title>Anh Tuấn iOS | Locket 60s VIP & YouTube Premium | ShadowRocket</title>
+  <meta name="description" content="Kích hoạt Locket Gold, Locket 60s VIP, YouTube Premium, Spotify Premium chất lượng cao và uy tín bởi Anh Tuấn iOS.">
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -293,26 +293,27 @@
         btnText: 'Lấy Cấu Hình Ngay'
       },
       {
-        id: 'locket-5s',
-        name: 'Gói Locket 5s Video',
-        tag: 'HOT - Đăng Video 5s',
-        badgeColor: 'from-sky-400 to-blue-600',
+        id: 'youtube-premium',
+        name: 'Gói YouTube Premium VIP',
+        tag: 'CHẶN QUẢNG CÁO • PHÁT NỀN 🎬',
+        badgeColor: 'from-red-500 via-rose-500 to-amber-500',
         price: '49.000đ',
         priceNum: 49000,
-        originalPrice: '99.000đ',
+        originalPrice: '120.000đ',
         isFree: false,
         isPopular: false,
-        desc: 'Mở khóa tính năng quay & tải lên video ngắn 5 giây mượt mà lên bạn bè mà không bị lỗi.',
+        desc: 'Cấu hình ShadowRocket chuyên dụng: Chặn 100% quảng cáo YouTube, phát trong nền khi tắt màn hình & Picture-in-Picture (PiP).',
         features: [
-          'Đăng video Locket 5 giây chất lượng cao',
-          'Bao gồm full tính năng Locket Gold',
-          'Tương thích mọi phiên bản iOS (15 -> 18+)',
-          'Không bị trôi cấu hình khi tắt VPN',
-          'Hỗ trợ cài đặt 1-1 qua UltraView / Zalo',
-          'Bảo hành kích hoạt 6 tháng'
+          'Chặn sạch 100% mọi loại quảng cáo video và banner YouTube',
+          'Phát nhạc & video trong nền (Tắt màn hình vẫn nghe âm thanh)',
+          'Hình trong hình (Picture-in-Picture / PiP) đa nhiệm mượt mà',
+          'Không cần đăng nhập tài khoản Google hay mua qua thẻ Visa/Master',
+          'Tặng kèm Access Key mở khóa Full cấu hình trên hệ thống',
+          'Hỗ trợ cài đặt 1-1 nhanh gọn trong 2 phút',
+          'Bảo hành kích hoạt trọn đời'
         ],
-        icon: 'fa-video',
-        btnText: 'Mua Gói 5s Ngay'
+        icon: 'fa-brands fa-youtube',
+        btnText: 'Mua Gói YouTube VIP'
       },
       {
         id: 'locket-60s',
@@ -486,7 +487,7 @@
     const INITIAL_NOTIFICATIONS = [
       { name: 'Hải Đăng', package: 'Locket 60s VIP', amount: '89.000đ', method: 'Vietcombank', time: 'Vừa xong' },
       { name: 'Khánh Linh', package: 'Locket 60s VIP', amount: '79.000đ', method: 'MoMo (Mã ANHTUAN)', time: '1 phút trước' },
-      { name: 'Minh Anh', package: 'Gói Locket 5s Video', amount: '49.000đ', method: 'MoMo', time: '3 phút trước' },
+      { name: 'Minh Anh', package: 'Gói YouTube Premium VIP', amount: '49.000đ', method: 'MoMo', time: '3 phút trước' },
       { name: 'Đức Huy', package: 'Super Combo All-In-One', amount: '139.000đ', method: 'Vietcombank', time: '5 phút trước' },
       { name: 'Bảo Trâm', package: 'Locket 60s VIP', amount: '89.000đ', method: 'MoMo', time: '7 phút trước' }
     ];
@@ -716,7 +717,7 @@
       const transferMemo = useMemo(() => {
         const phone = orderForm.contact.replace(/\D/g, '').slice(-6) || '8888';
         const pkgCode = selectedPackage.id === 'locket-60s' ? '60S'
-                      : selectedPackage.id === 'locket-5s' ? '5S'
+                      : selectedPackage.id === 'youtube-premium' ? 'YT'
                       : selectedPackage.id === 'allinone-super-vip' ? 'ALL' : 'GOLD';
         return `AT ${pkgCode} ${phone}`;
       }, [orderForm.contact, selectedPackage]);
@@ -1400,15 +1401,15 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             </div>
 
             {/* ======================================================== */}
-            {/* SECTION: PRICING & PACKAGES (GÓI LOCKET 5S & 60S) */}
+            {/* SECTION: PRICING & PACKAGES (GÓI LOCKET 60S & YOUTUBE VIP) */}
             {/* ======================================================== */}
             <section id="packages-section" className="mb-14 scroll-mt-20">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-1.5 text-xs font-black tracking-widest uppercase text-sky-400 mb-1">
                   <i className="fa-solid fa-sparkles"></i> DỊCH VỤ PREMIUM
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-black font-display text-white">BẢNG GIÁ CÁC GÓI LOCKET VIP</h3>
-                <p className="text-xs text-slate-400 mt-1">Chọn gói phù hợp với nhu cầu của bạn - Tạo mã QR chuyển khoản nhận cấu hình tức thì</p>
+                <h3 className="text-2xl sm:text-3xl font-black font-display text-white">BẢNG GIÁ CÁC GÓI DỊCH VỤ VIP</h3>
+                <p className="text-xs text-slate-400 mt-1">Locket Gold, YouTube Premium, Locket 60s VIP & Super Combo • Tặng Access Key mở khóa Full toàn bộ hệ thống</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -2430,12 +2431,87 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
             <section id="config-section" className="mb-14 scroll-mt-20">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-1.5 text-xs font-black tracking-widest uppercase text-sky-400 mb-1">
-                  <i className="fa-solid fa-cloud-arrow-down"></i> TẢI CẤU HÌNH MIỄN PHÍ
+                  <i className="fa-solid fa-cloud-arrow-down"></i> TẢI CẤU HÌNH & MODULE VIP
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black font-display text-white">CẤU HÌNH SHADOWROCKET & MODULE</h3>
-                <p className="text-xs text-slate-400 mt-1">Bản miễn phí công khai: Locket Gold Config • Các gói cao cấp hơn yêu cầu mua bản quyền để kích hoạt</p>
+                <p className="text-xs text-slate-400 mt-1">Bản miễn phí: Locket Gold Config • Nhập Key để mở khóa trọn bộ Module 60s, YouTube, Spotify & DNS Vĩnh Viễn</p>
               </div>
 
+              {/* VIP KEY UNLOCK BANNER (DÙNG CHUNG KEY VỚI CAPTION & KHUNG VIỀN) */}
+              <div className={`p-4 sm:p-5 rounded-3xl mb-6 border transition-all duration-300 ${
+                keyVerified 
+                  ? 'bg-emerald-500/10 border-emerald-500/35 shadow-lg shadow-emerald-500/10' 
+                  : 'bg-gradient-to-r from-amber-500/10 via-pink-500/10 to-indigo-500/10 border-amber-400/30 shadow-lg'
+              }`}>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-md flex-shrink-0 ${
+                      keyVerified ? 'bg-emerald-500 text-white shadow-emerald-500/30' : 'bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 font-black'
+                    }`}>
+                      <i className={`fa-solid ${keyVerified ? 'fa-unlock-keyhole' : 'fa-key'}`}></i>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-extrabold text-sm sm:text-base text-white">
+                          {keyVerified ? 'ĐÃ MỞ KHÓA TOÀN BỘ CẤU HÌNH VIP BẰNG KEY' : 'NHẬP KEY DO ANH TUẤN CẤP ĐỂ MỞ KHÓA TẤT CẢ'}
+                        </h4>
+                        <span className={`keep-white text-[9px] font-black px-2 py-0.5 rounded-full ${keyVerified ? 'bg-emerald-500' : 'bg-amber-500'}`}>
+                          {keyVerified ? 'FULL ACCESS' : 'DÙNG CHUNG KEY'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 mt-0.5">
+                        {keyVerified 
+                          ? `Xin chào ${verifiedKeyInfo?.owner || 'VIP'}! Key của bạn đã mở khóa đầy đủ: Caption, Khung Viền, Module 60s, YouTube, Spotify & DNS Vĩnh Viễn.`
+                          : 'Key kích hoạt dùng chung cho tất cả tính năng: Dán key 1 lần sẽ mở khóa cả Caption, Khung Viền và toàn bộ các mục bị khóa bên dưới.'
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  {!keyVerified ? (
+                    <div className="flex gap-2 w-full md:w-auto">
+                      <input 
+                        id="config-key-input"
+                        type="text"
+                        value={accessKeyInput}
+                        onChange={(e) => {
+                          setAccessKeyInput(e.target.value);
+                          setKeyVerified(false);
+                        }}
+                        placeholder="Dán mã Key tại đây..."
+                        className="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/20 text-white text-xs font-mono uppercase focus:outline-none focus:border-amber-400 w-full md:w-56"
+                      />
+                      <button 
+                        onClick={() => verifyCustomerAccessKey()}
+                        disabled={checkingKey}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black text-xs uppercase shadow transition hover:scale-105 disabled:opacity-50 flex-shrink-0"
+                      >
+                        {checkingKey ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Mở Khóa'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1.5">
+                        <i className="fa-solid fa-circle-check"></i> {accessKeyInput}
+                      </span>
+                      <button 
+                        onClick={() => {
+                          setKeyVerified(false);
+                          setAccessKeyInput('');
+                          localStorage.removeItem('at_customer_key');
+                          showToast('Đã đăng xuất key VIP.');
+                        }}
+                        className="text-[10px] text-slate-400 hover:text-white px-2 py-1 rounded-lg bg-white/5 border border-white/10 transition"
+                        title="Đổi key khác"
+                      >
+                        Đổi Key
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* GRID 4 CẤU HÌNH (LOCKET GOLD MIỄN PHÍ + 3 MỤC MỞ KHÓA BẰNG KEY) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {[
                   {
@@ -2456,45 +2532,45 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     file: 'locket60s.sgmodule',
                     icon: 'fa-puzzle-piece',
                     color: 'fuchsia',
-                    isLocked: true,
-                    lockNote: 'Cần mua gói 60s VIP để nhận Module độc quyền',
-                    badge: 'VIP KHÓA',
-                    badgeColor: 'bg-rose-500',
-                    btnGrad: 'from-slate-700 to-slate-800',
-                    rawUrl: '',
-                    deepLink: '',
-                    btnLabel: 'MỞ KHÓA GÓI 60S'
+                    isLocked: !keyVerified,
+                    lockNote: 'Dán Access Key để mở khóa tải Module',
+                    badge: keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
+                    badgeColor: keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
+                    btnGrad: 'from-fuchsia-500 via-pink-500 to-rose-500',
+                    rawUrl: CONFIGS.locket60sModuleUrl,
+                    deepLink: `shadowrocket://install?module=${encodeURIComponent(CONFIGS.locket60sModuleUrl)}`,
+                    btnLabel: keyVerified ? 'CÀI VÀO SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
                   },
                   {
                     title: 'Youtube Premium',
                     file: 'youtubepremium.config',
                     icon: 'fa-brands fa-youtube',
                     color: 'red',
-                    isLocked: true,
-                    lockNote: 'Tính năng thuộc gói Super Combo All-In-One',
-                    badge: 'VIP KHÓA',
-                    badgeColor: 'bg-rose-500',
-                    btnGrad: 'from-slate-700 to-slate-800',
-                    rawUrl: '',
-                    deepLink: '',
-                    btnLabel: 'MỞ KHÓA COMBO'
+                    isLocked: !keyVerified,
+                    lockNote: 'Dán Access Key để mở khóa cấu hình YouTube',
+                    badge: keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
+                    badgeColor: keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
+                    btnGrad: 'from-red-500 to-rose-600',
+                    rawUrl: CONFIGS.youtubeConfigUrl,
+                    deepLink: `shadowrocket://config/add/${CONFIGS.youtubeConfigUrl}`,
+                    btnLabel: keyVerified ? 'MỞ TRONG SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
                   },
                   {
                     title: 'Spotify Premium',
                     file: 'spotify.config',
                     icon: 'fa-brands fa-spotify',
                     color: 'emerald',
-                    isLocked: true,
-                    lockNote: 'Tính năng thuộc gói Super Combo All-In-One',
-                    badge: 'VIP KHÓA',
-                    badgeColor: 'bg-rose-500',
-                    btnGrad: 'from-slate-700 to-slate-800',
-                    rawUrl: '',
-                    deepLink: '',
-                    btnLabel: 'MỞ KHÓA COMBO'
+                    isLocked: !keyVerified,
+                    lockNote: 'Dán Access Key để mở khóa cấu hình Spotify',
+                    badge: keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
+                    badgeColor: keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
+                    btnGrad: 'from-emerald-500 to-teal-600',
+                    rawUrl: CONFIGS.spotifyConfigUrl,
+                    deepLink: `shadowrocket://config/add/${CONFIGS.spotifyConfigUrl}`,
+                    btnLabel: keyVerified ? 'MỞ TRONG SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
                   }
                 ].map((cfg, idx) => (
-                  <div key={idx} className={`glass-card rounded-2xl p-4 border transition relative overflow-hidden ${cfg.isLocked ? 'border-white/5 opacity-90' : 'border-sky-500/30 hover:border-sky-400/60 shadow-lg shadow-sky-500/10'}`}>
+                  <div key={idx} className={`glass-card rounded-2xl p-4 border transition relative overflow-hidden ${cfg.isLocked ? 'border-white/5 opacity-80' : 'border-sky-500/30 hover:border-sky-400/60 shadow-lg shadow-sky-500/10'}`}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${cfg.isLocked ? 'bg-slate-800 text-slate-400' : 'bg-sky-500/15 text-sky-400'}`}>
@@ -2528,7 +2604,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                         </div>
                       ) : (
                         <div className="text-[10px] font-bold text-amber-400/90 flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-400/10 border border-amber-400/20">
-                          <i className="fa-solid fa-lock text-[9px]"></i> Đã Khóa
+                          <i className="fa-solid fa-lock text-[9px]"></i> Cần Key
                         </div>
                       )}
                     </div>
@@ -2543,45 +2619,88 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     ) : (
                       <button 
                         onClick={() => {
-                          const targetPkg = cfg.title.includes('60s') ? PACKAGES.find(p => p.id === 'locket-60s') : PACKAGES.find(p => p.id === 'allinone-super-vip');
-                          if (targetPkg) handleSelectPackage(targetPkg);
+                          const el = document.getElementById('config-key-input');
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            el.focus();
+                          }
+                          showToast('Dán mã Key do Anh Tuấn cấp vào ô bên trên để mở khóa mục này!', 'fa-key');
                         }}
                         className="w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-amber-300 font-extrabold text-xs flex items-center justify-center gap-2 border border-amber-400/20 transition hover:scale-[1.01]"
                       >
-                        <i className="fa-solid fa-lock"></i> {cfg.btnLabel} (Xem Giá)
+                        <i className="fa-solid fa-key text-amber-400"></i> {cfg.btnLabel}
                       </button>
                     )}
                   </div>
                 ))}
               </div>
 
-              {/* DNS duy trì Locket vĩnh viễn (ĐÃ KHÓA THEO YÊU CẦU) */}
-              <div className="glass-card rounded-3xl p-5 border border-white/10 relative overflow-hidden mb-6 bg-slate-900/40">
+              {/* DNS DUY TRÌ LOCKET VĨNH VIỄN (MỞ KHÓA HOÀN TOÀN KHI CÓ KEY) */}
+              <div className={`glass-card rounded-3xl p-5 border relative overflow-hidden mb-6 transition ${
+                keyVerified 
+                  ? 'border-emerald-500/40 bg-emerald-500/5 shadow-lg shadow-emerald-500/10' 
+                  : 'border-white/10 bg-slate-900/40'
+              }`}>
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-800 text-amber-400 flex items-center justify-center text-xl flex-shrink-0 border border-amber-400/20">
-                      <i className="fa-solid fa-lock"></i>
+                  <div className="flex items-center gap-3.5">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 border ${
+                      keyVerified ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-amber-400 border-amber-400/20'
+                    }`}>
+                      <i className={`fa-solid ${keyVerified ? 'fa-shield-halved' : 'fa-lock'}`}></i>
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-extrabold text-base text-white">Cấu Hình DNS Duy Trì Locket Vĩnh Viễn</h4>
-                        <span className="keep-white text-[9px] font-black px-2 py-0.5 rounded bg-rose-500">ĐÃ KHÓA</span>
+                        <span className={`keep-white text-[9px] font-black px-2 py-0.5 rounded ${keyVerified ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                          {keyVerified ? 'VIP ĐÃ MỞ KHÓA' : 'CẦN ACCESS KEY'}
+                        </span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-0.5">Hồ sơ DNS MobileConfig chống trôi profile độc quyền — Được kích hoạt và cấp riêng khi mua gói Locket 5s, 60s hoặc Super Combo.</p>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {keyVerified 
+                          ? 'Đã mở khóa toàn bộ hồ sơ DNS chống trôi profile độc quyền. Bạn có thể cài đặt trực tiếp vào iPhone ngay!'
+                          : 'Hồ sơ DNS MobileConfig chống trôi profile độc quyền — Được mở khóa tự động khi bạn nhập Access Key VIP.'
+                        }
+                      </p>
                     </div>
                   </div>
 
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <button 
-                      onClick={() => {
-                        const el = document.getElementById('packages-section');
-                        if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        showToast('DNS chỉ dành riêng cho khách hàng mua gói VIP!', 'fa-lock');
-                      }}
-                      className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-black text-xs text-center border border-amber-400/30 shadow transition flex items-center justify-center gap-1.5"
-                    >
-                      <i className="fa-solid fa-lock text-xs"></i> Mua VIP Để Mở Khóa DNS
-                    </button>
+                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    {keyVerified ? (
+                      <>
+                        <a 
+                          href={CONFIGS.dnsLocketGoldUrl}
+                          className="keep-white px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
+                        >
+                          <i className="fa-solid fa-download"></i> DNS Locket Gold
+                        </a>
+                        <a 
+                          href={CONFIGS.dnsLocket60sUrl}
+                          className="keep-white px-3.5 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:opacity-90 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
+                        >
+                          <i className="fa-solid fa-download"></i> DNS Locket 60s
+                        </a>
+                        <a 
+                          href={CONFIGS.dnsRootCaUrl}
+                          className="keep-white px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-extrabold text-xs transition border border-white/15 flex items-center justify-center gap-1.5"
+                        >
+                          <i className="fa-solid fa-certificate text-amber-400"></i> Root CA
+                        </a>
+                      </>
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          const el = document.getElementById('config-key-input');
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            el.focus();
+                          }
+                          showToast('Dán mã Key do Anh Tuấn cấp để mở khóa cài đặt DNS!', 'fa-key');
+                        }}
+                        className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-black text-xs text-center border border-amber-400/30 shadow transition flex items-center justify-center gap-1.5"
+                      >
+                        <i className="fa-solid fa-key text-xs"></i> Nhập Key Mở Khóa DNS
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
