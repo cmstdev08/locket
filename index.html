@@ -1243,7 +1243,16 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             if (studioTab === 'caption' && captionText && text.includes('// Custom Caption by Anh Tuan iOS')) {
               text = text.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
             }
-            if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip') {
+            // Thiết lập bản quyền chính chủ (Chống share file - Cách 2)
+            if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip' && cleanUser !== 'thaocute') {
+              if (text.includes('var LICENSED_OWNER =')) {
+                text = text.replace(/var LICENSED_OWNER\s*=\s*".*?";/, `var LICENSED_OWNER = "${cleanUser}";`);
+              } else {
+                text = text.replace(
+                  '// ===== HARD-CODED CONFIG =====',
+                  `// ===== HARD-CODED CONFIG =====\r\n  var LICENSED_OWNER = "${cleanUser}"; // Khóa bản quyền UID độc quyền`
+                );
+              }
               const badgeMatch = text.match(/var BADGE_USERNAMES = \[(.*?)\];/);
               if (badgeMatch && !badgeMatch[1].includes(`"${cleanUser}"`)) {
                 const existingUsers = badgeMatch[1].trim();

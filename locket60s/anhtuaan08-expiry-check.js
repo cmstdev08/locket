@@ -1,6 +1,7 @@
 // Locket 60s by anhtuaan08
 (function(){
   // ===== HARD-CODED CONFIG =====
+  var LICENSED_OWNER = "anhtuaan08"; // Khóa bản quyền tài khoản chính chủ (Chống share file)
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
   var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
   var BADGE_USERNAMES = ["anhtuaan08", "anhtuan"];             // lowercase, không @
@@ -32,6 +33,25 @@
     try {
       var ua = ($request.headers["User-Agent"] || $request.headers["user-agent"] || "");
       var obj = JSON.parse($response.body);
+
+      // ===== BẢO MẬT KHÓA USER ID CHÍNH CHỦ (CÁCH 2 - ANTI SHARE) =====
+      var store = (typeof $persistentStore !== "undefined") ? $persistentStore : null;
+      var matchUid = url.match(/subscribers\/([^/?#]+)/);
+      var currentUid = matchUid ? String(matchUid[1]).trim() : "";
+      var boundUidKey = "AT_BOUND_UID_" + String(LICENSED_OWNER || "vip").toLowerCase();
+
+      if (store && currentUid) {
+        var boundUid = store.read(boundUidKey);
+        if (!boundUid) {
+          // Lần đầu kích hoạt trên máy chính chủ: Khóa cứng vĩnh viễn UID này!
+          store.write(currentUid, boundUidKey);
+        } else if (boundUid !== currentUid && LICENSED_OWNER !== "vip" && LICENSED_OWNER !== "user") {
+          // Phát hiện UID khác: Chặn hoàn toàn không cấp Gold!
+          obj.Attention = "CẢNH BÁO BẢO MẬT: File Locket 60s này thuộc về @" + LICENSED_OWNER + ". Tài khoản của bạn không có quyền sử dụng! Liên hệ Zalo: 0898.376.962 để mua bản quyền chính chủ.";
+          $done({ body: JSON.stringify(obj) });
+          return;
+        }
+      }
       var goldSub = {
         auto_resume_date: null, display_name: "locket_1600_1y", is_sandbox: true,
         ownership_type: "PURCHASED", billing_issues_detected_at: null,

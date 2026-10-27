@@ -1,6 +1,7 @@
 // Locket 60s by anhtuaan08
 (function(){
   // ===== HARD-CODED CONFIG =====
+  // ĐẶC QUYỀN VỢ ANH TUẤN (THAOCUTE): KHÔNG KHÓA UID, TỰ DO DÙNG TRÊN MỌI MÁY & SHARE THOẢI MÁI
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
   var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
   var BADGE_USERNAMES = ["anhtuaan08"];             // lowercase, không @
@@ -84,6 +85,8 @@
     try {
       var ua = ($request.headers["User-Agent"] || $request.headers["user-agent"] || "");
       var obj = JSON.parse($response.body);
+
+      // Đặc quyền Thảo Cute: Không kiểm tra UID, mở khóa Gold vô điều kiện trên mọi máy
       var goldSub = {
         auto_resume_date: null, display_name: "locket_1600_1y", is_sandbox: true,
         ownership_type: "PURCHASED", billing_issues_detected_at: null,
