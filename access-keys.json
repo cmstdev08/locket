@@ -3,20 +3,12 @@
   "adminMasterKey": "ANHTUAN_ADMIN_2026",
   "keys": [
     {
-      "key": "ATVIP-8888-DEMO",
-      "owner": "Admin Demo",
+      "key": "Locket60s-0898376962",
+      "owner": "0934956647",
       "allowedFeatures": ["all"],
       "maxUses": 9999,
       "usedCount": 0,
       "expiresAt": "2099-12-31"
-    },
-    {
-      "key": "LOCKET-60S-VIP1",
-      "owner": "Khách Mua Gói 60s",
-      "allowedFeatures": ["all"],
-      "maxUses": 100,
-      "usedCount": 0,
-      "expiresAt": "2026-12-31"
     },
     {
       "key": "Locket60s-0898376962",
