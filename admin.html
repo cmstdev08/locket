@@ -241,77 +241,108 @@
         showToast('Đã đăng xuất khỏi trang quản trị!', 'fa-arrow-right-from-bracket');
       };
 
-      // GitHub Commit Helper
-      const commitFileToGitHub = async (token, repo, branch, path, contentStr, commitMsg) => {
+      // GitHub Commit Helper with Auto-Retry & Anti-Cache Conflict Resolution
+      const commitFileToGitHub = async (token, repo, branch, path, contentStr, commitMsg, maxRetries = 3) => {
         const cleanToken = (token || '').trim();
-        const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
-        let sha = undefined;
-        try {
-          const checkRes = await fetch(getUrl, {
+        const b64 = btoa(unescape(encodeURIComponent(contentStr)));
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          // Luôn thêm timestamp ngẫu nhiên & no-store để trình duyệt và GitHub không dùng SHA cũ từ bộ nhớ đệm
+          const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}&_t=${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+          let sha = undefined;
+          let remoteB64 = null;
+
+          try {
+            const checkRes = await fetch(getUrl, {
+              cache: 'no-store',
+              headers: {
+                'Authorization': `Bearer ${cleanToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+              }
+            });
+
+            if (checkRes.ok) {
+              const checkData = await checkRes.json();
+              sha = checkData.sha;
+              remoteB64 = (checkData.content || '').replace(/\s/g, '');
+            } else if (checkRes.status === 401) {
+              throw new Error('GitHub Token không hợp lệ hoặc đã hết hạn (401 Bad Credentials)!');
+            } else if (checkRes.status === 404) {
+              // File chưa có trên GitHub -> sha để undefined để GitHub tạo mới
+              sha = undefined;
+            } else {
+              console.warn(`[GitHub Sync] Check ${path} status:`, checkRes.status);
+            }
+          } catch (eCheck) {
+            if (eCheck.message && (eCheck.message.includes('Token') || eCheck.message.includes('401'))) {
+              throw eCheck;
+            }
+          }
+
+          // Kiểm tra nếu nội dung trên GitHub đã trùng khớp 100%, bỏ qua commit để tránh xung đột
+          if (sha && remoteB64 && remoteB64 === b64.replace(/\s/g, '')) {
+            console.log(`[GitHub Sync] File ${path} không có thay đổi so với GitHub Cloud. Bỏ qua commit.`);
+            return { updated: false, sha };
+          }
+
+          const putUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+          const bodyPayload = {
+            message: commitMsg,
+            content: b64,
+            branch: branch
+          };
+          if (sha) bodyPayload.sha = sha;
+
+          const res = await fetch(putUrl, {
+            method: 'PUT',
             headers: {
               'Authorization': `Bearer ${cleanToken}`,
+              'Content-Type': 'application/json',
               'Accept': 'application/vnd.github.v3+json'
-            }
+            },
+            body: JSON.stringify(bodyPayload)
           });
-          if (checkRes.ok) {
-            const checkData = await checkRes.json();
-            sha = checkData.sha;
-          } else if (checkRes.status === 401) {
-            throw new Error('GitHub Token không hợp lệ hoặc đã hết hạn (401 Bad Credentials)!');
-          } else if (checkRes.status === 404) {
-            const repoRes = await fetch(`https://api.github.com/repos/${repo}`, {
-              headers: { 'Authorization': `Bearer ${cleanToken}` }
-            });
-            if (!repoRes.ok) {
-              throw new Error(`Không tìm thấy Repo "${repo}" hoặc Token không có quyền truy cập!`);
-            }
+
+          if (res.ok) {
+            return { updated: true };
           }
-        } catch (eCheck) {
-          if (eCheck.message && (eCheck.message.includes('Token') || eCheck.message.includes('Repo'))) {
-            throw eCheck;
-          }
-        }
 
-        const putUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
-        const b64 = btoa(unescape(encodeURIComponent(contentStr)));
-        const bodyPayload = {
-          message: commitMsg,
-          content: b64,
-          branch: branch
-        };
-        if (sha) bodyPayload.sha = sha;
-
-        const res = await fetch(putUrl, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${cleanToken}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/vnd.github.v3+json'
-          },
-          body: JSON.stringify(bodyPayload)
-        });
-
-        if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          if (res.status === 401) throw new Error('GitHub Token không có quyền đẩy mã (Cần tích chọn quyền repo)');
-          if (res.status === 409) throw new Error('Xung đột commit trên GitHub! Vui lòng bấm lưu lại lần nữa');
+
+          if (res.status === 401) {
+            throw new Error('GitHub Token không có quyền ghi mã (Cần tạo Token có tích chọn quyền repo)');
+          }
+
+          // Xử lý xung đột 409 Conflict: Tự động chờ và lấy lại SHA mới nhất rồi thử lại
+          if (res.status === 409 && attempt < maxRetries) {
+            console.warn(`[GitHub Sync] 409 Conflict ở file ${path} (lần ${attempt}/${maxRetries}). Đang lấy SHA mới và đẩy lại...`);
+            // Chờ một chút để GitHub cập nhật lại commit tree
+            await new Promise(r => setTimeout(r, 1200 * attempt));
+            continue;
+          }
+
+          if (res.status === 409) {
+            throw new Error(`Xung đột nhánh GitHub (${path}): Nhánh ${branch} đang bận hoặc có commit mới. Vui lòng bấm lưu lại sau 3 giây.`);
+          }
+
           throw new Error(errData.message || `Lỗi HTTP ${res.status}`);
         }
-        return true;
       };
 
       // Save & Sync All Changes directly to GitHub Cloud
       const handleSaveAndSyncGitHub = async () => {
         setSaving(true);
-        const token = (config.githubConfig.defaultGhToken || localStorage.getItem('at_gh_token') || '').trim();
-        const repo = (config.githubConfig.defaultGhRepo || 'cmstdev08/locket').trim();
-        const branch = (config.githubConfig.defaultGhBranch || 'master').trim();
+        const token = (config?.githubConfig?.defaultGhToken || localStorage.getItem('at_gh_token') || '').trim();
+        const repo = (config?.githubConfig?.defaultGhRepo || 'cmstdev08/locket').trim();
+        const branch = (config?.githubConfig?.defaultGhBranch || 'master').trim();
 
-        // 1. Lưu tạm vào LocalStorage trước
+        // 1. Luôn lưu tạm vào LocalStorage trước để không bao giờ mất dữ liệu
         localStorage.setItem('at_site_config', JSON.stringify(config));
         if (token) localStorage.setItem('at_gh_token', token);
-        if (config.telegramConfig.telegramBotToken) localStorage.setItem('at_tele_token', config.telegramConfig.telegramBotToken);
-        if (config.telegramConfig.telegramChatId) localStorage.setItem('at_tele_chat_id', config.telegramConfig.telegramChatId);
+        if (config?.telegramConfig?.telegramBotToken) localStorage.setItem('at_tele_token', config.telegramConfig.telegramBotToken);
+        if (config?.telegramConfig?.telegramChatId) localStorage.setItem('at_tele_chat_id', config.telegramConfig.telegramChatId);
 
         if (!token) {
           setSaving(false);
@@ -320,13 +351,20 @@
         }
 
         try {
+          showToast('⏳ Đang kết nối và đồng bộ lên GitHub Cloud...', 'fa-spinner fa-spin');
+
           // 2. Commit site-config.json
-          await commitFileToGitHub(
+          const resConfig = await commitFileToGitHub(
             token, repo, branch,
             'site-config.json',
             JSON.stringify(config, null, 2),
             `⚙️ Admin Cập Nhật Cấu Hình Website: ${new Date().toLocaleString('vi-VN')}`
           );
+
+          // Nếu site-config.json vừa commit mới, chờ 1 giây để GitHub branch ref cập nhật đồng bộ hoàn toàn
+          if (resConfig && resConfig.updated) {
+            await new Promise(r => setTimeout(r, 1200));
+          }
 
           // 3. Commit access-keys.json
           await commitFileToGitHub(
