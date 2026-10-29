@@ -4,10 +4,11 @@
   "keys": [
     {
       "key": "Locket60s-0934956647",
-      "owner": "thaocute (Vợ Anh Tuấn)",
+      "owner": "thaocute (Vợ Yêu Anh Tuấn - Quyền Tối Thượng)",
       "boundUsername": "thaocute",
       "allowedFeatures": ["all"],
-      "maxUses": 9999,
+      "isMaster": true,
+      "maxUses": 999999,
       "usedCount": 0,
       "expiresAt": "2099-12-31"
     },
