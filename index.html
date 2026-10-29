@@ -746,6 +746,26 @@
       const [accessKeyInput, setAccessKeyInput] = useState(() => localStorage.getItem('at_customer_key') || '');
       const [keyVerified, setKeyVerified] = useState(false);
       const [verifiedKeyInfo, setVerifiedKeyInfo] = useState(null);
+
+      // ========================================================
+      // NEW HIGH-CONVERTING FEATURES STATES (V2.6)
+      // ========================================================
+      const [showOrderLookupModal, setShowOrderLookupModal] = useState(false);
+      const [orderLookupQuery, setOrderLookupQuery] = useState('');
+      const [orderLookupResult, setOrderLookupResult] = useState(null);
+      const [orderLookupSearched, setOrderLookupSearched] = useState(false);
+
+      // Lucky Wheel State
+      const [showLuckyWheelModal, setShowLuckyWheelModal] = useState(false);
+      const [wheelSpinning, setWheelSpinning] = useState(false);
+      const [wheelPrize, setWheelPrize] = useState(null);
+      const [wheelAngle, setWheelAngle] = useState(0);
+
+      // Social Proof Notification Toast
+      const [socialToast, setSocialToast] = useState({ visible: false, text: '', location: '', time: 'vừa xong' });
+
+      // Flash Sale Real-time Countdown
+      const [flashCountdown, setFlashCountdown] = useState({ hours: '00', minutes: '00', seconds: '00' });
       const [checkingKey, setCheckingKey] = useState(false);
 
       // Config QR Modal State
@@ -838,6 +858,123 @@
         }, 4000);
         return () => clearInterval(interval);
       }, []);
+
+      // Real-time Flash Sale Countdown to Midnight
+      useEffect(() => {
+        const updateCountdown = () => {
+          const now = new Date();
+          const midnight = new Date();
+          midnight.setHours(23, 59, 59, 999);
+          const diff = Math.max(0, midnight.getTime() - now.getTime());
+          const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+          const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+          const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+          setFlashCountdown({ hours: h, minutes: m, seconds: s });
+        };
+        updateCountdown();
+        const timer = setInterval(updateCountdown, 1000);
+        return () => clearInterval(timer);
+      }, []);
+
+      // Social Proof Toast simulation
+      useEffect(() => {
+        const proofList = [
+          { name: '098****215', loc: 'Hà Nội', pkg: 'Gói Locket 60s VIP (Vĩnh Viễn)', time: '2 phút trước' },
+          { name: '091****839', loc: 'TP. Hồ Chí Minh', pkg: 'Combo Locket Gold & 60s', time: '5 phút trước' },
+          { name: '086****552', loc: 'Đà Nẵng', pkg: 'Tạo Module Locket 60s Riêng', time: '1 phút trước' },
+          { name: '097****641', loc: 'Hải Phòng', pkg: 'Gói Locket 60s VIP (Vĩnh Viễn)', time: '8 phút trước' },
+          { name: '033****918', loc: 'Cần Thơ', pkg: 'Chứng chỉ DNS Locket Gold', time: '3 phút trước' },
+          { name: '094****177', loc: 'Bình Dương', pkg: 'Gói Locket 60s VIP (Vĩnh Viễn)', time: 'Vừa xong' }
+        ];
+        let idx = 0;
+        const interval = setInterval(() => {
+          if (siteConfig?.socialProofConfig?.enabled === false) return;
+          const cur = proofList[idx % proofList.length];
+          setSocialToast({ visible: true, text: `Khách hàng ${cur.name} (${cur.loc}) vừa kích hoạt thành công ${cur.pkg}`, location: cur.loc, time: cur.time });
+          idx++;
+          setTimeout(() => {
+            setSocialToast(prev => ({ ...prev, visible: false }));
+          }, 4500);
+        }, (siteConfig?.socialProofConfig?.intervalSeconds || 18) * 1000);
+        return () => clearInterval(interval);
+      }, [siteConfig]);
+
+      // Order Lookup Logic
+      const handleSearchOrder = () => {
+        const q = orderLookupQuery.trim().toUpperCase();
+        if (!q) {
+          showToast('Vui lòng nhập Mã đơn hoặc SĐT!', 'fa-circle-exclamation');
+          return;
+        }
+        let list = [];
+        try {
+          const localList = JSON.parse(localStorage.getItem('at_customer_orders') || '[]');
+          const remoteList = siteConfig?.orders || [];
+          const combined = [...remoteList];
+          localList.forEach(lo => {
+            if (!combined.some(co => co.id === lo.id)) combined.unshift(lo);
+          });
+          list = combined;
+        } catch (_) {}
+
+        const matched = list.filter(o => 
+          (o.id && o.id.toUpperCase().includes(q)) ||
+          (o.contact && o.contact.includes(q)) ||
+          (o.name && o.name.toUpperCase().includes(q))
+        );
+        setOrderLookupResult(matched);
+        setOrderLookupSearched(true);
+      };
+
+      // Spin Lucky Wheel Function
+      const handleSpinWheel = () => {
+        if (wheelSpinning) return;
+        const lastSpin = localStorage.getItem('at_wheel_last_spin');
+        const todayStr = new Date().toISOString().slice(0, 10);
+        if (lastSpin === todayStr) {
+          showToast('Bạn đã quay hôm nay rồi! Hãy quay lại vào ngày mai nhé 🎁', 'fa-calendar-check');
+          return;
+        }
+
+        const prizes = siteConfig?.luckyWheelConfig?.prizes || [
+          { id: 1, label: 'Giảm 10.000đ', code: 'AT_GIAM10K', type: 'voucher', discount: 10000 },
+          { id: 2, label: 'Key Thử 2 Giờ', code: 'TRIAL_2H', type: 'trial_key' },
+          { id: 3, label: 'Giảm 20.000đ', code: 'AT_GIAM20K', type: 'voucher', discount: 20000 },
+          { id: 4, label: 'Thêm Lượt 🎯', code: 'SPIN_AGAIN', type: 'spin_again' },
+          { id: 5, label: 'Giảm 50.000đ', code: 'AT_GIAM50K', type: 'voucher', discount: 50000 },
+          { id: 6, label: 'Giảm 15%', code: 'AT_VIP15', type: 'voucher', discount: 15 }
+        ];
+
+        setWheelSpinning(true);
+        setWheelPrize(null);
+        const winIdx = Math.floor(Math.random() * prizes.length);
+        const prize = prizes[winIdx];
+        const sliceAngle = 360 / prizes.length;
+        const targetDeg = (360 * 6) + (360 - (winIdx * sliceAngle) - (sliceAngle / 2));
+
+        setWheelAngle(targetDeg);
+
+        setTimeout(() => {
+          setWheelSpinning(false);
+          setWheelPrize(prize);
+          if (prize.type !== 'spin_again') {
+            localStorage.setItem('at_wheel_last_spin', todayStr);
+          }
+          if (window.confetti) {
+            window.confetti({ particleCount: 150, spread: 80, origin: { y: 0.5 } });
+          }
+          // Auto apply voucher
+          if (prize.type === 'voucher' && prize.code) {
+            setVoucherCode(prize.code);
+            showToast(`Đã tự động áp dụng mã ${prize.code} giảm giá cho bạn!`, 'fa-ticket');
+          } else if (prize.type === 'trial_key') {
+            const trialKeyStr = 'TRIAL_' + Math.floor(100000 + Math.random() * 900000);
+            localStorage.setItem('at_trial_key_' + trialKeyStr, Date.now() + 2 * 3600 * 1000);
+            prize.trialKey = trialKeyStr;
+          }
+        }, 5000);
+      };
+
 
       const toggleTheme = () => {
         const next = theme === 'dark' ? 'light' : 'dark';
@@ -1094,8 +1231,55 @@
             return true;
           }
 
+          // Hỗ trợ kiểm tra Trial Key tạm thời từ Vòng Quay May Mắn (Hạn 2 tiếng)
+          if (key.startsWith('TRIAL_')) {
+            const expTime = localStorage.getItem('at_trial_key_' + key);
+            if (expTime && Number(expTime) > Date.now()) {
+              const trialInfo = { key, owner: 'Khách Trải Nghiệm (Vòng Quay)', allowedFeatures: ['all'], isTrial: true };
+              setKeyVerified(true);
+              setVerifiedKeyInfo(trialInfo);
+              localStorage.setItem('at_customer_key', key);
+              showToast('🎉 Kích hoạt Key Dùng Thử 2 Giờ thành công! Tận hưởng VIP Locket ngay.');
+              setCheckingKey(false);
+              return true;
+            } else {
+              setKeyVerified(false);
+              setVerifiedKeyInfo(null);
+              showToast('Key dùng thử này đã hết hạn (2 tiếng) hoặc không hợp lệ!', 'fa-circle-xmark');
+              setCheckingKey(false);
+              return false;
+            }
+          }
+
           const matched = (keysData.keys || []).find(k => k.key.toUpperCase() === key);
           if (matched) {
+            // Kiểm tra giới hạn thiết bị (Chống dùng chung & chia sẻ key)
+            const myDevId = (() => {
+              let did = localStorage.getItem('at_device_id');
+              if (!did) {
+                did = 'dev_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+                localStorage.setItem('at_device_id', did);
+              }
+              return did;
+            })();
+
+            const maxDev = matched.maxDevices !== undefined ? matched.maxDevices : (matched.isMaster ? 999 : 1);
+            const usedDevs = matched.usedDevices || [];
+            if (!matched.isMaster && !usedDevs.includes(myDevId)) {
+              if (usedDevs.length >= maxDev) {
+                setKeyVerified(false);
+                setVerifiedKeyInfo(null);
+                showToast(`Key này đã kích hoạt trên ${usedDevs.length}/${maxDev} thiết bị khác! Vui lòng liên hệ Admin để đổi máy.`, 'fa-mobile-screen-button');
+                setCheckingKey(false);
+                return false;
+              } else {
+                matched.usedDevices = [...usedDevs, myDevId];
+                try {
+                  localStorage.setItem('at_bound_dev_' + key, JSON.stringify(matched.usedDevices));
+                } catch (_) {}
+              }
+            }
+
             setKeyVerified(true);
             setVerifiedKeyInfo(matched);
             localStorage.setItem('at_customer_key', key);
@@ -1855,6 +2039,14 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 
               {/* Theme & Contact Actions */}
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowOrderLookupModal(true)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-sky-400 hover:text-sky-300 font-bold text-xs flex items-center gap-1.5 border border-sky-500/30 shadow-sm transition"
+                  title="Tra cứu đơn hàng & Lấy Key VIP"
+                >
+                  <i className="fa-solid fa-magnifying-glass text-xs"></i>
+                  <span className="hidden sm:inline">Tra Cứu Đơn</span>
+                </button>
                 <button 
                   onClick={toggleTheme}
                   aria-label="Đổi theme sáng tối"
@@ -1948,6 +2140,70 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
               </div>
             </div>
 
+            {/* ======================================================== */}
+            {/* FLASH SALE COUNTDOWN & FOMO BAR (V2.6) */}
+            {/* ======================================================== */}
+            {siteConfig?.flashSaleConfig?.enabled !== false && (
+              <div className="mb-8 p-4 sm:p-5 rounded-3xl glass-card border border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-amber-500/10 shadow-xl shadow-amber-500/5 relative overflow-hidden">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5 text-center md:text-left">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center text-xl text-black flex-shrink-0 shadow-lg shadow-amber-500/30 animate-bounce">
+                      <i className="fa-solid fa-bolt-lightning"></i>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-center md:justify-start gap-2">
+                        <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[9px] uppercase tracking-wider animate-pulse">
+                          LIVE • ĐANG DIỄN RA
+                        </span>
+                        <h4 className="font-extrabold text-sm sm:text-base text-white">
+                          {siteConfig?.flashSaleConfig?.title || '⚡ FLASH SALE ĐỘC QUYỀN TRONG NGÀY'}
+                        </h4>
+                      </div>
+                      <p className="text-xs text-amber-300/90 mt-0.5">
+                        🔥 Chỉ còn <b className="text-white underline">{siteConfig?.flashSaleConfig?.remainingSlots ?? 3} suất ưu đãi cuối cùng</b> hôm nay! Đặt mua ngay trước khi hết giờ.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Countdown Digital Timer */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-center">
+                      <div className="w-11 h-11 rounded-xl bg-slate-900 border border-amber-500/40 flex items-center justify-center font-mono font-black text-amber-400 text-base shadow-inner">
+                        {flashCountdown.hours}
+                      </div>
+                      <span className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Giờ</span>
+                    </div>
+                    <span className="font-black text-amber-400 text-lg mb-4">:</span>
+                    <div className="flex flex-col items-center">
+                      <div className="w-11 h-11 rounded-xl bg-slate-900 border border-amber-500/40 flex items-center justify-center font-mono font-black text-amber-400 text-base shadow-inner">
+                        {flashCountdown.minutes}
+                      </div>
+                      <span className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Phút</span>
+                    </div>
+                    <span className="font-black text-amber-400 text-lg mb-4">:</span>
+                    <div className="flex flex-col items-center">
+                      <div className="w-11 h-11 rounded-xl bg-slate-900 border border-rose-500/40 flex items-center justify-center font-mono font-black text-rose-400 text-base shadow-inner animate-pulse">
+                        {flashCountdown.seconds}
+                      </div>
+                      <span className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Giây</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Slots Progress Bar */}
+                <div className="mt-3.5 pt-3 border-t border-white/10 flex items-center gap-3">
+                  <div className="flex-1 bg-slate-900/80 rounded-full h-2.5 overflow-hidden border border-white/10 p-0.5">
+                    <div 
+                      className="bg-gradient-to-r from-amber-400 to-rose-500 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, Math.max(15, (1 - ((siteConfig?.flashSaleConfig?.remainingSlots ?? 3) / (siteConfig?.flashSaleConfig?.totalSlots ?? 20))) * 100))}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-[10px] font-bold text-amber-300 font-mono flex-shrink-0">
+                    Đã bán {(siteConfig?.flashSaleConfig?.totalSlots ?? 20) - (siteConfig?.flashSaleConfig?.remainingSlots ?? 3)}/{siteConfig?.flashSaleConfig?.totalSlots ?? 20} suất
+                  </span>
+                </div>
+              </div>
+            )}
             {/* ======================================================== */}
             {/* SECTION: PRICING & PACKAGES (GÓI LOCKET 60S & YOUTUBE VIP) */}
             {/* ======================================================== */}
@@ -3916,6 +4172,242 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
             </div>
           )}
 
+          {/* ======================================================== */}
+          {/* FLOATING LUCKY WHEEL WIDGET BUTTON */}
+          {/* ======================================================== */}
+          {siteConfig?.luckyWheelConfig?.enabled !== false && (
+            <button
+              onClick={() => {
+                setShowLuckyWheelModal(true);
+                setWheelPrize(null);
+              }}
+              className="fixed bottom-20 md:bottom-6 left-5 z-40 px-3.5 py-2.5 rounded-2xl glass-card border border-purple-500/50 bg-purple-500/20 text-white font-extrabold text-xs flex items-center gap-2 shadow-2xl shadow-purple-500/40 hover:scale-105 transition animate-pulse"
+              title="Quay vòng may mắn nhận voucher hoặc key trải nghiệm"
+            >
+              <span className="text-base">🎁</span>
+              <span className="hidden sm:inline">Vòng Quay May Mắn</span>
+              <span className="w-2 h-2 rounded-full bg-pink-400 animate-ping"></span>
+            </button>
+          )}
+
+          {/* ======================================================== */}
+          {/* SOCIAL PROOF TOAST NOTIFICATION */}
+          {/* ======================================================== */}
+          {socialToast.visible && (
+            <div className="fixed bottom-32 md:bottom-20 left-4 right-4 sm:right-auto sm:left-5 z-40 max-w-sm rounded-2xl glass-card border border-emerald-500/40 bg-slate-950/95 p-3.5 shadow-2xl shadow-emerald-500/10 transition-all transform translate-y-0 opacity-100 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 border border-emerald-500/30">
+                <i className="fa-solid fa-check-double text-xs"></i>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-white line-clamp-2 leading-snug">{socialToast.text}</p>
+                <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400 font-medium">
+                  <span className="text-emerald-400 font-bold">✓ Đã xác minh</span>
+                  <span>•</span>
+                  <span>{socialToast.time}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* MODAL: TRA CỨU ĐƠN HÀNG DÀNH CHO KHÁCH HÀNG */}
+          {/* ======================================================== */}
+          {showOrderLookupModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="glass-card max-w-lg w-full rounded-3xl p-6 border border-white/15 shadow-2xl relative space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <h3 className="font-extrabold text-base text-white flex items-center gap-2">
+                    <i className="fa-solid fa-magnifying-glass text-sky-400"></i> TRA CỨU ĐƠN HÀNG & LẤY KEY VIP
+                  </h3>
+                  <button 
+                    onClick={() => {
+                      setShowOrderLookupModal(false);
+                      setOrderLookupResult(null);
+                      setOrderLookupSearched(false);
+                    }}
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-400 hover:text-white transition"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+
+                <div className="flex gap-2">
+                  <input 
+                    type="text"
+                    value={orderLookupQuery}
+                    onChange={(e) => setOrderLookupQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearchOrder()}
+                    placeholder="Nhập Mã đơn (VD: AT_771492) hoặc Số Điện Thoại..."
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-mono focus:outline-none focus:border-sky-400"
+                  />
+                  <button
+                    onClick={handleSearchOrder}
+                    className="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-extrabold text-xs transition flex items-center gap-1.5"
+                  >
+                    <i className="fa-solid fa-search"></i> Tra Cứu
+                  </button>
+                </div>
+
+                {/* Lookup Results */}
+                {orderLookupSearched && (
+                  <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                    {(!orderLookupResult || orderLookupResult.length === 0) ? (
+                      <div className="p-6 rounded-2xl bg-slate-900/50 text-center text-slate-400 text-xs">
+                        <i className="fa-solid fa-box-open text-2xl mb-2 text-slate-600 block"></i>
+                        Không tìm thấy đơn hàng nào với từ khóa: <b>{orderLookupQuery}</b>. Vui lòng kiểm tra lại số điện thoại hoặc mã đơn!
+                      </div>
+                    ) : (
+                      orderLookupResult.map(ord => (
+                        <div key={ord.id} className="p-4 rounded-2xl bg-slate-900 border border-white/10 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono font-bold text-xs text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                              #{ord.id}
+                            </span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              ord.status === 'approved' 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                                : ord.status === 'rejected'
+                                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
+                            }`}>
+                              {ord.status === 'approved' ? '✅ ĐÃ KÍCH HOẠT THÀNH CÔNG' : ord.status === 'rejected' ? '❌ ĐÃ TỪ CHỐI' : '⏳ ĐANG CHỜ ADMIN DUYỆT'}
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-slate-300 space-y-1">
+                            <p><b>Gói dịch vụ:</b> {ord.pkgName}</p>
+                            <p><b>Số tiền:</b> <span className="font-mono text-emerald-400 font-bold">{ord.priceStr}</span></p>
+                            <p><b>Khách hàng:</b> {ord.name} ({ord.contact})</p>
+                          </div>
+
+                          {/* If Approved, show granted Key */}
+                          {ord.status === 'approved' && ord.grantedKey && (
+                            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2 mt-2">
+                              <span className="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">
+                                🔑 ACCESS KEY VIP CỦA BẠN:
+                              </span>
+                              <div className="flex items-center justify-between gap-2">
+                                <code className="font-mono font-black text-xs text-white bg-slate-950 px-2.5 py-1.5 rounded-lg border border-white/10 select-all">
+                                  {ord.grantedKey}
+                                </code>
+                                <div className="flex gap-1.5">
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(ord.grantedKey);
+                                      showToast('Đã sao chép mã Key VIP!');
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-500 text-white font-bold text-xs"
+                                  >
+                                    Copy Key
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setShowOrderLookupModal(false);
+                                      handleCheckAccessKey(ord.grantedKey);
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 font-bold text-xs"
+                                  >
+                                    ⚡ Kích Hoạt Luôn
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {ord.status !== 'approved' && (
+                            <p className="text-[10px] text-amber-300/80 italic">
+                              * Đơn hàng đang được Admin kiểm tra biên lai. Khi được duyệt, Key VIP sẽ tự động hiển thị tại đây.
+                            </p>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* MODAL: VÒNG QUAY MAY MẮN (LUCKY WHEEL) */}
+          {/* ======================================================== */}
+          {showLuckyWheelModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="glass-card max-w-sm w-full rounded-3xl p-6 border border-purple-500/40 shadow-2xl relative text-center space-y-4">
+                <button 
+                  onClick={() => setShowLuckyWheelModal(false)}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-400 hover:text-white transition"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+
+                <div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-black text-[10px] uppercase border border-purple-500/30">
+                    QUAY LÀ TRÚNG 100%
+                  </span>
+                  <h3 className="font-black text-xl text-white mt-1">🎁 VÒNG QUAY MAY MẮN</h3>
+                  <p className="text-[11px] text-slate-400">Trúng ngay voucher giảm tới 50k hoặc Key VIP trải nghiệm 2 giờ!</p>
+                </div>
+
+                {/* Canvas Wheel Simulation */}
+                <div className="relative w-64 h-64 mx-auto my-2 flex items-center justify-center">
+                  {/* Wheel Pointer Arrow */}
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-20 text-amber-400 text-2xl drop-shadow-md">
+                    <i className="fa-solid fa-caret-down"></i>
+                  </div>
+
+                  <div 
+                    className="w-60 h-60 rounded-full border-4 border-amber-400 shadow-2xl relative overflow-hidden transition-all duration-[5000ms] ease-out flex items-center justify-center"
+                    style={{ 
+                      transform: `rotate(${wheelAngle}deg)`,
+                      background: 'conic-gradient(#f59e0b 0deg 60deg, #8b5cf6 60deg 120deg, #ec4899 120deg 180deg, #3b82f6 180deg 240deg, #10b981 240deg 300deg, #06b6d4 300deg 360deg)'
+                    }}
+                  >
+                    <div className="absolute w-14 h-14 rounded-full bg-slate-950 border-4 border-amber-400 flex items-center justify-center text-amber-400 font-black text-xs z-10 shadow-lg">
+                      LUCK
+                    </div>
+                  </div>
+                </div>
+
+                {/* Prize Result Box */}
+                {wheelPrize && (
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/40 animate-bounce space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-amber-300">🎉 CHÚC MỪNG BẠN TRÚNG:</span>
+                    <h4 className="text-base font-black text-white">{wheelPrize.label}</h4>
+                    {wheelPrize.type === 'trial_key' && wheelPrize.trialKey && (
+                      <div className="mt-2 text-xs">
+                        <p className="text-slate-300">Mã Key Dùng Thử 2 Giờ:</p>
+                        <code className="font-mono font-bold text-amber-300 bg-black/50 px-2 py-1 rounded block my-1">
+                          {wheelPrize.trialKey}
+                        </code>
+                        <button
+                          onClick={() => {
+                            setShowLuckyWheelModal(false);
+                            handleCheckAccessKey(wheelPrize.trialKey);
+                          }}
+                          className="mt-1 px-3 py-1 rounded-lg bg-emerald-500 text-white font-bold text-xs"
+                        >
+                          ⚡ Kích Hoạt Dùng Thử Ngay
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleSpinWheel}
+                  disabled={wheelSpinning}
+                  className={`w-full py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider transition shadow-xl ${
+                    wheelSpinning 
+                      ? 'bg-slate-700 text-slate-400 cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 hover:opacity-95 text-white shadow-pink-500/30'
+                  }`}
+                >
+                  {wheelSpinning ? 'Đang quay...' : 'QUAY NGAY (1 LƯỢT MIỄN PHÍ)'}
+                </button>
+              </div>
+            </div>
+          )}
           {/* Back To Top Button */}
           {showBackTop && (
             <button 

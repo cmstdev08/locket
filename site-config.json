@@ -17,8 +17,11 @@
     "hotline": "0898.376.962"
   },
   "telegramConfig": {
+    "enabled": true,
     "telegramBotToken": "9054468692:AAFcOoaVyU4Wv1_ndqH5qIXmT5wMZD-EqLo",
-    "telegramChatId": "7705653131"
+    "telegramChatId": "7705653131",
+    "notifyOnOrder": true,
+    "notifyOnTicket": true
   },
   "githubConfig": {
     "defaultGhRepo": "cmstdev08/locket",
@@ -197,5 +200,70 @@
       "discount": 50000,
       "desc": "Giảm sốc 50.000đ cho khách hàng VIP"
     }
-  ]
+  ],
+  "flashSaleConfig": {
+    "enabled": true,
+    "title": "⚡ FLASH SALE ĐỘC QUYỀN TRONG NGÀY",
+    "badge": "CHỈ CÒN DUY NHẤT HÔM NAY",
+    "remainingSlots": 3,
+    "totalSlots": 20,
+    "endTime": "23:59:59"
+  },
+  "luckyWheelConfig": {
+    "enabled": true,
+    "title": "🎁 VÒNG QUAY MAY MẮN",
+    "subtitle": "Quay là trúng voucher giảm giá hoặc Key trải nghiệm VIP!",
+    "prizes": [
+      {
+        "id": 1,
+        "label": "Giảm 10.000đ",
+        "code": "AT_GIAM10K",
+        "type": "voucher",
+        "discount": 10000,
+        "color": "#f59e0b"
+      },
+      {
+        "id": 2,
+        "label": "Key Thử 2 Giờ",
+        "code": "TRIAL_2H",
+        "type": "trial_key",
+        "color": "#8b5cf6"
+      },
+      {
+        "id": 3,
+        "label": "Giảm 20.000đ",
+        "code": "AT_GIAM20K",
+        "type": "voucher",
+        "discount": 20000,
+        "color": "#ec4899"
+      },
+      {
+        "id": 4,
+        "label": "Thêm Lượt 🎯",
+        "code": "SPIN_AGAIN",
+        "type": "spin_again",
+        "color": "#3b82f6"
+      },
+      {
+        "id": 5,
+        "label": "Giảm 50.000đ",
+        "code": "AT_GIAM50K",
+        "type": "voucher",
+        "discount": 50000,
+        "color": "#10b981"
+      },
+      {
+        "id": 6,
+        "label": "Giảm 15%",
+        "code": "AT_VIP15",
+        "type": "voucher",
+        "discount": 15,
+        "color": "#06b6d4"
+      }
+    ]
+  },
+  "socialProofConfig": {
+    "enabled": true,
+    "intervalSeconds": 18
+  }
 }

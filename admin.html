@@ -88,7 +88,10 @@
         adminZalo: "https://zalo.me/0898376962",
         hotline: "0898.376.962"
       },
-      telegramConfig: { telegramBotToken: "", telegramChatId: "" },
+      telegramConfig: { enabled: false, telegramBotToken: "", telegramChatId: "", notifyOnOrder: true, notifyOnTicket: true },
+      flashSaleConfig: { enabled: true, title: "⚡ FLASH SALE ĐỘC QUYỀN TRONG NGÀY", badge: "CHỈ CÒN DUY NHẤT HÔM NAY", remainingSlots: 3, totalSlots: 20, endTime: "23:59:59" },
+      luckyWheelConfig: { enabled: true, title: "🎁 VÒNG QUAY MAY MẮN", subtitle: "Quay là trúng voucher giảm giá hoặc Key trải nghiệm VIP!" },
+      socialProofConfig: { enabled: true, intervalSeconds: 18 },
       githubConfig: { defaultGhRepo: "cmstdev08/locket", defaultGhBranch: "master", defaultGhToken: "" },
       popupConfig: {
         enabled: false,
@@ -750,6 +753,76 @@
         }
       };
 
+      // Revenue calculations
+      const totalApprovedRevenue = useMemo(() => {
+        return (config.orders || [])
+          .filter(o => o.status === 'approved')
+          .reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+      }, [config.orders]);
+
+      const todayApprovedRevenue = useMemo(() => {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        return (config.orders || [])
+          .filter(o => o.status === 'approved' && (o.createdAt || '').startsWith(todayStr))
+          .reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+      }, [config.orders]);
+
+      // Reset device limit for key
+      const handleResetKeyDevices = (keyStr) => {
+        const updatedKeys = (keysData.keys || []).map(k => {
+          if (k.key === keyStr) {
+            return { ...k, usedDevices: [] };
+          }
+          return k;
+        });
+        setKeysData({ ...keysData, keys: updatedKeys });
+        showToast(`Đã reset toàn bộ thiết bị cho Key ${keyStr}!`, 'fa-mobile-screen-button');
+      };
+
+      // Export System Backup JSON
+      const handleExportBackup = () => {
+        const backupObj = {
+          version: '2.6',
+          exportedAt: new Date().toISOString(),
+          config: config,
+          keysData: keysData
+        };
+        const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `locket_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Đã xuất bản sao lưu hệ thống thành công!', 'fa-file-arrow-down');
+      };
+
+      // Restore System Backup JSON
+      const handleRestoreBackup = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const parsed = JSON.parse(evt.target.result);
+            if (!parsed.config || !parsed.keysData) {
+              alert('File sao lưu không hợp lệ! Thiếu trường config hoặc keysData.');
+              return;
+            }
+            if (confirm(`Bạn có chắc muốn khôi phục dữ liệu từ bản sao lưu ngày ${parsed.exportedAt || 'không rõ'}? Thao tác này sẽ ghi đè cấu hình hiện tại.`)) {
+              setConfig(parsed.config);
+              setKeysData(parsed.keysData);
+              showToast('Khôi phục dữ liệu thành công! Hãy bấm "LƯU LÊN GITHUB" để áp dụng lên đám mây.', 'fa-cloud-arrow-up');
+            }
+          } catch (err) {
+            alert('Lỗi đọc file JSON sao lưu: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+
       // ========================================================
       // 1. GIAO DIỆN ĐĂNG NHẬP (NẾU CHƯA ĐĂNG NHẬP)
       // ========================================================
@@ -968,21 +1041,44 @@
                     </button>
                   </div>
 
-                  {/* Summary Metric Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="glass-card rounded-2xl p-3.5 border border-white/10">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">Tổng đơn hàng:</span>
-                      <p className="text-xl font-black text-white mt-1">{(config.orders || []).length}</p>
-                    </div>
-                    <div className="glass-card rounded-2xl p-3.5 border border-rose-500/30 bg-rose-500/5">
-                      <span className="text-[10px] text-rose-400 font-bold uppercase">Chờ xác nhận & cấp key:</span>
-                      <p className="text-xl font-black text-rose-400 mt-1">{pendingOrdersCount}</p>
-                    </div>
+                  {/* Summary Metric & Revenue Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="glass-card rounded-2xl p-3.5 border border-emerald-500/30 bg-emerald-500/5">
-                      <span className="text-[10px] text-emerald-400 font-bold uppercase">Đã duyệt & kích hoạt:</span>
-                      <p className="text-xl font-black text-emerald-400 mt-1">
-                        {(config.orders || []).filter(o => o.status === 'approved').length}
+                      <span className="text-[10px] text-emerald-400 font-bold uppercase flex items-center gap-1">
+                        <i className="fa-solid fa-sack-dollar"></i> Tổng Doanh Thu:
+                      </span>
+                      <p className="text-lg sm:text-xl font-black text-emerald-400 mt-1">
+                        {totalApprovedRevenue.toLocaleString('vi-VN')}đ
                       </p>
+                      <span className="text-[9px] text-slate-400">Từ các đơn đã duyệt</span>
+                    </div>
+
+                    <div className="glass-card rounded-2xl p-3.5 border border-amber-500/30 bg-amber-500/5">
+                      <span className="text-[10px] text-amber-400 font-bold uppercase flex items-center gap-1">
+                        <i className="fa-solid fa-chart-line"></i> Hôm Nay:
+                      </span>
+                      <p className="text-lg sm:text-xl font-black text-amber-400 mt-1">
+                        {todayApprovedRevenue.toLocaleString('vi-VN')}đ
+                      </p>
+                      <span className="text-[9px] text-slate-400">Doanh thu ngày hôm nay</span>
+                    </div>
+
+                    <div className="glass-card rounded-2xl p-3.5 border border-rose-500/30 bg-rose-500/5">
+                      <span className="text-[10px] text-rose-400 font-bold uppercase flex items-center gap-1">
+                        <i className="fa-solid fa-clock"></i> Chờ Cấp Key:
+                      </span>
+                      <p className="text-lg sm:text-xl font-black text-rose-400 mt-1">{pendingOrdersCount}</p>
+                      <span className="text-[9px] text-rose-300/70">Cần xử lý duyệt bill</span>
+                    </div>
+
+                    <div className="glass-card rounded-2xl p-3.5 border border-white/10">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1">
+                        <i className="fa-solid fa-boxes-stacked"></i> Tổng Số Đơn:
+                      </span>
+                      <p className="text-lg sm:text-xl font-black text-white mt-1">{(config.orders || []).length}</p>
+                      <span className="text-[9px] text-emerald-400">
+                        {((config.orders || []).filter(o => o.status === 'approved').length)} đã duyệt thành công
+                      </span>
                     </div>
                   </div>
 
@@ -1597,6 +1693,7 @@
                             <th className="py-3 px-3.5">Chủ Sở Hữu (Owner)</th>
                             <th className="py-3 px-3.5">Khóa Username</th>
                             <th className="py-3 px-3.5">Lượt Dùng</th>
+                            <th className="py-3 px-3.5">Thiết Bị (Khóa Máy)</th>
                             <th className="py-3 px-3.5">Hạn Dùng</th>
                             <th className="py-3 px-3.5 text-right">Thao Tác</th>
                           </tr>
@@ -1641,6 +1738,26 @@
                                 </td>
                                 <td className="py-3 px-3.5 font-mono text-slate-400">
                                   {k.usedCount || 0} / {k.maxUses || 9999}
+                                </td>
+                                <td className="py-3 px-3.5 font-mono">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                      (k.usedDevices || []).length >= (k.maxDevices || 1)
+                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                    }`}>
+                                      {(k.usedDevices || []).length} / {k.maxDevices || 1} máy
+                                    </span>
+                                    {(k.usedDevices || []).length > 0 && (
+                                      <button
+                                        onClick={() => handleResetKeyDevices(k.key)}
+                                        className="text-[10px] text-rose-400 hover:text-rose-300 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 transition"
+                                        title="Reset thiết bị về 0 để khách đổi sang iPhone khác"
+                                      >
+                                        <i className="fa-solid fa-rotate-left"></i> Reset
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="py-3 px-3.5 font-mono text-slate-400">
                                   {k.expiresAt || 'Vĩnh viễn'}
@@ -2006,6 +2123,116 @@
                         Trạng thái hiện tại: {config.popupConfig?.enabled ? '🟢 Đang Bật' : '⚪ Đang Tắt'}
                       </p>
                     </div>
+
+                    {/* Flash Sale Countdown Settings Card */}
+                    <div className="glass-card rounded-2xl p-5 border border-amber-500/30 bg-amber-500/5 space-y-3.5">
+                      <div className="flex items-center justify-between pb-2 border-b border-amber-500/20">
+                        <span className="font-extrabold text-xs text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <i className="fa-solid fa-bolt text-amber-400"></i> Đồng Hồ Flash Sale & FOMO:
+                        </span>
+                        <button
+                          onClick={() => setConfig({
+                            ...config,
+                            flashSaleConfig: { ...config.flashSaleConfig, enabled: !config.flashSaleConfig?.enabled }
+                          })}
+                          className={`px-3 py-1.5 rounded-xl font-black text-xs transition ${
+                            config.flashSaleConfig?.enabled 
+                              ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30' 
+                              : 'bg-slate-800 text-slate-400 border border-white/10'
+                          }`}
+                        >
+                          {config.flashSaleConfig?.enabled ? '🟢 ĐANG BẬT' : '⚪ ĐANG TẮT'}
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Tiêu Đề Flash Sale:</label>
+                        <input 
+                          type="text"
+                          value={config.flashSaleConfig?.title || ''}
+                          onChange={(e) => setConfig({
+                            ...config,
+                            flashSaleConfig: { ...config.flashSaleConfig, title: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Số Suất Còn Lại (Ảo):</label>
+                          <input 
+                            type="number"
+                            value={config.flashSaleConfig?.remainingSlots ?? 3}
+                            onChange={(e) => setConfig({
+                              ...config,
+                              flashSaleConfig: { ...config.flashSaleConfig, remainingSlots: parseInt(e.target.value) || 0 }
+                            })}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-amber-400 font-bold text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Tổng Số Suất Ưu Đãi:</label>
+                          <input 
+                            type="number"
+                            value={config.flashSaleConfig?.totalSlots ?? 20}
+                            onChange={(e) => setConfig({
+                              ...config,
+                              flashSaleConfig: { ...config.flashSaleConfig, totalSlots: parseInt(e.target.value) || 0 }
+                            })}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-400">Hiển thị thanh tiến độ sốt hàng: "Đã bán 17/20 suất • Chỉ còn 3 suất VIP hôm nay!"</p>
+                    </div>
+
+                    {/* Lucky Wheel & Social Proof Settings Card */}
+                    <div className="glass-card rounded-2xl p-5 border border-purple-500/30 bg-purple-500/5 space-y-3.5 md:col-span-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Lucky Wheel Toggle */}
+                        <div className="p-4 rounded-xl bg-slate-900 border border-white/10 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-extrabold text-xs text-purple-300 flex items-center gap-1.5">
+                              <i className="fa-solid fa-gift text-pink-400"></i> Vòng Quay May Mắn (Lucky Wheel)
+                            </span>
+                            <button
+                              onClick={() => setConfig({
+                                ...config,
+                                luckyWheelConfig: { ...config.luckyWheelConfig, enabled: !config.luckyWheelConfig?.enabled }
+                              })}
+                              className={`px-2.5 py-1 rounded-lg font-bold text-xs ${
+                                config.luckyWheelConfig?.enabled ? 'bg-purple-500 text-white' : 'bg-slate-800 text-slate-400'
+                              }`}
+                            >
+                              {config.luckyWheelConfig?.enabled ? 'BẬT' : 'TẮT'}
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-slate-400">Nút nổi góc màn hình cho khách quay nhận voucher 10k-50k hoặc Key VIP trải nghiệm 2 giờ.</p>
+                        </div>
+
+                        {/* Social Proof Toggle */}
+                        <div className="p-4 rounded-xl bg-slate-900 border border-white/10 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-extrabold text-xs text-sky-300 flex items-center gap-1.5">
+                              <i className="fa-solid fa-bell text-sky-400"></i> Thông Báo Mua Hàng Ảo (Social Proof)
+                            </span>
+                            <button
+                              onClick={() => setConfig({
+                                ...config,
+                                socialProofConfig: { ...config.socialProofConfig, enabled: !config.socialProofConfig?.enabled }
+                              })}
+                              className={`px-2.5 py-1 rounded-lg font-bold text-xs ${
+                                config.socialProofConfig?.enabled ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400'
+                              }`}
+                            >
+                              {config.socialProofConfig?.enabled ? 'BẬT' : 'TẮT'}
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-slate-400">Tự động hiện thông báo popup góc dưới: "Khách hàng 098****215 vừa kích hoạt thành công Locket 60s vĩnh viễn".</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -2140,12 +2367,89 @@
                         />
                       </div>
 
+                      <div className="pt-2 border-t border-white/10 space-y-2">
+                        <label className="text-[11px] font-bold text-slate-300 block">Bật Thông Báo Tự Động:</label>
+                        <div className="flex flex-wrap gap-4 text-xs text-slate-300">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={config.telegramConfig?.enabled !== false}
+                              onChange={(e) => setConfig({
+                                ...config,
+                                telegramConfig: { ...config.telegramConfig, enabled: e.target.checked }
+                              })}
+                              className="accent-sky-500 rounded"
+                            />
+                            <span>Bật Bot Toàn Hệ Thống</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={config.telegramConfig?.notifyOnOrder !== false}
+                              onChange={(e) => setConfig({
+                                ...config,
+                                telegramConfig: { ...config.telegramConfig, notifyOnOrder: e.target.checked }
+                              })}
+                              className="accent-sky-500 rounded"
+                            />
+                            <span>Báo Khi Có Đơn Mới / Bill</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={config.telegramConfig?.notifyOnTicket !== false}
+                              onChange={(e) => setConfig({
+                                ...config,
+                                telegramConfig: { ...config.telegramConfig, notifyOnTicket: e.target.checked }
+                              })}
+                              className="accent-sky-500 rounded"
+                            />
+                            <span>Báo Khi Có Vé Hỗ Trợ</span>
+                          </label>
+                        </div>
+                      </div>
+
                       <button
                         onClick={handleTestTelegram}
                         className="w-full py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-bold text-xs border border-sky-500/30 transition flex items-center justify-center gap-1.5"
                       >
                         <i className="fa-solid fa-paper-plane text-xs"></i> Gửi Thử Tin Nhắn Test Về Telegram
                       </button>
+                    </div>
+
+                    {/* System Backup & Restore 1-Click Card */}
+                    <div className="glass-card rounded-2xl p-5 border border-indigo-500/30 bg-indigo-500/5 space-y-3.5 md:col-span-2">
+                      <div className="flex items-center justify-between pb-2 border-b border-indigo-500/20">
+                        <h3 className="font-extrabold text-xs text-indigo-300 uppercase tracking-wider flex items-center gap-2">
+                          <i className="fa-solid fa-database text-sm"></i> Sao Lưu & Khôi Phục Hệ Thống (Backup & Restore 1-Click)
+                        </h3>
+                        <span className="text-[10px] text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full font-bold">
+                          Dự phòng dữ liệu an toàn 100%
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-slate-400">
+                        Xuất toàn bộ cấu hình, danh sách Access Key, lịch sử hóa đơn đơn hàng và vé hỗ trợ ra file JSON về máy tính. Bạn có thể khôi phục lại bất cứ lúc nào chỉ với 1 cú click.
+                      </p>
+
+                      <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <button
+                          onClick={handleExportBackup}
+                          className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30"
+                        >
+                          <i className="fa-solid fa-download"></i> Tải File Sao Lưu Hệ Thống (.JSON)
+                        </button>
+
+                        <label className="flex-1 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-extrabold text-xs transition flex items-center justify-center gap-2 cursor-pointer border border-white/15 text-center">
+                          <i className="fa-solid fa-upload text-indigo-400"></i> Nhập & Khôi Phục Dữ Liệu
+                          <input 
+                            type="file" 
+                            accept=".json"
+                            onChange={handleRestoreBackup}
+                            className="hidden" 
+                          />
+                        </label>
+                      </div>
                     </div>
 
                     {/* Contact Config */}
