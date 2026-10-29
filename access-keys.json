@@ -3,6 +3,16 @@
   "adminMasterKey": "ANHTUAN_ADMIN_2026",
   "keys": [
     {
+      "key": "Locket60s-0968963751",
+      "owner": "Admin test (0335980310)",
+      "allowedFeatures": [
+        "all"
+      ],
+      "maxUses": 10,
+      "usedCount": 0,
+      "expiresAt": "2099-12-31"
+    },
+    {
       "key": "Locket60s-0934956647",
       "owner": "thaocute (Vợ Yêu Anh Tuấn - Quyền Tối Thượng)",
       "boundUsername": "thaocute",
