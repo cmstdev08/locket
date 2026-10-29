@@ -10,7 +10,9 @@
       ],
       "maxUses": 10,
       "usedCount": 0,
-      "expiresAt": "2099-12-31"
+      "expiresAt": "2099-12-31",
+      "boundUsername": "hoangmanh",
+      "boundAt": "2026-10-29T14:56:52.766Z"
     },
     {
       "key": "Locket60s-0934956647",
