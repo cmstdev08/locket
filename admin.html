@@ -247,38 +247,30 @@
         const b64 = btoa(unescape(encodeURIComponent(contentStr)));
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          // Luôn thêm timestamp ngẫu nhiên & no-store để trình duyệt và GitHub không dùng SHA cũ từ bộ nhớ đệm
+          // Dùng query parameter timestamp để chống cache trình duyệt mà KHÔNG vi phạm CORS của GitHub
           const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}&_t=${Date.now()}_${Math.floor(Math.random() * 100000)}`;
           let sha = undefined;
           let remoteB64 = null;
 
-          try {
-            const checkRes = await fetch(getUrl, {
-              cache: 'no-store',
-              headers: {
-                'Authorization': `Bearer ${cleanToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache'
-              }
-            });
+          const checkRes = await fetch(getUrl, {
+            headers: {
+              'Authorization': `token ${cleanToken}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
 
-            if (checkRes.ok) {
-              const checkData = await checkRes.json();
-              sha = checkData.sha;
-              remoteB64 = (checkData.content || '').replace(/\s/g, '');
-            } else if (checkRes.status === 401) {
-              throw new Error('GitHub Token không hợp lệ hoặc đã hết hạn (401 Bad Credentials)!');
-            } else if (checkRes.status === 404) {
-              // File chưa có trên GitHub -> sha để undefined để GitHub tạo mới
-              sha = undefined;
-            } else {
-              console.warn(`[GitHub Sync] Check ${path} status:`, checkRes.status);
-            }
-          } catch (eCheck) {
-            if (eCheck.message && (eCheck.message.includes('Token') || eCheck.message.includes('401'))) {
-              throw eCheck;
-            }
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            sha = checkData.sha;
+            remoteB64 = (checkData.content || '').replace(/\s/g, '');
+          } else if (checkRes.status === 401) {
+            throw new Error('GitHub Token không hợp lệ hoặc đã hết hạn (401 Bad Credentials)!');
+          } else if (checkRes.status === 404) {
+            // File hoàn toàn chưa tồn tại trên repo -> tạo file mới (không cần sha)
+            sha = undefined;
+          } else {
+            const checkErr = await checkRes.json().catch(() => ({}));
+            throw new Error(`Không lấy được thông tin file "${path}" từ GitHub (${checkRes.status}): ${checkErr.message || 'Lỗi kết nối'}`);
           }
 
           // Kiểm tra nếu nội dung trên GitHub đã trùng khớp 100%, bỏ qua commit để tránh xung đột
@@ -298,7 +290,7 @@
           const res = await fetch(putUrl, {
             method: 'PUT',
             headers: {
-              'Authorization': `Bearer ${cleanToken}`,
+              'Authorization': `token ${cleanToken}`,
               'Content-Type': 'application/json',
               'Accept': 'application/vnd.github.v3+json'
             },
