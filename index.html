@@ -3310,10 +3310,19 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
               </div>
 
               {/* GRID 4 CẤU HÌNH (LOCKET GOLD MIỄN PHÍ + 3 MỤC MỞ KHÓA BẰNG KEY) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {[
-                  {
-                    title: 'Locket Gold Config',
+              {(() => {
+                const activeRepo = (siteConfig?.githubConfig?.defaultGhRepo || ghRepo).trim();
+                const activeBranch = (siteConfig?.githubConfig?.defaultGhBranch || ghBranch || 'master').trim();
+                const curGoldUrl = `https://raw.githubusercontent.com/${activeRepo}/refs/heads/${activeBranch}/locketgoldbyanhtuaan.config`;
+                const cur60sUrl = `https://raw.githubusercontent.com/${activeRepo}/refs/heads/${activeBranch}/locket60s.sgmodule`;
+                const curYtUrl = `https://raw.githubusercontent.com/${activeRepo}/refs/heads/${activeBranch}/youtubepremium.config`;
+                const curSpUrl = `https://raw.githubusercontent.com/${activeRepo}/refs/heads/${activeBranch}/spotify.config`;
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    {[
+                      {
+                        title: 'Locket Gold Config',
                     file: 'locketgoldbyanhtuaan.config',
                     icon: 'fa-lock',
                     color: 'sky',
@@ -3321,8 +3330,8 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     badge: 'MIỄN PHÍ',
                     badgeColor: 'bg-emerald-500',
                     btnGrad: 'from-sky-500 to-blue-600',
-                    rawUrl: CONFIGS.locketGoldConfigUrl,
-                    deepLink: `shadowrocket://config/add/${CONFIGS.locketGoldConfigUrl}`,
+                    rawUrl: curGoldUrl,
+                    deepLink: `shadowrocket://config/add/${curGoldUrl}`,
                     btnLabel: 'MỞ TRONG SHADOWROCKET'
                   },
                   {
@@ -3335,8 +3344,8 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     badge: keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
                     badgeColor: keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
                     btnGrad: 'from-fuchsia-500 via-pink-500 to-rose-500',
-                    rawUrl: keyVerified ? CONFIGS.locket60sModuleUrl : '',
-                    deepLink: keyVerified ? `shadowrocket://install?module=${encodeURIComponent(CONFIGS.locket60sModuleUrl)}` : '#',
+                    rawUrl: keyVerified ? cur60sUrl : '',
+                    deepLink: keyVerified ? `shadowrocket://install?module=${encodeURIComponent(cur60sUrl)}` : '#',
                     btnLabel: keyVerified ? 'CÀI VÀO SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
                   },
                   {
@@ -3445,6 +3454,8 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                   </div>
                 ))}
               </div>
+                );
+              })()}
 
               {/* DNS DUY TRÌ LOCKET VĨNH VIỄN (CẤU HÌNH & KHÓA QUẢN TRỊ ADMIN) */}
               {(() => {
