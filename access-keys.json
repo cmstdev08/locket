@@ -6,7 +6,9 @@
       "key": "Locket60s-0934956647",
       "owner": "thaocute (Vợ Yêu Anh Tuấn - Quyền Tối Thượng)",
       "boundUsername": "thaocute",
-      "allowedFeatures": ["all"],
+      "allowedFeatures": [
+        "all"
+      ],
       "isMaster": true,
       "maxUses": 999999,
       "usedCount": 0,
@@ -18,7 +20,9 @@
       "boundUsername": "anhtuaan08",
       "role": "admin",
       "isMaster": true,
-      "allowedFeatures": ["all"],
+      "allowedFeatures": [
+        "all"
+      ],
       "maxUses": 999999,
       "usedCount": 0,
       "expiresAt": "2099-12-31"
