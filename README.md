@@ -43,13 +43,17 @@ Khi có khách mua gói 500.000đ, mở file `access-keys.json` và thêm 1 dòn
 {
   "key": "Locket60s-09xxxxxxxxx",
   "owner": "Số điện thoại hoặc tên khách",
+  "boundUsername": "tuanle",
   "allowedFeatures": ["all"],
   "maxUses": 9999,
   "usedCount": 0,
   "expiresAt": "2099-12-31"
 }
 ```
-- **Master Key quản trị:** `ANHTUAN_ADMIN_2026` (Dùng để kiểm tra hoặc kích hoạt không giới hạn).
+- **Khóa cứng Username (`boundUsername`):**
+  - **Cách 1 (Tự động):** Bạn để trống hoặc không cần ghi `boundUsername`. Khi khách nhập Key vào web và tạo cấu hình lần đầu với Username nào, hệ thống sẽ **khóa cứng vĩnh viễn** Username đó vào Key. Lần sau nhập lại Key, web sẽ tự hiện Username đó và **khóa không cho chỉnh sửa**, ngăn chặn việc 1 Key đem share cho nhiều người khác tạo file.
+  - **Cách 2 (Chỉ định sẵn):** Bạn điền sẵn `"boundUsername": "tên_locket_của_khách"`. Khách chỉ việc nhập Key, hệ thống tự động điền đúng tên khách và cấm sửa đổi.
+- **Master Key quản trị:** `ANHTUAN_ADMIN_2026` (Dùng để kiểm tra hoặc kích hoạt không giới hạn, không bị khóa cố định Username).
 - Mỗi khi sửa xong file `access-keys.json`, chỉ cần lưu và đẩy lên GitHub là khách nhập được ngay trên website.
 
 ---

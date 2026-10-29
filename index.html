@@ -948,6 +948,16 @@
         return `AT ${pkgCode} ${phone}`;
       }, [orderForm.contact, selectedPackage]);
 
+      // 🔒 Kiểm tra xem Key này đã bị khóa cứng với Username nào chưa
+      const isUsernameLocked = useMemo(() => {
+        if (!keyVerified || !verifiedKeyInfo) return false;
+        if (verifiedKeyInfo.isMaster) return false; // Master Key không bị khóa
+        const currentKey = (accessKeyInput || '').trim().toUpperCase();
+        const boundFromKey = verifiedKeyInfo.boundUsername;
+        const boundFromLocal = localStorage.getItem('at_bound_username_' + currentKey);
+        return Boolean(boundFromKey || boundFromLocal);
+      }, [keyVerified, verifiedKeyInfo, accessKeyInput]);
+
       // VietQR Image URL (Auto-updates with discounted price)
       const vietQrUrl = useMemo(() => {
         return `https://img.vietqr.io/image/${CONFIGS.bankName}-${CONFIGS.bankNumber}-compact2.png?amount=${finalPriceNum}&addInfo=${encodeURIComponent(transferMemo)}&accountName=${encodeURIComponent(CONFIGS.bankOwner)}`;
@@ -1052,14 +1062,24 @@
             setVerifiedKeyInfo(matched);
             localStorage.setItem('at_customer_key', key);
             try {
-              const savedUser = localStorage.getItem('at_user_for_key_' + key.toUpperCase());
-              if (savedUser) {
-                setGhCustomerUsername(savedUser);
-                const savedJoined = localStorage.getItem('at_gold_joined_' + savedUser);
+              // 🔒 Kiểm tra Username đã khóa cứng cho Key này (Ưu tiên từ access-keys.json trên GitHub)
+              const boundUser = matched.boundUsername 
+                || localStorage.getItem('at_bound_username_' + key.toUpperCase())
+                || localStorage.getItem('at_user_for_key_' + key.toUpperCase());
+
+              if (boundUser) {
+                setGhCustomerUsername(boundUser);
+                const savedJoined = localStorage.getItem('at_gold_joined_' + boundUser);
                 if (savedJoined) setGoldJoinedAt(savedJoined);
               }
             } catch (_) {}
-            showToast(`Key hợp lệ! Xin chào ${matched.owner || 'khách hàng'}.`);
+
+            if (matched.boundUsername || localStorage.getItem('at_bound_username_' + key.toUpperCase())) {
+              const u = matched.boundUsername || localStorage.getItem('at_bound_username_' + key.toUpperCase());
+              showToast(`Key hợp lệ! Đã khóa chính chủ: @${u}`);
+            } else {
+              showToast(`Key hợp lệ! Xin chào ${matched.owner || 'khách hàng'}.`);
+            }
             setCheckingKey(false);
             return true;
           } else {
@@ -1120,17 +1140,37 @@ ${JSON.stringify(captionObj, null, 2)}
           }
         }
 
-        // 1. Xác định định danh User / Key độc quyền
+        // 1. Kiểm tra ràng buộc bảo mật: 1 Key = 1 Username vĩnh viễn (Chống share Key)
+        const currentKey = accessKeyInput.trim().toUpperCase();
+        let boundUser = (verifiedKeyInfo && verifiedKeyInfo.boundUsername) 
+          || localStorage.getItem('at_bound_username_' + currentKey) 
+          || null;
+
         let rawId = (ghCustomerUsername.trim() || '').replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
-        if (!rawId && accessKeyInput.trim()) {
-          rawId = accessKeyInput.trim().replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+        if (!rawId && boundUser) {
+          rawId = boundUser.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+        }
+        if (!rawId && currentKey) {
+          rawId = currentKey.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
         }
         const cleanUser = rawId || 'vip';
 
-        // Tự động ghi nhớ liên kết Key <-> Username
-        if (accessKeyInput.trim() && cleanUser) {
+        // CHẶN BẢO MẬT: Nếu Key này đã bị khóa cứng với Username trước đó, cấm đổi sang Username khác
+        if (verifiedKeyInfo && !verifiedKeyInfo.isMaster && boundUser) {
+          if (cleanUser.toLowerCase() !== boundUser.toLowerCase()) {
+            showToast(`Key ${currentKey} đã khóa vĩnh viễn cho @${boundUser}. Không được phép dùng cho @${cleanUser}!`, 'fa-circle-xmark');
+            setDeploying(false);
+            return;
+          }
+        }
+
+        // LẦN ĐẦU KÍCH HOẠT: Khóa cứng vĩnh viễn Username này vào Key ngay lập tức!
+        if (verifiedKeyInfo && !verifiedKeyInfo.isMaster && !boundUser) {
+          boundUser = cleanUser;
           try {
-            localStorage.setItem('at_user_for_key_' + accessKeyInput.trim().toUpperCase(), cleanUser);
+            localStorage.setItem('at_bound_username_' + currentKey, cleanUser);
+            localStorage.setItem('at_user_for_key_' + currentKey, cleanUser);
+            setVerifiedKeyInfo(prev => ({ ...prev, boundUsername: cleanUser }));
           } catch (_) {}
         }
 
@@ -1417,6 +1457,34 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                 sgmoduleContent,
                 `🚀 Tạo module sg riêng cho @${cleanUser}`
               );
+
+              // 4. Đồng bộ khóa cứng Key vào access-keys.json trên GitHub (Chống đổi Username trên máy khác)
+              try {
+                const keysGetUrl = `${_atDec('aHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy8=')}${effectiveRepo}/contents/access-keys.json?ref=${effectiveBranch}`;
+                const keysRes = await fetch(keysGetUrl, {
+                  headers: {
+                    'Authorization': `Bearer ${effectiveToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                  }
+                });
+                if (keysRes.ok) {
+                  const keysData = await keysRes.json();
+                  const rawKeysText = decodeURIComponent(escape(atob(keysData.content.replace(/\s/g, ''))));
+                  const keysObj = JSON.parse(rawKeysText);
+                  const targetKeyObj = (keysObj.keys || []).find(k => k.key.toUpperCase() === currentKey);
+                  if (targetKeyObj && !targetKeyObj.boundUsername) {
+                    targetKeyObj.boundUsername = cleanUser;
+                    targetKeyObj.boundAt = new Date().toISOString();
+                    await putGitHubFile(
+                      'access-keys.json',
+                      JSON.stringify(keysObj, null, 2),
+                      `🔒 Khóa vĩnh viễn Key ${currentKey} cho @${cleanUser}`
+                    );
+                  }
+                }
+              } catch (eKeySync) {
+                console.warn('Lỗi ghi khóa key vào access-keys.json trên GitHub:', eKeySync);
+              }
 
               syncedToGithub = true;
             } catch (errGh) {
@@ -3433,19 +3501,40 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                           <span className="flex items-center gap-1.5">
                             <i className="fa-solid fa-user-tag text-pink-400"></i> Username Locket:
                           </span>
-                          <span className="text-[10px] text-slate-400 font-normal">Không kèm @</span>
+                          {isUsernameLocked ? (
+                            <span className="text-[10px] text-emerald-400 font-extrabold flex items-center gap-1 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                              <i className="fa-solid fa-lock text-[9px]"></i> ĐÃ KHÓA CHÍNH CHỦ
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-amber-300 font-bold flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                              <i className="fa-solid fa-triangle-exclamation text-[9px]"></i> Khóa cứng sau khi tạo
+                            </span>
+                          )}
                         </label>
                         <input 
                           type="text"
                           value={ghCustomerUsername}
-                          onChange={(e) => setGhCustomerUsername(e.target.value)}
+                          disabled={isUsernameLocked}
+                          readOnly={isUsernameLocked}
+                          onChange={(e) => !isUsernameLocked && setGhCustomerUsername(e.target.value)}
                           placeholder="VD: thaocute, hoanglong..."
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-semibold focus:outline-none focus:border-pink-500 transition shadow-inner"
+                          className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold focus:outline-none transition shadow-inner ${
+                            isUsernameLocked 
+                              ? 'bg-slate-900/90 border-emerald-500/40 text-emerald-400 font-mono cursor-not-allowed select-none' 
+                              : 'bg-slate-900 border-white/15 text-white focus:border-pink-500'
+                          }`}
                         />
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-2">
-                        Tạo file: <code className="text-pink-400 font-mono text-[9px] font-bold">modules/locket60s-{ghCustomerUsername.trim() || 'user'}.sgmodule</code>
-                      </p>
+                      {isUsernameLocked ? (
+                        <p className="text-[10px] text-emerald-400/90 mt-2 flex items-center gap-1 font-medium">
+                          <i className="fa-solid fa-shield-halved text-emerald-400"></i> Key này đã khóa vĩnh viễn với <b>@{ghCustomerUsername}</b> (Không cho chỉnh sửa).
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-amber-300/90 mt-2 leading-relaxed flex items-start gap-1">
+                          <i className="fa-solid fa-circle-exclamation text-amber-400 mt-0.5 flex-shrink-0"></i>
+                          <span><b>Lưu ý:</b> Username sẽ được <b>khóa cứng vĩnh viễn</b> vào Key sau lần xác nhận đầu tiên. Không thể đổi cho người khác!</span>
+                        </p>
+                      )}
                     </div>
 
                     <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
