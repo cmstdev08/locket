@@ -5,12 +5,33 @@
 ---
 
 ## 📌 MỤC LỤC
-1. [Hướng Dẫn Đổi Code Sang Repo Mới](#1-hướng-dẫn-đổi-code-sang-repo-mới)
-2. [Quản Lý & Cấp Mã Access Key Cho Khách](#2-quản-lý--cấp-mã-access-key-cho-khách)
-3. [Cấu Hình Bot Telegram Nhận Đơn Hàng & Bill](#3-cấu-hình-bot-telegram-nhận-đơn-hàng--bill)
-4. [Cơ Chế Chống Share File (Khóa UID Máy Khách)](#4-cơ-chế-chống-share-file-khóa-uid-máy-khách)
-5. [Cổng Thanh Toán QR & Bảng Giá](#5-cổng-thanh-toán-qr--bảng-giá)
-6. [Lưu Ý Quan Trọng Khi Đẩy Code (Git Push)](#6-lưu-ý-quan-trọng-khi-đẩy-code-git-push)
+1. [Bảng Điều Khiển Quản Trị Trực Quan (/admin)](#-bảng-điều-khiển-quản-trị-trực-quan-admin)
+2. [Hướng Dẫn Đổi Code Sang Repo Mới](#1-hướng-dẫn-đổi-code-sang-repo-mới)
+3. [Quản Lý & Cấp Mã Access Key Cho Khách](#2-quản-lý--cấp-mã-access-key-cho-khách)
+4. [Cấu Hình Bot Telegram Nhận Đơn Hàng & Bill](#3-cấu-hình-bot-telegram-nhận-đơn-hàng--bill)
+5. [Cơ Chế Chống Share File (Khóa UID Máy Khách)](#4-cơ-chế-chống-share-file-khóa-uid-máy-khách)
+6. [Cổng Thanh Toán QR & Bảng Giá](#5-cổng-thanh-toán-qr--bảng-giá)
+7. [Lưu Ý Quan Trọng Khi Đẩy Code (Git Push)](#6-lưu-ý-quan-trọng-khi-đẩy-code-git-push)
+
+---
+
+## 👑 BẢNG ĐIỀU KHIỂN QUẢN TRỊ TRỰC QUAN (/admin)
+
+Bạn có thể quản lý toàn bộ hệ thống bằng giao diện đồ họa trực quan tại đường dẫn:
+👉 **`https://tên-miền-của-bạn/admin`** *(hoặc file `admin.html`)*
+
+### 🔐 Thông tin đăng nhập mặc định:
+- **Tài khoản:** `anhtuaan08`
+- **Mật khẩu:** `admin2026@anhtuan`
+*(Bạn có thể đổi mật khẩu bất kỳ lúc nào tại tab "Cấu Hình & Token" bên trong trang Admin).*
+
+### 🚀 Toàn bộ tính năng trong trang Admin:
+1. **Quản lý Access Keys:** Thêm key mới, khóa cứng Username cho từng khách, cấp quyền Master, sửa/xóa key và tìm kiếm nhanh.
+2. **Ngân hàng & Thanh toán QR:** Đổi số tài khoản VCB, số MoMo, tên chủ tài khoản — QR code trên toàn bộ web khách tự động đổi theo!
+3. **Gói Bán & Khóa / Mở Khóa Bảo Trì:** Bật/tắt bảo trì gói YouTube, Spotify chỉ với 1 click (mở bán lại bất cứ lúc nào); sửa giá bán Flash Sale, giá gốc.
+4. **Mã Giảm Giá (Vouchers):** Thêm mã khuyến mãi (VD: `ANHTUAN20K`), chỉnh số tiền giảm.
+5. **Popup Thông Báo:** Bật/tắt popup chào mừng hoặc thông báo khuyến mãi khi khách truy cập web, xem trước giao diện popup trực tiếp.
+6. **Lưu & Đẩy Lên GitHub Cloud:** Mọi thay đổi bạn chỉnh sửa chỉ cần bấm nút **"LƯU LÊN GITHUB"** là hệ thống tự động ghi thẳng vào file code và commit lên GitHub `master` ngay lập tức!
 
 ---
 

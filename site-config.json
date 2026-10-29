@@ -1,0 +1,149 @@
+{
+  "adminCredentials": {
+    "username": "anhtuaan08",
+    "password": "admin2026@anhtuan"
+  },
+  "bankConfig": {
+    "bankNumber": "7898376962",
+    "bankName": "Vietcombank",
+    "bankOwner": "TRAN VAN ANH TUAN",
+    "momoNumber": "0898376962",
+    "paypalUrl": "https://paypal.me/anhtuaan"
+  },
+  "contactConfig": {
+    "adminTelegram": "https://t.me/anhtuaan",
+    "adminInstagram": "https://www.instagram.com/anhtuaan.08",
+    "adminZalo": "https://zalo.me/0898376962",
+    "hotline": "0898.376.962"
+  },
+  "telegramConfig": {
+    "telegramBotToken": "",
+    "telegramChatId": ""
+  },
+  "githubConfig": {
+    "defaultGhRepo": "cmstdev08/locket",
+    "defaultGhBranch": "master",
+    "defaultGhToken": ""
+  },
+  "popupConfig": {
+    "enabled": false,
+    "title": "🎉 CHÀO MỪNG ĐẾN VỚI ANH TUẤN iOS!",
+    "badge": "THÔNG BÁO QUAN TRỌNG",
+    "content": "Gói Locket 60s VIP vĩnh viễn đang mở bán với giá ưu đãi đặc biệt! Chúc bạn có trải nghiệm tuyệt vời.",
+    "btnText": "Xem Chi Tiết Ngay",
+    "btnLink": "#pricing"
+  },
+  "packages": [
+    {
+      "id": "locket-gold-free",
+      "name": "Locket Gold Basic",
+      "tag": "Cấu hình Miễn Phí",
+      "badgeColor": "from-amber-400 to-yellow-500",
+      "price": "0đ",
+      "priceNum": 0,
+      "originalPrice": "99.000đ",
+      "isFree": true,
+      "isPopular": false,
+      "isMaintenance": false,
+      "desc": "Sử dụng cấu hình ShadowRocket miễn phí, mở khóa các tính năng Gold tiêu chuẩn.",
+      "features": [
+        "Chụp ảnh không giới hạn với bạn bè",
+        "Biểu tượng Locket Gold viền vàng",
+        "Tùy chỉnh Widget màn hình chính",
+        "Cài đặt trực tiếp qua ShadowRocket",
+        "File cấu hình duy trì DNS vĩnh viễn"
+      ],
+      "icon": "fa-lock",
+      "btnText": "Lấy Cấu Hình Ngay"
+    },
+    {
+      "id": "youtube-premium",
+      "name": "Gói YouTube Premium VIP",
+      "tag": "BẢO TRÌ VÔ THỜI HẠN 🔒",
+      "badgeColor": "from-slate-600 to-slate-700",
+      "price": "49.000đ",
+      "priceNum": 49000,
+      "originalPrice": "120.000đ",
+      "isFree": false,
+      "isPopular": false,
+      "isMaintenance": true,
+      "desc": "Cấu hình ShadowRocket YouTube hiện đang tạm ngưng bảo trì vô thời hạn. Quý khách vui lòng tham khảo Gói Locket 60s VIP đang mở bán.",
+      "features": [
+        "Chặn sạch 100% quảng cáo video và banner YouTube",
+        "Phát nhạc & video trong nền (Tắt màn hình)",
+        "Hình trong hình (Picture-in-Picture / PiP)",
+        "Trạng thái: 🔒 Tạm khóa bảo trì vô thời hạn"
+      ],
+      "icon": "fa-brands fa-youtube",
+      "btnText": "TẠM NGƯNG BÁN (ĐANG BẢO TRÌ)"
+    },
+    {
+      "id": "locket-60s",
+      "name": "Gói Locket 60s VIP (Vĩnh Viễn)",
+      "tag": "ĐANG MỞ BÁN • VĨNH VIỄN TRỌN ĐỜI 🔥",
+      "badgeColor": "from-fuchsia-500 via-pink-500 to-amber-400",
+      "price": "500.000đ",
+      "priceNum": 500000,
+      "originalPrice": "999.000đ",
+      "isFree": false,
+      "isPopular": true,
+      "isMaintenance": false,
+      "desc": "Bản nâng cấp độc quyền: Sử dụng VĨNH VIỄN TRỌN ĐỜI, quay & đăng video 60 giây (1 phút) + Mở khóa Khung Caption Custom đặc quyền!",
+      "features": [
+        "Sở hữu và sử dụng VĨNH VIỄN trọn đời (Không lo gia hạn)",
+        "Quay & đăng video Locket tối đa 60 giây (1 Phút)",
+        "ĐẶC QUYỀN: Khung Caption Custom độc quyền (đổi màu, icon, font cá nhân)",
+        "Tích hợp Module script locket60s độc quyền của Anh Tuấn",
+        "Chứng chỉ DNS duy trì riêng biệt vĩnh viễn",
+        "Không giật lag, giữ trọn chất lượng âm thanh & hình ảnh HD",
+        "Hỗ trợ cài đặt từ A-Z đến khi dùng được",
+        "Bảo hành trọn đời & cập nhật miễn phí khi Locket đổi thuật toán"
+      ],
+      "icon": "fa-crown",
+      "btnText": "Mua Gói 60s Vĩnh Viễn"
+    },
+    {
+      "id": "allinone-super-vip",
+      "name": "Super Combo All-In-One",
+      "tag": "BẢO TRÌ YOUTUBE & SPOTIFY 🔒",
+      "badgeColor": "from-slate-600 to-slate-700",
+      "price": "139.000đ",
+      "priceNum": 139000,
+      "originalPrice": "350.000đ",
+      "isFree": false,
+      "isPopular": false,
+      "isMaintenance": true,
+      "desc": "Do YouTube và Spotify đang tạm ngưng bảo trì vô thời hạn, gói Super Combo tạm dừng cung cấp.",
+      "features": [
+        "Gồm đầy đủ toàn bộ tính năng Locket Gold",
+        "Trạng thái: 🔒 Tạm khóa bảo trì vô thời hạn"
+      ],
+      "icon": "fa-wand-magic-sparkles",
+      "btnText": "TẠM NGƯNG BÁN (ĐANG BẢO TRÌ)"
+    },
+    {
+      "id": "spotify-premium",
+      "name": "Gói Spotify Premium",
+      "tag": "BẢO TRÌ VÔ THỜI HẠN 🔒",
+      "badgeColor": "from-slate-600 to-slate-700",
+      "price": "39.000đ",
+      "priceNum": 39000,
+      "originalPrice": "99.000đ",
+      "isFree": false,
+      "isPopular": false,
+      "isMaintenance": true,
+      "desc": "Cấu hình ShadowRocket Spotify hiện đang tạm ngưng bảo trì vô thời hạn.",
+      "features": [
+        "Nghe nhạc chất lượng cao Very High 320kbps",
+        "Chặn mọi quảng cáo audio và banner chen ngang",
+        "Trạng thái: 🔒 Tạm khóa bảo trì vô thời hạn"
+      ],
+      "icon": "fa-brands fa-spotify",
+      "btnText": "TẠM NGƯNG BÁN (ĐANG BẢO TRÌ)"
+    }
+  ],
+  "vouchers": [
+    { "code": "ANHTUAN20K", "discount": 20000, "desc": "Giảm ngay 20.000đ áp dụng cho gói 60s VIP" },
+    { "code": "VIP60S", "discount": 50000, "desc": "Giảm sốc 50.000đ cho khách hàng VIP" }
+  ]
+}

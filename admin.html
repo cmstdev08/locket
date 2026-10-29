@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#030509">
+  <title>Anh Tuấn iOS | Bảng Điều Khiển Quản Trị Hệ Thống (Admin Portal)</title>
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Fonts & Icons -->
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue: '#38bdf8',
+              indigo: '#818cf8',
+              purple: '#a855f7',
+              pink: '#ec4899',
+              gold: '#fbbf24',
+              green: '#22c55e',
+              dark: '#030509',
+              card: 'rgba(15, 23, 42, 0.75)'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- React 18 & Babel CDN (Cloudflare CDN Edge) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.0/babel.min.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #030509;
+      --text-main: #f8fafc;
+      --glass-bg: rgba(15, 23, 42, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+    }
+    .glass-card-hover {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.2);
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.5); }
+  </style>
+</head>
+<body class="bg-[#030509] text-slate-100 antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- React Root Container -->
+  <div id="root">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#030509;color:#fff;font-family:sans-serif;">
+      <div style="width:50px;height:50px;border:3px solid rgba(16,185,129,0.2);border-top-color:#10b981;border-radius:50%;animation:atSpin 0.75s linear infinite;"></div>
+      <p style="margin-top:16px;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;">Đang nạp Bảng Quản Trị...</p>
+    </div>
+    <style>@keyframes atSpin{to{transform:rotate(360deg)}}</style>
+  </div>
+
+  <!-- React Babel Script -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    const DEFAULT_CONFIG = {
+      adminCredentials: { username: "anhtuaan08", password: "admin2026@anhtuan" },
+      bankConfig: {
+        bankNumber: "7898376962",
+        bankName: "Vietcombank",
+        bankOwner: "TRAN VAN ANH TUAN",
+        momoNumber: "0898376962",
+        paypalUrl: "https://paypal.me/anhtuaan"
+      },
+      contactConfig: {
+        adminTelegram: "https://t.me/anhtuaan",
+        adminInstagram: "https://www.instagram.com/anhtuaan.08",
+        adminZalo: "https://zalo.me/0898376962",
+        hotline: "0898.376.962"
+      },
+      telegramConfig: { telegramBotToken: "", telegramChatId: "" },
+      githubConfig: { defaultGhRepo: "cmstdev08/locket", defaultGhBranch: "master", defaultGhToken: "" },
+      popupConfig: {
+        enabled: false,
+        title: "🎉 THÔNG BÁO TỪ ANH TUẤN iOS",
+        badge: "TIN NÓNG",
+        content: "Gói Locket 60s VIP vĩnh viễn đang mở bán với giá ưu đãi! Chúc bạn có trải nghiệm tuyệt vời.",
+        btnText: "Xem Ngay",
+        btnLink: "#pricing"
+      },
+      packages: [],
+      vouchers: []
+    };
+
+    function AdminApp() {
+      // Auth State
+      const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        return sessionStorage.getItem('at_admin_auth') === 'true' || localStorage.getItem('at_admin_auth') === 'true';
+      });
+      const [loginUser, setLoginUser] = useState('');
+      const [loginPass, setLoginPass] = useState('');
+      const [rememberMe, setRememberMe] = useState(true);
+      const [loginError, setLoginError] = useState('');
+
+      // Active Tab State
+      const [activeTab, setActiveTab] = useState('keys'); // 'keys', 'bank', 'packages', 'vouchers', 'popup', 'system'
+
+      // Data State
+      const [config, setConfig] = useState(DEFAULT_CONFIG);
+      const [keysData, setKeysData] = useState({ adminMasterKey: 'ANHTUAN_ADMIN_2026', keys: [] });
+      const [loading, setLoading] = useState(true);
+      const [saving, setSaving] = useState(false);
+      const [toast, setToast] = useState({ show: false, text: '', icon: 'fa-check' });
+
+      // Key Management Filter & Modal State
+      const [keySearch, setKeySearch] = useState('');
+      const [editingKey, setEditingKey] = useState(null); // null or key object
+      const [showKeyModal, setShowKeyModal] = useState(false);
+
+      // Voucher Management Modal State
+      const [showVoucherModal, setShowVoucherModal] = useState(false);
+      const [editingVoucher, setEditingVoucher] = useState(null);
+
+      const showToast = (text, icon = 'fa-circle-check') => {
+        setToast({ show: true, text, icon });
+        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+      };
+
+      // Load Config & Keys on mount
+      useEffect(() => {
+        const loadAllData = async () => {
+          setLoading(true);
+          try {
+            // 1. Fetch site-config.json
+            let loadedCfg = null;
+            try {
+              const resCfg = await fetch('./site-config.json?_t=' + Date.now());
+              if (resCfg.ok) loadedCfg = await resCfg.json();
+            } catch (_) {}
+            if (!loadedCfg) {
+              const savedLocal = localStorage.getItem('at_site_config');
+              if (savedLocal) {
+                try { loadedCfg = JSON.parse(savedLocal); } catch(_) {}
+              }
+            }
+            if (loadedCfg) {
+              // Gộp token từ localStorage nếu có
+              const savedGhToken = localStorage.getItem('at_gh_token');
+              const savedTeleToken = localStorage.getItem('at_tele_token');
+              const savedTeleChat = localStorage.getItem('at_tele_chat_id');
+              if (savedGhToken && !loadedCfg.githubConfig.defaultGhToken) {
+                loadedCfg.githubConfig.defaultGhToken = savedGhToken;
+              }
+              if (savedTeleToken && !loadedCfg.telegramConfig.telegramBotToken) {
+                loadedCfg.telegramConfig.telegramBotToken = savedTeleToken;
+              }
+              if (savedTeleChat && !loadedCfg.telegramConfig.telegramChatId) {
+                loadedCfg.telegramConfig.telegramChatId = savedTeleChat;
+              }
+              setConfig(loadedCfg);
+            }
+
+            // 2. Fetch access-keys.json
+            let loadedKeys = null;
+            try {
+              const resKeys = await fetch('./access-keys.json?_t=' + Date.now());
+              if (resKeys.ok) loadedKeys = await resKeys.json();
+            } catch (_) {}
+            if (loadedKeys) {
+              setKeysData(loadedKeys);
+            }
+          } catch (err) {
+            console.error('Error loading data:', err);
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        loadAllData();
+      }, []);
+
+      // Handle Login
+      const handleLogin = (e) => {
+        e.preventDefault();
+        setLoginError('');
+        const validUser = config?.adminCredentials?.username || 'anhtuaan08';
+        const validPass = config?.adminCredentials?.password || 'admin2026@anhtuan';
+
+        if (loginUser.trim() === validUser && loginPass === validPass) {
+          setIsLoggedIn(true);
+          if (rememberMe) localStorage.setItem('at_admin_auth', 'true');
+          sessionStorage.setItem('at_admin_auth', 'true');
+          showToast('Đăng nhập thành công! Chào mừng Boss Anh Tuấn.', 'fa-crown');
+        } else {
+          setLoginError('Tài khoản hoặc mật khẩu không chính xác!');
+        }
+      };
+
+      // Handle Logout
+      const handleLogout = () => {
+        setIsLoggedIn(false);
+        sessionStorage.removeItem('at_admin_auth');
+        localStorage.removeItem('at_admin_auth');
+        showToast('Đã đăng xuất khỏi trang quản trị!', 'fa-arrow-right-from-bracket');
+      };
+
+      // GitHub Commit Helper
+      const commitFileToGitHub = async (token, repo, branch, path, contentStr, commitMsg) => {
+        const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
+        let sha = undefined;
+        try {
+          const checkRes = await fetch(getUrl, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            sha = checkData.sha;
+          }
+        } catch (_) {}
+
+        const putUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+        const b64 = btoa(unescape(encodeURIComponent(contentStr)));
+        const bodyPayload = {
+          message: commitMsg,
+          content: b64,
+          branch: branch
+        };
+        if (sha) bodyPayload.sha = sha;
+
+        const res = await fetch(putUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/vnd.github.v3+json'
+          },
+          body: JSON.stringify(bodyPayload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || `Lỗi HTTP ${res.status}`);
+        }
+        return true;
+      };
+
+      // Save & Sync All Changes directly to GitHub Cloud
+      const handleSaveAndSyncGitHub = async () => {
+        setSaving(true);
+        const token = (config.githubConfig.defaultGhToken || localStorage.getItem('at_gh_token') || '').trim();
+        const repo = (config.githubConfig.defaultGhRepo || 'cmstdev08/locket').trim();
+        const branch = (config.githubConfig.defaultGhBranch || 'master').trim();
+
+        // 1. Lưu tạm vào LocalStorage trước
+        localStorage.setItem('at_site_config', JSON.stringify(config));
+        if (token) localStorage.setItem('at_gh_token', token);
+        if (config.telegramConfig.telegramBotToken) localStorage.setItem('at_tele_token', config.telegramConfig.telegramBotToken);
+        if (config.telegramConfig.telegramChatId) localStorage.setItem('at_tele_chat_id', config.telegramConfig.telegramChatId);
+
+        if (!token) {
+          showToast('Đã lưu cục bộ! Nhập GitHub Token ở tab Cấu Hình để đẩy thẳng lên GitHub Cloud.', 'fa-circle-exclamation');
+          setSaving(false);
+          return;
+        }
+
+        try {
+          // 2. Commit site-config.json
+          await commitFileToGitHub(
+            token, repo, branch,
+            'site-config.json',
+            JSON.stringify(config, null, 2),
+            `⚙️ Admin Cập Nhật Cấu Hình Website: ${new Date().toLocaleString('vi-VN')}`
+          );
+
+          // 3. Commit access-keys.json
+          await commitFileToGitHub(
+            token, repo, branch,
+            'access-keys.json',
+            JSON.stringify(keysData, null, 2),
+            `🔑 Admin Cập Nhật Danh Sách Access Keys: ${new Date().toLocaleString('vi-VN')}`
+          );
+
+          showToast('🎉 Tuyệt vời! Đã đồng bộ và lưu toàn bộ lên GitHub Cloud thành công!', 'fa-cloud-arrow-up');
+        } catch (err) {
+          console.error('Lỗi khi đẩy GitHub:', err);
+          showToast(`Lỗi khi đẩy GitHub: ${err.message}. Đã lưu tạm trên máy.`, 'fa-triangle-exclamation');
+        } finally {
+          setSaving(false);
+        }
+      };
+
+      // Key Helpers
+      const filteredKeys = useMemo(() => {
+        const q = keySearch.trim().toLowerCase();
+        if (!q) return keysData.keys || [];
+        return (keysData.keys || []).filter(k => 
+          (k.key || '').toLowerCase().includes(q) ||
+          (k.owner || '').toLowerCase().includes(q) ||
+          (k.boundUsername || '').toLowerCase().includes(q)
+        );
+      }, [keysData.keys, keySearch]);
+
+      const handleSaveKey = (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const keyVal = form.keyVal.value.trim();
+        const ownerVal = form.ownerVal.value.trim() || 'Khách hàng';
+        const boundUserVal = form.boundUserVal.value.trim().replace(/^@/, '').toLowerCase();
+        const maxUsesVal = parseInt(form.maxUsesVal.value, 10) || 100;
+        const expiresVal = form.expiresVal.value || '2099-12-31';
+        const isMasterVal = form.isMasterVal.checked;
+
+        if (!keyVal) {
+          alert('Vui lòng nhập mã Key!');
+          return;
+        }
+
+        const newKeyObj = {
+          key: keyVal,
+          owner: ownerVal,
+          boundUsername: boundUserVal || undefined,
+          allowedFeatures: ["all"],
+          isMaster: isMasterVal ? true : undefined,
+          maxUses: maxUsesVal,
+          usedCount: editingKey ? (editingKey.usedCount || 0) : 0,
+          expiresAt: expiresVal
+        };
+
+        const existingIdx = (keysData.keys || []).findIndex(k => k.key.toUpperCase() === keyVal.toUpperCase());
+        let updatedList = [...(keysData.keys || [])];
+
+        if (existingIdx !== -1) {
+          updatedList[existingIdx] = { ...updatedList[existingIdx], ...newKeyObj };
+        } else {
+          updatedList.unshift(newKeyObj);
+        }
+
+        setKeysData({ ...keysData, keys: updatedList });
+        setShowKeyModal(false);
+        setEditingKey(null);
+        showToast(`Đã lưu Key ${keyVal}! Hãy bấm nút "Lưu Lên GitHub" ở góc trên.`);
+      };
+
+      const handleDeleteKey = (targetKey) => {
+        if (!confirm(`Bạn có chắc chắn muốn XÓA vĩnh viễn Key "${targetKey}" không?`)) return;
+        const updatedList = (keysData.keys || []).filter(k => k.key !== targetKey);
+        setKeysData({ ...keysData, keys: updatedList });
+        showToast(`Đã xóa Key ${targetKey}! Hãy bấm "Lưu Lên GitHub" để hoàn tất.`);
+      };
+
+      const generateRandomKey = () => {
+        const phone = '09' + Math.floor(10000000 + Math.random() * 90000000);
+        return `Locket60s-${phone}`;
+      };
+
+      // Package Toggle Maintenance
+      const handleTogglePackageMaintenance = (pkgId) => {
+        const updatedPkgs = (config.packages || []).map(p => {
+          if (p.id === pkgId) {
+            const nextM = !p.isMaintenance;
+            return {
+              ...p,
+              isMaintenance: nextM,
+              tag: nextM ? 'BẢO TRÌ VÔ THỜI HẠN 🔒' : (p.id === 'locket-60s' ? 'ĐANG MỞ BÁN • VĨNH VIỄN TRỌN ĐỜI 🔥' : 'ĐANG MỞ BÁN 🔥')
+            };
+          }
+          return p;
+        });
+        setConfig({ ...config, packages: updatedPkgs });
+        showToast('Đã đổi trạng thái gói! Bấm "Lưu Lên GitHub" để cập nhật web khách.');
+      };
+
+      // Package Update Price
+      const handleUpdatePackagePrice = (pkgId, newPriceNum, newPriceStr, newOriginalStr) => {
+        const updatedPkgs = (config.packages || []).map(p => {
+          if (p.id === pkgId) {
+            return {
+              ...p,
+              priceNum: newPriceNum,
+              price: newPriceStr,
+              originalPrice: newOriginalStr
+            };
+          }
+          return p;
+        });
+        setConfig({ ...config, packages: updatedPkgs });
+        showToast('Đã cập nhật giá bán mới!');
+      };
+
+      // Voucher Helpers
+      const handleSaveVoucher = (e) => {
+        e.preventDefault();
+        const code = e.target.vCode.value.trim().toUpperCase();
+        const discount = parseInt(e.target.vDiscount.value, 10) || 0;
+        const desc = e.target.vDesc.value.trim() || 'Mã ưu đãi giảm giá';
+        if (!code) return;
+
+        const newVoucher = { code, discount, desc };
+        const list = [...(config.vouchers || [])];
+        const idx = list.findIndex(v => v.code === code);
+        if (idx !== -1) list[idx] = newVoucher;
+        else list.push(newVoucher);
+
+        setConfig({ ...config, vouchers: list });
+        setShowVoucherModal(false);
+        setEditingVoucher(null);
+        showToast(`Đã lưu Voucher ${code}! Bấm "Lưu Lên GitHub" để áp dụng.`);
+      };
+
+      const handleDeleteVoucher = (code) => {
+        if (!confirm(`Xóa mã voucher "${code}"?`)) return;
+        const list = (config.vouchers || []).filter(v => v.code !== code);
+        setConfig({ ...config, vouchers: list });
+        showToast(`Đã xóa voucher ${code}!`);
+      };
+
+      // Test Telegram message
+      const handleTestTelegram = async () => {
+        const botToken = (config.telegramConfig.telegramBotToken || '').trim();
+        const chatId = (config.telegramConfig.telegramChatId || '').trim();
+        if (!botToken || !chatId) {
+          alert('Vui lòng nhập đủ Bot Token và Chat ID trước khi test!');
+          return;
+        }
+        try {
+          const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: `👑 <b>ANH TUẤN iOS - TEST BOT THÀNH CÔNG!</b>\n━━━━━━━━━━━━━━━━━━━━\n✅ Kết nối thành công từ Bảng Quản Trị Admin.\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`,
+              parse_mode: 'HTML'
+            })
+          });
+          const data = await res.json();
+          if (data.ok) {
+            showToast('✅ Đã gửi tin nhắn test thành công về Telegram của bạn!');
+          } else {
+            alert('Lỗi Telegram: ' + (data.description || 'Không gửi được'));
+          }
+        } catch (e) {
+          alert('Lỗi kết nối API Telegram: ' + e.message);
+        }
+      };
+
+      // ========================================================
+      // 1. GIAO DIỆN ĐĂNG NHẬP (NẾU CHƯA ĐĂNG NHẬP)
+      // ========================================================
+      if (!isLoggedIn) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#030509] via-[#0b101b] to-[#030509] relative overflow-hidden">
+            {/* Background glowing orbs */}
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="glass-card max-w-md w-full rounded-3xl p-8 border border-white/10 shadow-2xl relative z-10">
+              <div className="text-center mb-7">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 mx-auto flex items-center justify-center text-2xl text-white shadow-lg shadow-emerald-500/30 mb-4">
+                  <i className="fa-solid fa-shield-halved"></i>
+                </div>
+                <h2 className="text-2xl font-black text-white tracking-tight">ADMIN PORTAL</h2>
+                <p className="text-xs text-slate-400 mt-1">Đăng nhập Bảng Điều Khiển Quản Trị Hệ Thống</p>
+                <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold">
+                  Bản quyền: Anh Tuấn iOS
+                </span>
+              </div>
+
+              {loginError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+                  <i className="fa-solid fa-circle-exclamation flex-shrink-0"></i>
+                  <span>{loginError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1.5 flex items-center gap-1.5">
+                    <i className="fa-solid fa-user text-emerald-400"></i> Tài khoản Admin:
+                  </label>
+                  <input 
+                    type="text"
+                    value={loginUser}
+                    onChange={(e) => setLoginUser(e.target.value)}
+                    placeholder="Nhập tên đăng nhập..."
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1.5 flex items-center gap-1.5">
+                    <i className="fa-solid fa-key text-emerald-400"></i> Mật khẩu:
+                  </label>
+                  <input 
+                    type="password"
+                    value={loginPass}
+                    onChange={(e) => setLoginPass(e.target.value)}
+                    placeholder="Nhập mật khẩu quản trị..."
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input 
+                      type="checkbox" 
+                      checked={rememberMe} 
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="rounded accent-emerald-500" 
+                    />
+                    <span>Ghi nhớ đăng nhập</span>
+                  </label>
+                  <a href="./" className="hover:text-emerald-400 transition flex items-center gap-1">
+                    <i className="fa-solid fa-arrow-left"></i> Về Trang Web
+                  </a>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/25 transition transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+                >
+                  <i className="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập Quản Trị
+                </button>
+              </form>
+
+              <div className="mt-6 pt-4 border-t border-white/5 text-center text-[11px] text-slate-500">
+                Mặc định: <code>anhtuaan08</code> | Mật khẩu: <code>admin2026@anhtuan</code>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // ========================================================
+      // 2. GIAO DIỆN BẢNG ĐIỀU KHIỂN CHÍNH (DASHBOARD)
+      // ========================================================
+      return (
+        <div className="min-h-screen flex flex-col bg-[#030509]">
+          
+          {/* TOP NAVBAR */}
+          <header className="sticky top-0 z-40 glass-card border-b border-white/10 px-4 sm:px-8 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white text-base shadow-md">
+                <i className="fa-solid fa-crown"></i>
+              </div>
+              <div>
+                <h1 className="font-black text-sm text-white flex items-center gap-1.5">
+                  ANH TUẤN iOS <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">ADMIN V2.0</span>
+                </h1>
+                <p className="text-[10px] text-slate-400 hidden sm:block">Bảng điều khiển & Quản trị dữ liệu trực tiếp lên GitHub</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Nút Xem Web */}
+              <a 
+                href="./" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold text-xs border border-white/10 transition flex items-center gap-1.5"
+                title="Mở xem website thực tế"
+              >
+                <i className="fa-solid fa-arrow-up-right-from-square text-[10px] text-emerald-400"></i>
+                <span className="hidden sm:inline">Xem Trang Web</span>
+              </a>
+
+              {/* Nút LƯU & ĐẨY GITHUB */}
+              <button
+                onClick={handleSaveAndSyncGitHub}
+                disabled={saving}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs shadow-md shadow-emerald-500/25 transition flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {saving ? (
+                  <><i className="fa-solid fa-spinner fa-spin"></i> ĐANG ĐỒNG BỘ...</>
+                ) : (
+                  <><i className="fa-solid fa-cloud-arrow-up"></i> <span>LƯU LÊN GITHUB</span></>
+                )}
+              </button>
+
+              {/* Nút Đăng Xuất */}
+              <button
+                onClick={handleLogout}
+                className="w-8 h-8 rounded-xl bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-white/10 flex items-center justify-center transition"
+                title="Đăng xuất"
+              >
+                <i className="fa-solid fa-power-off text-xs"></i>
+              </button>
+            </div>
+          </header>
+
+          {/* MAIN LAYOUT WITH TABS */}
+          <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row gap-6">
+            
+            {/* SIDEBAR TABS */}
+            <aside className="w-full md:w-64 flex-shrink-0">
+              <div className="glass-card rounded-2xl p-2.5 border border-white/10 space-y-1 sticky top-20">
+                {[
+                  { id: 'keys', label: 'Quản Lý Access Keys', icon: 'fa-key', count: (keysData.keys || []).length },
+                  { id: 'bank', label: 'Ngân Hàng & QR', icon: 'fa-qrcode' },
+                  { id: 'packages', label: 'Gói Bán & Bảo Trì', icon: 'fa-box-archive' },
+                  { id: 'vouchers', label: 'Mã Giảm Giá', icon: 'fa-ticket', count: (config.vouchers || []).length },
+                  { id: 'popup', label: 'Popup Thông Báo', icon: 'fa-bullhorn', active: config.popupConfig?.enabled },
+                  { id: 'system', label: 'Cấu Hình & Token', icon: 'fa-sliders' }
+                ].map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveTab(t.id)}
+                    className={`w-full px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between transition ${
+                      activeTab === t.id
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <i className={`fa-solid ${t.icon} text-sm ${activeTab === t.id ? 'text-emerald-400' : 'text-slate-400'}`}></i>
+                      <span>{t.label}</span>
+                    </span>
+                    {t.count !== undefined && (
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">
+                        {t.count}
+                      </span>
+                    )}
+                    {t.active && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    )}
+                  </button>
+                ))}
+
+                <div className="pt-3 mt-2 border-t border-white/5 px-2">
+                  <div className="text-[10px] text-slate-500">
+                    <p>Admin: <span className="text-emerald-400 font-bold">@{config.adminCredentials?.username || 'anhtuaan08'}</span></p>
+                    <p className="mt-0.5">Repo: <code className="text-slate-400">{config.githubConfig.defaultGhRepo}</code></p>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            {/* TAB CONTENT AREA */}
+            <main className="flex-1 min-w-0">
+              
+              {/* ======================================================== */}
+              {/* TAB 1: QUẢN LÝ ACCESS KEYS (access-keys.json) */}
+              {/* ======================================================== */}
+              {activeTab === 'keys' && (
+                <div className="space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-black text-white flex items-center gap-2">
+                        <i className="fa-solid fa-key text-emerald-400"></i> QUẢN LÝ ACCESS KEYS
+                      </h2>
+                      <p className="text-xs text-slate-400">Khóa 1 Key = 1 Username vĩnh viễn, quản lý lượt dùng và cấp quyền VIP</p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setEditingKey(null);
+                        setShowKeyModal(true);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xs shadow-md shadow-emerald-500/20 transition flex items-center justify-center gap-1.5 self-start sm:self-auto"
+                    >
+                      <i className="fa-solid fa-plus"></i> Thêm Key Mới
+                    </button>
+                  </div>
+
+                  {/* Summary & Search Box */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="glass-card rounded-2xl p-3.5 border border-white/10">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase">Tổng số Key:</span>
+                      <p className="text-xl font-black text-white mt-1">{(keysData.keys || []).length}</p>
+                    </div>
+                    <div className="glass-card rounded-2xl p-3.5 border border-white/10">
+                      <span className="text-[10px] text-emerald-400 font-bold uppercase">Đã Khóa Username:</span>
+                      <p className="text-xl font-black text-emerald-400 mt-1">
+                        {(keysData.keys || []).filter(k => k.boundUsername).length}
+                      </p>
+                    </div>
+                    <div className="glass-card rounded-2xl p-3.5 border border-white/10">
+                      <span className="text-[10px] text-amber-400 font-bold uppercase">Master Quyền Tối Thượng:</span>
+                      <p className="text-xl font-black text-amber-400 mt-1">
+                        {(keysData.keys || []).filter(k => k.isMaster).length}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Search bar */}
+                  <div className="relative">
+                    <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input 
+                      type="text"
+                      value={keySearch}
+                      onChange={(e) => setKeySearch(e.target.value)}
+                      placeholder="Tìm kiếm theo mã Key, Tên khách hoặc Username đã khóa..."
+                      className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                    />
+                  </div>
+
+                  {/* Key Table List */}
+                  <div className="glass-card rounded-2xl border border-white/10 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-900/80 text-slate-400 border-b border-white/10 font-bold text-[10px] uppercase tracking-wider">
+                          <tr>
+                            <th className="py-3 px-3.5">Mã Access Key</th>
+                            <th className="py-3 px-3.5">Chủ Sở Hữu (Owner)</th>
+                            <th className="py-3 px-3.5">Khóa Username</th>
+                            <th className="py-3 px-3.5">Lượt Dùng</th>
+                            <th className="py-3 px-3.5">Hạn Dùng</th>
+                            <th className="py-3 px-3.5 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {filteredKeys.length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="py-8 text-center text-slate-500">
+                                Không tìm thấy Key nào phù hợp!
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredKeys.map((k, idx) => (
+                              <tr key={idx} className="hover:bg-white/[0.02] transition">
+                                <td className="py-3 px-3.5 font-mono font-bold text-white flex items-center gap-2">
+                                  <span>{k.key}</span>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(k.key);
+                                      showToast(`Đã copy ${k.key}!`);
+                                    }}
+                                    className="text-slate-500 hover:text-emerald-400 transition"
+                                    title="Copy Key"
+                                  >
+                                    <i className="fa-regular fa-copy text-[10px]"></i>
+                                  </button>
+                                  {k.isMaster && (
+                                    <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold text-[9px] border border-amber-500/30">
+                                      👑 Master
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3.5 text-slate-300 font-medium">
+                                  {k.owner || 'Khách'}
+                                </td>
+                                <td className="py-3 px-3.5">
+                                  {k.boundUsername ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold">
+                                      <i className="fa-solid fa-lock text-[8px]"></i> @{k.boundUsername}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-500 text-[10px] italic">Chưa kích hoạt</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3.5 font-mono text-slate-400 text-[11px]">
+                                  {k.usedCount || 0} / {k.maxUses || 100}
+                                </td>
+                                <td className="py-3 px-3.5 font-mono text-slate-400 text-[11px]">
+                                  {k.expiresAt || '2099-12-31'}
+                                </td>
+                                <td className="py-3 px-3.5 text-right space-x-1">
+                                  <button
+                                    onClick={() => {
+                                      setEditingKey(k);
+                                      setShowKeyModal(true);
+                                    }}
+                                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition"
+                                    title="Sửa Key"
+                                  >
+                                    <i className="fa-solid fa-pen-to-square text-[11px]"></i>
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteKey(k.key)}
+                                    className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition"
+                                    title="Xóa Key"
+                                  >
+                                    <i className="fa-solid fa-trash text-[11px]"></i>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* TAB 2: NGÂN HÀNG & THANH TOÁN (bankConfig) */}
+              {/* ======================================================== */}
+              {activeTab === 'bank' && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-lg font-black text-white flex items-center gap-2">
+                      <i className="fa-solid fa-qrcode text-emerald-400"></i> CẤU HÌNH NGÂN HÀNG & THANH TOÁN
+                    </h2>
+                    <p className="text-xs text-slate-400">Thay đổi thông tin nhận tiền Vietcombank, MoMo, PayPal và xem trước mã QR</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    {/* Form Input */}
+                    <div className="lg:col-span-7 glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+                      <div>
+                        <label className="text-xs font-bold text-slate-300 block mb-1">Tên Chủ Tài Khoản (In Hoa Không Dấu):</label>
+                        <input 
+                          type="text"
+                          value={config.bankConfig.bankOwner}
+                          onChange={(e) => setConfig({ ...config, bankConfig: { ...config.bankConfig, bankOwner: e.target.value.toUpperCase() } })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono font-bold focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-slate-300 block mb-1">Số Tài Khoản Vietcombank:</label>
+                          <input 
+                            type="text"
+                            value={config.bankConfig.bankNumber}
+                            onChange={(e) => setConfig({ ...config, bankConfig: { ...config.bankConfig, bankNumber: e.target.value } })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono font-bold focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-slate-300 block mb-1">Tên Ngân Hàng:</label>
+                          <input 
+                            type="text"
+                            value={config.bankConfig.bankName}
+                            onChange={(e) => setConfig({ ...config, bankConfig: { ...config.bankConfig, bankName: e.target.value } })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-slate-300 block mb-1">Số Ví MoMo:</label>
+                          <input 
+                            type="text"
+                            value={config.bankConfig.momoNumber}
+                            onChange={(e) => setConfig({ ...config, bankConfig: { ...config.bankConfig, momoNumber: e.target.value } })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono font-bold focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-slate-300 block mb-1">Link PayPal:</label>
+                          <input 
+                            type="text"
+                            value={config.bankConfig.paypalUrl}
+                            onChange={(e) => setConfig({ ...config, bankConfig: { ...config.bankConfig, paypalUrl: e.target.value } })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 text-[11px] text-slate-400">
+                        💡 Lưu ý: Khi bạn sửa các ô trên và bấm <b>"LƯU LÊN GITHUB"</b>, mã VietQR và MoMo QR trên toàn bộ website của khách hàng sẽ tự động cập nhật ngay lập tức!
+                      </div>
+                    </div>
+
+                    {/* QR Live Preview */}
+                    <div className="lg:col-span-5 glass-card rounded-2xl p-5 border border-white/10 flex flex-col items-center justify-center text-center">
+                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3">XEM TRƯỚC VIETQR TỰ ĐỘNG</span>
+                      <div className="w-48 h-48 rounded-2xl bg-white p-2 flex items-center justify-center shadow-lg border border-emerald-500/30">
+                        <img 
+                          src={`https://img.vietqr.io/image/${config.bankConfig.bankName}-${config.bankConfig.bankNumber}-compact2.png?amount=500000&accountName=${encodeURIComponent(config.bankConfig.bankOwner)}`}
+                          alt="VietQR Preview"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <p className="mt-3 text-xs font-mono font-bold text-white">{config.bankConfig.bankNumber} ({config.bankConfig.bankName})</p>
+                      <p className="text-[11px] font-bold text-emerald-400">{config.bankConfig.bankOwner}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* TAB 3: GÓI BÁN & BẢO TRÌ (packages) */}
+              {/* ======================================================== */}
+              {activeTab === 'packages' && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-lg font-black text-white flex items-center gap-2">
+                      <i className="fa-solid fa-box-archive text-emerald-400"></i> QUẢN LÝ GÓI BÁN & BẢO TRÌ
+                    </h2>
+                    <p className="text-xs text-slate-400">Bật/tắt bảo trì gói YouTube, Spotify hoặc sửa đổi giá bán Flash Sale</p>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    {(config.packages || []).map((pkg) => (
+                      <div key={pkg.id} className="glass-card rounded-2xl p-4 border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-start gap-3.5">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl text-white flex-shrink-0 ${pkg.isMaintenance ? 'bg-slate-800 text-slate-500' : 'bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-md'}`}>
+                            <i className={pkg.icon || 'fa-solid fa-cube'}></i>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-extrabold text-sm text-white">{pkg.name}</h4>
+                              {pkg.isMaintenance ? (
+                                <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-[9px] font-bold">
+                                  🔒 Đang Bảo Trì
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold">
+                                  ✅ Đang Mở Bán
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{pkg.desc}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs font-black text-emerald-400 font-mono">{pkg.price}</span>
+                              <span className="text-[10px] text-slate-500 line-through font-mono">{pkg.originalPrice}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Controls */}
+                        <div className="flex flex-wrap items-center gap-2 border-t md:border-t-0 pt-3 md:pt-0 border-white/5">
+                          {/* Toggle Maintenance Button */}
+                          <button
+                            onClick={() => handleTogglePackageMaintenance(pkg.id)}
+                            className={`px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition ${
+                              pkg.isMaintenance
+                                ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30'
+                            }`}
+                          >
+                            <i className={`fa-solid ${pkg.isMaintenance ? 'fa-lock-open' : 'fa-lock'}`}></i>
+                            <span>{pkg.isMaintenance ? 'Mở Bán Lại' : 'Khóa Bảo Trì'}</span>
+                          </button>
+
+                          {/* Quick Price Editor */}
+                          <button
+                            onClick={() => {
+                              const newP = prompt(`Nhập số tiền bán mới cho ${pkg.name} (chỉ số, VD: 450000):`, pkg.priceNum);
+                              if (newP !== null && !isNaN(parseInt(newP, 10))) {
+                                const num = parseInt(newP, 10);
+                                const fmt = num.toLocaleString('vi-VN') + 'đ';
+                                const orig = prompt('Nhập giá gạch ngang (VD: 999.000đ):', pkg.originalPrice) || pkg.originalPrice;
+                                handleUpdatePackagePrice(pkg.id, num, fmt, orig);
+                              }
+                            }}
+                            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-bold text-xs border border-white/10 transition flex items-center gap-1"
+                          >
+                            <i className="fa-solid fa-tag text-amber-400"></i> Đổi Giá
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* TAB 4: MÃ GIẢM GIÁ (vouchers) */}
+              {/* ======================================================== */}
+              {activeTab === 'vouchers' && (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-black text-white flex items-center gap-2">
+                        <i className="fa-solid fa-ticket text-emerald-400"></i> QUẢN LÝ MÃ GIẢM GIÁ (VOUCHER)
+                      </h2>
+                      <p className="text-xs text-slate-400">Tạo mã khuyến mãi Flash Sale cho khách áp dụng giảm giá tự động</p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setEditingVoucher(null);
+                        setShowVoucherModal(true);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xs shadow-md shadow-emerald-500/20 transition flex items-center gap-1.5"
+                    >
+                      <i className="fa-solid fa-plus"></i> Thêm Voucher
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {(config.vouchers || []).map((v) => (
+                      <div key={v.code} className="glass-card rounded-2xl p-4 border border-white/10 flex items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-black text-emerald-400 text-sm tracking-wider">{v.code}</span>
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                              -{v.discount.toLocaleString('vi-VN')}đ
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 mt-1">{v.desc}</p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteVoucher(v.code)}
+                          className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition"
+                          title="Xóa voucher"
+                        >
+                          <i className="fa-solid fa-trash text-xs"></i>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* TAB 5: POPUP THÔNG BÁO (popupConfig) */}
+              {/* ======================================================== */}
+              {activeTab === 'popup' && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-lg font-black text-white flex items-center gap-2">
+                      <i className="fa-solid fa-bullhorn text-emerald-400"></i> POPUP THÔNG BÁO KHÁCH HÀNG
+                    </h2>
+                    <p className="text-xs text-slate-400">Bật popup quảng cáo, thông báo khuyến mãi khi khách vừa truy cập trang web</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    {/* Settings Form */}
+                    <div className="lg:col-span-7 glass-card rounded-2xl p-5 border border-white/10 space-y-4">
+                      <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900 border border-white/10">
+                        <div>
+                          <span className="font-bold text-xs text-white block">Hiển Thị Popup Khi Khách Vào Web:</span>
+                          <span className="text-[10px] text-slate-400">Bật để khách xem thông báo quan trọng hoặc khuyến mãi</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={config.popupConfig?.enabled || false}
+                            onChange={(e) => setConfig({ ...config, popupConfig: { ...config.popupConfig, enabled: e.target.checked } })}
+                            className="sr-only peer" 
+                          />
+                          <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-slate-300 block mb-1">Huy Hiệu (Badge):</label>
+                        <input 
+                          type="text"
+                          value={config.popupConfig?.badge || ''}
+                          onChange={(e) => setConfig({ ...config, popupConfig: { ...config.popupConfig, badge: e.target.value } })}
+                          placeholder="VD: KHUYẾN MÃI HOT, TIN NÓNG..."
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-slate-300 block mb-1">Tiêu Đề Popup:</label>
+                        <input 
+                          type="text"
+                          value={config.popupConfig?.title || ''}
+                          onChange={(e) => setConfig({ ...config, popupConfig: { ...config.popupConfig, title: e.target.value } })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-bold focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-slate-300 block mb-1">Nội Dung Thông Báo:</label>
+                        <textarea 
+                          rows="4"
+                          value={config.popupConfig?.content || ''}
+                          onChange={(e) => setConfig({ ...config, popupConfig: { ...config.popupConfig, content: e.target.value } })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                        ></textarea>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-slate-300 block mb-1">Chữ Trên Nút Bấm:</label>
+                          <input 
+                            type="text"
+                            value={config.popupConfig?.btnText || ''}
+                            onChange={(e) => setConfig({ ...config, popupConfig: { ...config.popupConfig, btnText: e.target.value } })}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-slate-300 block mb-1">Link Khi Bấm Nút:</label>
+                          <input 
+                            type="text"
+                            value={config.popupConfig?.btnLink || ''}
+                            onChange={(e) => setConfig({ ...config, popupConfig: { ...config.popupConfig, btnLink: e.target.value } })}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Live Preview */}
+                    <div className="lg:col-span-5 glass-card rounded-2xl p-5 border border-white/10 flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-3">XEM TRƯỚC GIAO DIỆN POPUP</span>
+                        <div className="p-5 rounded-2xl bg-slate-900/90 border border-emerald-500/30 text-center shadow-2xl relative">
+                          {config.popupConfig?.badge && (
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold uppercase inline-block mb-2 border border-emerald-500/30">
+                              {config.popupConfig.badge}
+                            </span>
+                          )}
+                          <h4 className="text-base font-black text-white">{config.popupConfig?.title || 'Tiêu Đề Popup'}</h4>
+                          <p className="text-xs text-slate-300 mt-2 leading-relaxed whitespace-pre-line">
+                            {config.popupConfig?.content || 'Nội dung thông báo sẽ hiển thị ở đây.'}
+                          </p>
+                          <button className="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold text-xs shadow-md">
+                            {config.popupConfig?.btnText || 'Xem Ngay'}
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-4 text-center">
+                        Trạng thái hiện tại: {config.popupConfig?.enabled ? '🟢 Đang Bật' : '⚪ Đang Tắt'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ======================================================== */}
+              {/* TAB 6: HẠ TẦNG & BẢO MẬT (system) */}
+              {/* ======================================================== */}
+              {activeTab === 'system' && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-lg font-black text-white flex items-center gap-2">
+                      <i className="fa-solid fa-sliders text-emerald-400"></i> CẤU HÌNH HẠ TẦNG & BẢO MẬT
+                    </h2>
+                    <p className="text-xs text-slate-400">Cấu hình GitHub Token để đẩy code, Bot Telegram nhận bill và đổi mật khẩu Admin</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    {/* GitHub Cloud Config */}
+                    <div className="glass-card rounded-2xl p-5 border border-white/10 space-y-3.5">
+                      <h3 className="font-extrabold text-xs text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                        <i className="fa-brands fa-github text-sm"></i> GitHub Cloud (Lưu Code & File)
+                      </h3>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">GitHub Personal Access Token (PAT):</label>
+                        <input 
+                          type="password"
+                          value={config.githubConfig.defaultGhToken || ''}
+                          onChange={(e) => setConfig({ ...config, githubConfig: { ...config.githubConfig, defaultGhToken: e.target.value } })}
+                          placeholder="ghp_xxxx..."
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                        />
+                        <span className="text-[10px] text-slate-500 mt-1 block">Token này dùng để tự động đẩy file module và cấu hình lên GitHub.</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Repo Name:</label>
+                          <input 
+                            type="text"
+                            value={config.githubConfig.defaultGhRepo}
+                            onChange={(e) => setConfig({ ...config, githubConfig: { ...config.githubConfig, defaultGhRepo: e.target.value } })}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Branch:</label>
+                          <input 
+                            type="text"
+                            value={config.githubConfig.defaultGhBranch}
+                            onChange={(e) => setConfig({ ...config, githubConfig: { ...config.githubConfig, defaultGhBranch: e.target.value } })}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Telegram Bot Config */}
+                    <div className="glass-card rounded-2xl p-5 border border-white/10 space-y-3.5">
+                      <h3 className="font-extrabold text-xs text-sky-400 uppercase tracking-wider flex items-center gap-2">
+                        <i className="fa-brands fa-telegram text-sm"></i> Telegram Bot Nhận Đơn & Bill
+                      </h3>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Telegram Bot Token (từ @BotFather):</label>
+                        <input 
+                          type="password"
+                          value={config.telegramConfig.telegramBotToken || ''}
+                          onChange={(e) => setConfig({ ...config, telegramConfig: { ...config.telegramConfig, telegramBotToken: e.target.value } })}
+                          placeholder="VD: 8123456789:AAH_xxxx..."
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-sky-500 transition shadow-inner"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Chat ID Của Bạn (từ @userinfobot):</label>
+                        <input 
+                          type="text"
+                          value={config.telegramConfig.telegramChatId || ''}
+                          onChange={(e) => setConfig({ ...config, telegramConfig: { ...config.telegramConfig, telegramChatId: e.target.value } })}
+                          placeholder="VD: 123456789"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-sky-500 transition shadow-inner"
+                        />
+                      </div>
+
+                      <button
+                        onClick={handleTestTelegram}
+                        className="w-full py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-bold text-xs border border-sky-500/30 transition flex items-center justify-center gap-1.5"
+                      >
+                        <i className="fa-solid fa-paper-plane text-xs"></i> Gửi Thử Tin Nhắn Test Về Telegram
+                      </button>
+                    </div>
+
+                    {/* Contact Config */}
+                    <div className="glass-card rounded-2xl p-5 border border-white/10 space-y-3.5">
+                      <h3 className="font-extrabold text-xs text-purple-400 uppercase tracking-wider flex items-center gap-2">
+                        <i className="fa-solid fa-address-book text-sm"></i> Thông Tin Liên Hệ Khách Hàng
+                      </h3>
+
+                      <div className="space-y-2.5">
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-0.5">Link Zalo Admin:</label>
+                          <input 
+                            type="text"
+                            value={config.contactConfig.adminZalo}
+                            onChange={(e) => setConfig({ ...config, contactConfig: { ...config.contactConfig, adminZalo: e.target.value } })}
+                            className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-0.5">Link Telegram Admin:</label>
+                          <input 
+                            type="text"
+                            value={config.contactConfig.adminTelegram}
+                            onChange={(e) => setConfig({ ...config, contactConfig: { ...config.contactConfig, adminTelegram: e.target.value } })}
+                            className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-0.5">Link Instagram Admin:</label>
+                          <input 
+                            type="text"
+                            value={config.contactConfig.adminInstagram}
+                            onChange={(e) => setConfig({ ...config, contactConfig: { ...config.contactConfig, adminInstagram: e.target.value } })}
+                            className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Change Admin Password */}
+                    <div className="glass-card rounded-2xl p-5 border border-white/10 space-y-3.5">
+                      <h3 className="font-extrabold text-xs text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                        <i className="fa-solid fa-lock text-sm"></i> Đổi Mật Khẩu Admin
+                      </h3>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Tên Đăng Nhập:</label>
+                        <input 
+                          type="text"
+                          value={config.adminCredentials.username}
+                          onChange={(e) => setConfig({ ...config, adminCredentials: { ...config.adminCredentials, username: e.target.value } })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono font-bold"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-300 block mb-1">Mật Khẩu Mới:</label>
+                        <input 
+                          type="text"
+                          value={config.adminCredentials.password}
+                          onChange={(e) => setConfig({ ...config, adminCredentials: { ...config.adminCredentials, password: e.target.value } })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono font-bold"
+                        />
+                      </div>
+                      <span className="text-[10px] text-slate-500 block">Sau khi đổi, bấm "LƯU LÊN GITHUB" ở trên cùng để lưu vĩnh viễn.</span>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+            </main>
+          </div>
+
+          {/* ======================================================== */}
+          {/* MODAL: THÊM / SỬA ACCESS KEY */}
+          {/* ======================================================== */}
+          {showKeyModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="glass-card max-w-md w-full rounded-3xl p-6 border border-white/15 shadow-2xl relative">
+                <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+                  <h3 className="font-black text-sm text-white flex items-center gap-2">
+                    <i className="fa-solid fa-key text-emerald-400"></i>
+                    <span>{editingKey ? 'CHỈNH SỬA ACCESS KEY' : 'THÊM ACCESS KEY MỚI'}</span>
+                  </h3>
+                  <button 
+                    onClick={() => setShowKeyModal(false)}
+                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-400 hover:text-white flex items-center justify-center text-xs"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveKey} className="space-y-3.5">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Mã Key Kích Hoạt:</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        name="keyVal"
+                        defaultValue={editingKey?.key || generateRandomKey()}
+                        className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono font-bold focus:outline-none focus:border-emerald-500"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          const inp = e.target.closest('form').keyVal;
+                          inp.value = generateRandomKey();
+                        }}
+                        className="px-2.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 font-bold text-xs"
+                        title="Tạo mã ngẫu nhiên"
+                      >
+                        <i className="fa-solid fa-dice"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Tên Khách Hàng / SĐT (Owner):</label>
+                    <input 
+                      type="text"
+                      name="ownerVal"
+                      defaultValue={editingKey?.owner || ''}
+                      placeholder="VD: Nguyễn Văn A (0988xxxxxx)"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1 flex items-center justify-between">
+                      <span>Khóa Username Locket (Tùy chọn):</span>
+                      <span className="text-[10px] text-emerald-400 font-mono">1 Key = 1 User</span>
+                    </label>
+                    <input 
+                      type="text"
+                      name="boundUserVal"
+                      defaultValue={editingKey?.boundUsername || ''}
+                      placeholder="VD: hoanglong (để trống nếu muốn khóa tự động sau khi khách tạo)"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-emerald-400 font-mono text-xs focus:outline-none"
+                    />
+                    <span className="text-[9px] text-slate-500 mt-0.5 block">Nếu để trống: Lần đầu khách nhập tên nào sẽ tự động khóa cứng tên đó vĩnh viễn.</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Số Lượt Tạo File:</label>
+                      <input 
+                        type="number"
+                        name="maxUsesVal"
+                        defaultValue={editingKey?.maxUses || 9999}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Ngày Hết Hạn:</label>
+                      <input 
+                        type="date"
+                        name="expiresVal"
+                        defaultValue={editingKey?.expiresAt || '2099-12-31'}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-xs text-white block">Cấp Quyền Master (Tối Thượng):</span>
+                      <span className="text-[10px] text-slate-400">Không bị khóa UID, không giới hạn tính năng</span>
+                    </div>
+                    <input 
+                      type="checkbox"
+                      name="isMasterVal"
+                      defaultChecked={editingKey?.isMaster || false}
+                      className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowKeyModal(false)}
+                      className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 font-bold text-xs"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xs shadow-md"
+                    >
+                      Lưu Key
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* MODAL: THÊM / SỬA VOUCHER */}
+          {/* ======================================================== */}
+          {showVoucherModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="glass-card max-w-sm w-full rounded-3xl p-6 border border-white/15 shadow-2xl relative">
+                <h3 className="font-black text-sm text-white mb-3 flex items-center gap-2">
+                  <i className="fa-solid fa-ticket text-emerald-400"></i> THÊM MÃ GIẢM GIÁ
+                </h3>
+
+                <form onSubmit={handleSaveVoucher} className="space-y-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Mã Code (In Hoa):</label>
+                    <input 
+                      type="text"
+                      name="vCode"
+                      placeholder="VD: ANHTUAN50K"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono font-bold focus:outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Số Tiền Giảm (VNĐ):</label>
+                    <input 
+                      type="number"
+                      name="vDiscount"
+                      defaultValue="50000"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Mô Tả:</label>
+                    <input 
+                      type="text"
+                      name="vDesc"
+                      defaultValue="Ưu đãi giảm giá đặc biệt"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowVoucherModal(false)}
+                      className="flex-1 py-2.5 rounded-xl bg-white/10 text-slate-300 font-bold text-xs"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold text-xs shadow-md"
+                    >
+                      Lưu Mã
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* TOAST NOTIFICATION */}
+          {toast.show && (
+            <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-slate-900/95 border border-emerald-500/50 text-white text-xs font-bold shadow-2xl flex items-center gap-2.5 animate-bounce">
+              <i className={`fa-solid ${toast.icon} text-emerald-400 text-base`}></i>
+              <span>{toast.text}</span>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<AdminApp />);
+  </script>
+</body>
+</html>

@@ -9,10 +9,12 @@
 /access-keys.json
   Cache-Control: no-cache, no-store, must-revalidate
   Access-Control-Allow-Origin: *
+/site-config.json
+  Cache-Control: no-cache, no-store, must-revalidate
+  Access-Control-Allow-Origin: *
 /modules/*
   Content-Type: text/plain; charset=utf-8
   Access-Control-Allow-Origin: *
 /locket60s/*
   Content-Type: text/javascript; charset=utf-8
   Access-Control-Allow-Origin: *
-

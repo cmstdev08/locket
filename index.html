@@ -705,6 +705,8 @@
       const [showBackTop, setShowBackTop] = useState(false);
 
       // Voucher State
+      const [siteConfig, setSiteConfig] = useState(null);
+      const [announcementModal, setAnnouncementModal] = useState(false);
       const [voucherInput, setVoucherInput] = useState('');
       const [appliedVoucher, setAppliedVoucher] = useState(null);
 
@@ -782,6 +784,27 @@
       const [deployHistory, setDeployHistory] = useState(() => {
         try { return JSON.parse(localStorage.getItem('at_deploy_history') || '[]'); } catch(e) { return []; }
       });
+
+      // Load Dynamic Site Config từ site-config.json (do Admin quản trị trực quan)
+      useEffect(() => {
+        const loadSiteConfig = async () => {
+          try {
+            const res = await fetch('./site-config.json?_t=' + Date.now());
+            if (res.ok) {
+              const data = await res.json();
+              setSiteConfig(data);
+              if (data.popupConfig?.enabled) {
+                const shown = sessionStorage.getItem('at_popup_shown');
+                if (!shown) {
+                  setAnnouncementModal(true);
+                  sessionStorage.setItem('at_popup_shown', 'true');
+                }
+              }
+            }
+          } catch (_) {}
+        };
+        loadSiteConfig();
+      }, []);
 
       // Init Theme
       useEffect(() => {
@@ -958,14 +981,29 @@
         return Boolean(boundFromKey || boundFromLocal);
       }, [keyVerified, verifiedKeyInfo, accessKeyInput]);
 
+      // Dynamic Bank Info & Packages from site-config.json
+      const currentBank = useMemo(() => {
+        return siteConfig?.bankConfig || {
+          bankNumber: CONFIGS.bankNumber,
+          bankName: CONFIGS.bankName,
+          bankOwner: CONFIGS.bankOwner,
+          momoNumber: CONFIGS.momoNumber,
+          paypalUrl: CONFIGS.paypalUrl
+        };
+      }, [siteConfig]);
+
+      const packagesList = useMemo(() => {
+        return (siteConfig?.packages && siteConfig.packages.length > 0) ? siteConfig.packages : PACKAGES;
+      }, [siteConfig]);
+
       // VietQR Image URL (Auto-updates with discounted price)
       const vietQrUrl = useMemo(() => {
-        return `https://img.vietqr.io/image/${CONFIGS.bankName}-${CONFIGS.bankNumber}-compact2.png?amount=${finalPriceNum}&addInfo=${encodeURIComponent(transferMemo)}&accountName=${encodeURIComponent(CONFIGS.bankOwner)}`;
+        return `https://img.vietqr.io/image/${currentBank.bankName}-${currentBank.bankNumber}-compact2.png?amount=${finalPriceNum}&addInfo=${encodeURIComponent(transferMemo)}&accountName=${encodeURIComponent(currentBank.bankOwner)}`;
       }, [finalPriceNum, transferMemo]);
 
       // MoMo QR Image URL (Auto-updates with discounted price)
       const momoQrUrl = useMemo(() => {
-        const payload = `2|99|${CONFIGS.momoNumber}|${CONFIGS.bankOwner}||0|0|${finalPriceNum}|${transferMemo}|transfer_myqr`;
+        const payload = `2|99|${currentBank.momoNumber}|${currentBank.bankOwner}||0|0|${finalPriceNum}|${transferMemo}|transfer_myqr`;
         return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payload)}`;
       }, [finalPriceNum, transferMemo]);
 
@@ -1866,7 +1904,7 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {PACKAGES.map((pkg) => (
+                {packagesList.map((pkg) => (
                   <div 
                     key={pkg.id} 
                     className={`glass-card rounded-3xl p-6 relative flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${
@@ -2689,17 +2727,17 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
 
                       <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
                         <span className="text-slate-400">Chủ tài khoản:</span>
-                        <span className="font-extrabold text-white uppercase tracking-wider">{CONFIGS.bankOwner}</span>
+                        <span className="font-extrabold text-white uppercase tracking-wider">{currentBank.bankOwner}</span>
                       </div>
 
                       <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-white/5">
                         <span className="text-slate-400">Số TK / SĐT:</span>
                         <div className="flex items-center gap-2">
                           <span className="font-mono font-bold text-sky-400">
-                            {orderForm.paymentMethod === 'vietqr' ? `${CONFIGS.bankNumber} (${CONFIGS.bankName})` : CONFIGS.momoNumber}
+                            {orderForm.paymentMethod === 'vietqr' ? `${currentBank.bankNumber} (${currentBank.bankName})` : currentBank.momoNumber}
                           </span>
                           <button 
-                            onClick={() => copyText(orderForm.paymentMethod === 'vietqr' ? CONFIGS.bankNumber : CONFIGS.momoNumber, 'Đã sao chép số tài khoản!')} 
+                            onClick={() => copyText(orderForm.paymentMethod === 'vietqr' ? currentBank.bankNumber : currentBank.momoNumber, 'Đã sao chép số tài khoản!')} 
                             className="text-slate-400 hover:text-sky-400"
                           >
                             <i className="fa-regular fa-copy"></i>
@@ -3780,6 +3818,49 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
           )}
 
           {/* ======================================================== */}
+          {/* MODAL: ANNOUNCEMENT POPUP (ADMIN QUẢN TRỊ BẬT / TẮT) */}
+          {/* ======================================================== */}
+          {announcementModal && siteConfig?.popupConfig?.enabled && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+              <div className="glass-card max-w-md w-full rounded-3xl p-6 sm:p-7 text-center border border-emerald-500/40 relative shadow-2xl">
+                <button 
+                  onClick={() => setAnnouncementModal(false)}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-400 hover:text-white flex items-center justify-center text-xs transition"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+                {siteConfig.popupConfig.badge && (
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider inline-block mb-3 border border-emerald-500/30">
+                    <i className="fa-solid fa-bullhorn mr-1.5"></i> {siteConfig.popupConfig.badge}
+                  </span>
+                )}
+                <h3 className="text-xl font-black text-white mb-3">
+                  {siteConfig.popupConfig.title}
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed mb-6 whitespace-pre-line text-left bg-slate-900/60 p-4 rounded-2xl border border-white/5">
+                  {siteConfig.popupConfig.content}
+                </p>
+                <div className="flex gap-2.5">
+                  <button
+                    onClick={() => setAnnouncementModal(false)}
+                    className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 font-bold text-xs transition"
+                  >
+                    Đóng
+                  </button>
+                  <a
+                    href={siteConfig.popupConfig.btnLink || '#pricing'}
+                    onClick={() => setAnnouncementModal(false)}
+                    className="keep-white flex-[2] py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-1.5"
+                  >
+                    <span>{siteConfig.popupConfig.btnText || 'Xem Ngay'}</span>
+                    <i className="fa-solid fa-arrow-right text-xs"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
           {/* MODAL: ORDER SUCCESS */}
           {/* ======================================================== */}
           {orderSuccessModal && (
@@ -3872,7 +3953,15 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
           {/* Footer */}
           <footer className="max-w-4xl mx-auto px-4 text-center text-xs text-slate-400 border-t border-white/10 pt-8 mt-12">
             <p className="font-bold text-slate-300 mb-1">© 2026 Anh Tuấn iOS • Locket 60s & ShadowRocket Premium</p>
-            <p className="text-[11px] text-slate-400">Thiết kế chuẩn React UI hiện đại • Chúc bạn có trải nghiệm tuyệt vời cùng Locket Gold!</p>
+            <p className="text-[11px] text-slate-400 mb-3">Thiết kế chuẩn React UI hiện đại • Chúc bạn có trải nghiệm tuyệt vời cùng Locket Gold!</p>
+            <div className="flex items-center justify-center gap-2">
+              <a 
+                href="./admin" 
+                className="px-3 py-1 rounded-full bg-white/5 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 border border-white/10 text-[11px] font-mono font-bold transition flex items-center gap-1.5"
+              >
+                <i className="fa-solid fa-lock text-[10px]"></i> Bảng Quản Trị Admin
+              </a>
+            </div>
           </footer>
         </div>
       );
