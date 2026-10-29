@@ -3,30 +3,6 @@
   "adminMasterKey": "ANHTUAN_ADMIN_2026",
   "keys": [
     {
-      "key": "Locket60s-0935810664",
-      "owner": "hfnhsn (6575747777)",
-      "allowedFeatures": [
-        "all"
-      ],
-      "maxUses": 1,
-      "usedCount": 0,
-      "expiresAt": "2099-12-31"
-    },
-    {
-      "key": "Locket60s-0968963751",
-      "owner": "Admin test (0335980310)",
-      "allowedFeatures": [
-        "all"
-      ],
-      "maxUses": 10,
-      "usedCount": 0,
-      "expiresAt": "2099-12-31",
-      "boundUsername": "hoangmanh",
-      "boundAt": "2026-10-29T14:56:52.766Z",
-      "maxDevices": 1,
-      "usedDevices": []
-    },
-    {
       "key": "Locket60s-0934956647",
       "owner": "thaocute (Vợ Yêu Anh Tuấn - Quyền Tối Thượng)",
       "boundUsername": "thaocute",
