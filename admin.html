@@ -559,6 +559,14 @@
         showToast(nextLocked ? '🔒 Đã BẬT khóa bảo trì DNS toàn hệ thống!' : '🔓 Đã MỞ khóa cho phép tải DNS bình thường!');
       };
 
+      const handleToggleIndividualDnsLock = (keyName, label) => {
+        const curr = config.dnsConfig || DEFAULT_CONFIG.dnsConfig;
+        const nextVal = !curr[keyName];
+        const updated = { ...curr, [keyName]: nextVal };
+        setConfig({ ...config, dnsConfig: updated });
+        showToast(nextVal ? `🔒 Đã KHÓA ${label}!` : `🔓 Đã MỞ KHÓA ${label}!`);
+      };
+
       const handleToggleDnsRequireKey = () => {
         const curr = config.dnsConfig || DEFAULT_CONFIG.dnsConfig;
         const nextReq = !curr.requireKey;
@@ -1318,6 +1326,89 @@
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Panel 0: KHÓA TỪNG NÚT DNS RIÊNG BIỆT (3 NÚT) */}
+                    <div className="glass-card rounded-2xl p-5 border border-amber-500/30 bg-amber-500/5 space-y-3.5 md:col-span-2">
+                      <div className="flex items-center justify-between pb-2 border-b border-amber-500/20">
+                        <h3 className="font-extrabold text-xs text-amber-300 uppercase tracking-wider flex items-center gap-2">
+                          <i className="fa-solid fa-sliders text-sm"></i> Khóa Từng Nút DNS Riêng Biệt (Không Ảnh Hưởng Nút Khác)
+                        </h3>
+                        <span className="text-[10px] text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full font-bold">
+                          Bật/Tắt riêng lẻ từng file
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* 1. Locket Gold */}
+                        <div className="p-4 rounded-2xl bg-slate-900 border border-white/10 flex flex-col justify-between space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-sky-400 flex items-center gap-1.5">
+                                <i className="fa-solid fa-download"></i> DNS Locket Gold
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${config.dnsConfig?.lockGold ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                                {config.dnsConfig?.lockGold ? 'Đang Khóa 🔒' : 'Đang Mở 🔓'}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-2">Nút tải DNS Locket Gold trên trang chủ.</p>
+                          </div>
+                          <button
+                            onClick={() => handleToggleIndividualDnsLock('lockGold', 'DNS Locket Gold')}
+                            className={`w-full py-2.5 rounded-xl font-black text-xs transition ${
+                              config.dnsConfig?.lockGold ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-white/10 hover:bg-white/15 text-slate-200'
+                            }`}
+                          >
+                            {config.dnsConfig?.lockGold ? '🔓 Bấm Để Mở Khóa Gold' : '🔒 Khóa Riêng Nút Gold'}
+                          </button>
+                        </div>
+
+                        {/* 2. Locket 60s */}
+                        <div className="p-4 rounded-2xl bg-slate-900 border border-white/10 flex flex-col justify-between space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-fuchsia-400 flex items-center gap-1.5">
+                                <i className="fa-solid fa-download"></i> DNS Locket 60s
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${config.dnsConfig?.lock60s ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                                {config.dnsConfig?.lock60s ? 'Đang Khóa 🔒' : 'Đang Mở 🔓'}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-2">Nút tải DNS Locket 60s trên trang chủ.</p>
+                          </div>
+                          <button
+                            onClick={() => handleToggleIndividualDnsLock('lock60s', 'DNS Locket 60s')}
+                            className={`w-full py-2.5 rounded-xl font-black text-xs transition ${
+                              config.dnsConfig?.lock60s ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-white/10 hover:bg-white/15 text-slate-200'
+                            }`}
+                          >
+                            {config.dnsConfig?.lock60s ? '🔓 Bấm Để Mở Khóa 60s' : '🔒 Khóa Riêng Nút 60s'}
+                          </button>
+                        </div>
+
+                        {/* 3. Root CA */}
+                        <div className="p-4 rounded-2xl bg-slate-900 border border-white/10 flex flex-col justify-between space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-amber-400 flex items-center gap-1.5">
+                                <i className="fa-solid fa-certificate"></i> Chứng Chỉ Root CA
+                              </span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${config.dnsConfig?.lockCa ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                                {config.dnsConfig?.lockCa ? 'Đang Khóa 🔒' : 'Đang Mở 🔓'}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-2">Nút tải chứng chỉ Root CA hệ thống.</p>
+                          </div>
+                          <button
+                            onClick={() => handleToggleIndividualDnsLock('lockCa', 'Root CA')}
+                            className={`w-full py-2.5 rounded-xl font-black text-xs transition ${
+                              config.dnsConfig?.lockCa ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-white/10 hover:bg-white/15 text-slate-200'
+                            }`}
+                          >
+                            {config.dnsConfig?.lockCa ? '🔓 Bấm Để Mở Khóa CA' : '🔒 Khóa Riêng Nút CA'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Panel 1: Công tắc khóa DNS */}
                     <div className="glass-card rounded-2xl p-5 border border-white/10 space-y-4">
                       <h3 className="font-extrabold text-xs text-sky-400 uppercase tracking-wider flex items-center gap-2">

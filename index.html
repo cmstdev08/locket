@@ -3194,17 +3194,24 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
               {(() => {
                 const dnsCfg = siteConfig?.dnsConfig || {
                   isLocked: false,
+                  lockGold: false,
+                  lock60s: false,
+                  lockCa: false,
                   requireKey: true,
-                  lockNotice: "Hệ thống DNS hiện đang tạm bảo trì để nâng cấp chứng chỉ mới. Quý khách vui lòng quay lại sau!",
+                  lockNotice: "Hồ sơ DNS này hiện đang tạm bảo trì để cập nhật chứng chỉ mới. Vui lòng thử lại sau!",
                   locketGoldUrl: "./dns/locketgold.mobileconfig",
                   locket60sUrl: "./dns/locketgold.mobileconfig",
                   rootCaUrl: "./dns/rootca.mobileconfig"
                 };
                 const canDownloadDns = !dnsCfg.isLocked && (!dnsCfg.requireKey || keyVerified);
+                const isGoldLocked = dnsCfg.isLocked || dnsCfg.lockGold;
+                const is60sLocked = dnsCfg.isLocked || dnsCfg.lock60s;
+                const isCaLocked = dnsCfg.isLocked || dnsCfg.lockCa;
+                const allLocked = isGoldLocked && is60sLocked && isCaLocked;
 
                 return (
                   <div className={`glass-card rounded-3xl p-5 border relative overflow-hidden mb-6 transition ${
-                    dnsCfg.isLocked
+                    allLocked
                       ? 'border-rose-500/40 bg-rose-500/5 shadow-lg shadow-rose-500/10'
                       : (keyVerified || !dnsCfg.requireKey)
                         ? 'border-emerald-500/40 bg-emerald-500/5 shadow-lg shadow-emerald-500/10' 
@@ -3213,30 +3220,30 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="flex items-center gap-3.5">
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 border ${
-                          dnsCfg.isLocked
+                          allLocked
                             ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                             : (keyVerified || !dnsCfg.requireKey)
                               ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
                               : 'bg-slate-800 text-amber-400 border-amber-400/20'
                         }`}>
-                          <i className={`fa-solid ${dnsCfg.isLocked ? 'fa-lock' : (keyVerified || !dnsCfg.requireKey) ? 'fa-shield-halved' : 'fa-lock'}`}></i>
+                          <i className={`fa-solid ${allLocked ? 'fa-lock' : (keyVerified || !dnsCfg.requireKey) ? 'fa-shield-halved' : 'fa-lock'}`}></i>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="font-extrabold text-base text-white">Cấu Hình DNS Duy Trì Locket Vĩnh Viễn</h4>
                             <span className={`keep-white text-[9px] font-black px-2 py-0.5 rounded ${
-                              dnsCfg.isLocked 
+                              allLocked 
                                 ? 'bg-rose-600 animate-pulse' 
                                 : (keyVerified || !dnsCfg.requireKey) ? 'bg-emerald-500' : 'bg-amber-500'
                             }`}>
-                              {dnsCfg.isLocked ? '🔒 BẢO TRÌ DNS' : (keyVerified || !dnsCfg.requireKey) ? 'VIP ĐÃ MỞ KHÓA' : 'CẦN ACCESS KEY'}
+                              {allLocked ? '🔒 BẢO TRÌ TOÀN BỘ DNS' : (keyVerified || !dnsCfg.requireKey) ? 'VIP ĐÃ MỞ KHÓA' : 'CẦN ACCESS KEY'}
                             </span>
                           </div>
                           <p className="text-xs text-slate-400 mt-0.5">
-                            {dnsCfg.isLocked
-                              ? (dnsCfg.lockNotice || 'Hệ thống DNS hiện đang tạm bảo trì để nâng cấp chứng chỉ mới. Quý khách vui lòng quay lại sau!')
+                            {allLocked
+                              ? (dnsCfg.lockNotice || 'Hệ thống DNS hiện đang tạm bảo trì để cập nhật chứng chỉ mới. Quý khách vui lòng thử lại sau!')
                               : (keyVerified || !dnsCfg.requireKey)
-                                ? 'Đã mở khóa toàn bộ hồ sơ DNS chống trôi profile độc quyền. Bạn có thể cài đặt trực tiếp vào iPhone ngay!'
+                                ? 'Đã mở khóa hồ sơ DNS chống trôi profile độc quyền. Bạn có thể cài đặt trực tiếp vào iPhone ngay!'
                                 : 'Hồ sơ DNS MobileConfig chống trôi profile độc quyền — Được mở khóa tự động khi bạn nhập Access Key VIP.'
                             }
                           </p>
@@ -3244,33 +3251,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                       </div>
 
                       <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                        {dnsCfg.isLocked ? (
-                          <div className="px-4 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center gap-2">
-                            <i className="fa-solid fa-triangle-exclamation"></i>
-                            <span>Tạm Khóa Tải DNS Để Bảo Trì</span>
-                          </div>
-                        ) : canDownloadDns ? (
-                          <>
-                            <a 
-                              href={dnsCfg.locketGoldUrl || CONFIGS.dnsLocketGoldUrl}
-                              className="keep-white px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
-                            >
-                              <i className="fa-solid fa-download"></i> DNS Locket Gold
-                            </a>
-                            <a 
-                              href={dnsCfg.locket60sUrl || CONFIGS.dnsLocket60sUrl}
-                              className="keep-white px-3.5 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:opacity-90 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
-                            >
-                              <i className="fa-solid fa-download"></i> DNS Locket 60s
-                            </a>
-                            <a 
-                              href={dnsCfg.rootCaUrl || CONFIGS.dnsRootCaUrl}
-                              className="keep-white px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-extrabold text-xs transition border border-white/15 flex items-center justify-center gap-1.5"
-                            >
-                              <i className="fa-solid fa-certificate text-amber-400"></i> Root CA
-                            </a>
-                          </>
-                        ) : (
+                        {!canDownloadDns && (
                           <button 
                             onClick={() => {
                               const el = document.getElementById('config-key-input');
@@ -3284,6 +3265,52 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                           >
                             <i className="fa-solid fa-key text-xs"></i> Nhập Key Mở Khóa DNS
                           </button>
+                        )}
+
+                        {canDownloadDns && (
+                          <>
+                            {/* 1. Locket Gold */}
+                            {isGoldLocked ? (
+                              <button disabled className="px-3 py-2 rounded-xl bg-slate-800 text-slate-500 font-extrabold text-xs cursor-not-allowed border border-white/10 flex items-center gap-1.5" title="Mục này đang tạm khóa bảo trì">
+                                <i className="fa-solid fa-lock text-rose-400"></i> Khóa Gold
+                              </button>
+                            ) : (
+                              <a 
+                                href={dnsCfg.locketGoldUrl || CONFIGS.dnsLocketGoldUrl}
+                                className="keep-white px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
+                              >
+                                <i className="fa-solid fa-download"></i> DNS Locket Gold
+                              </a>
+                            )}
+
+                            {/* 2. Locket 60s */}
+                            {is60sLocked ? (
+                              <button disabled className="px-3 py-2 rounded-xl bg-slate-800 text-slate-500 font-extrabold text-xs cursor-not-allowed border border-white/10 flex items-center gap-1.5" title="Mục này đang tạm khóa bảo trì">
+                                <i className="fa-solid fa-lock text-rose-400"></i> Khóa 60s
+                              </button>
+                            ) : (
+                              <a 
+                                href={dnsCfg.locket60sUrl || CONFIGS.dnsLocket60sUrl}
+                                className="keep-white px-3.5 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:opacity-90 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
+                              >
+                                <i className="fa-solid fa-download"></i> DNS Locket 60s
+                              </a>
+                            )}
+
+                            {/* 3. Root CA */}
+                            {isCaLocked ? (
+                              <button disabled className="px-3 py-2 rounded-xl bg-slate-800 text-slate-500 font-extrabold text-xs cursor-not-allowed border border-white/10 flex items-center gap-1.5" title="Mục này đang tạm khóa bảo trì">
+                                <i className="fa-solid fa-lock text-rose-400"></i> Khóa CA
+                              </button>
+                            ) : (
+                              <a 
+                                href={dnsCfg.rootCaUrl || CONFIGS.dnsRootCaUrl}
+                                className="keep-white px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-extrabold text-xs transition border border-white/15 flex items-center justify-center gap-1.5"
+                              >
+                                <i className="fa-solid fa-certificate text-amber-400"></i> Root CA
+                              </a>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -3760,7 +3787,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                                 <i className="fa-solid fa-circle-question text-amber-400"></i> Cách kích hoạt trong ShadowRocket:
                               </div>
                               <p><b>Bước 1:</b> Bấm nút "Cài Vào ShadowRocket" (hoặc tải file .sgmodule về rồi mở bằng ShadowRocket).</p>
-                              <p><b>Bước 2:</b> Vào mục <b>Cấu hình (Config)</b> -> <b>Module</b> -> Bật module riêng của bạn lên là xong!</p>
+                              <p><b>Bước 2:</b> Vào mục <b>Cấu hình (Config)</b> → <b>Module</b> → Bật module riêng của bạn lên là xong!</p>
                             </div>
                           </div>
                         )}
