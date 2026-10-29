@@ -754,6 +754,7 @@
       const [orderLookupQuery, setOrderLookupQuery] = useState('');
       const [orderLookupResult, setOrderLookupResult] = useState(null);
       const [orderLookupSearched, setOrderLookupSearched] = useState(false);
+      const [orderLookupLoading, setOrderLookupLoading] = useState(false);
 
       // Lucky Wheel State
       const [showLuckyWheelModal, setShowLuckyWheelModal] = useState(false);
@@ -899,31 +900,127 @@
         return () => clearInterval(interval);
       }, [siteConfig]);
 
-      // Order Lookup Logic
-      const handleSearchOrder = () => {
-        const q = orderLookupQuery.trim().toUpperCase();
-        if (!q) {
+      // Helper: Quick Activate Key From Lookup or Lucky Wheel
+      const handleCheckAccessKey = async (key) => {
+        if (!key) return false;
+        setAccessKeyInput(key);
+        return await verifyCustomerAccessKey(key);
+      };
+
+      // Order Lookup Logic (Supports Order ID, #ID, Phone, Name, Memo, with Real-Time Fetch)
+      const handleSearchOrder = async () => {
+        const rawQ = (orderLookupQuery || '').trim();
+        if (!rawQ) {
           showToast('Vui lòng nhập Mã đơn hoặc SĐT!', 'fa-circle-exclamation');
           return;
         }
+
+        setOrderLookupLoading(true);
+        const qUpper = rawQ.toUpperCase();
+        const qClean = qUpper.replace(/[^A-Z0-9]/g, '');
+        const qDigits = rawQ.replace(/\D/g, '');
+        const qPhone = qDigits.startsWith('84') && qDigits.length >= 11 ? '0' + qDigits.slice(2) : qDigits;
+
         let list = [];
         try {
-          const localList = JSON.parse(localStorage.getItem('at_customer_orders') || '[]');
-          const remoteList = siteConfig?.orders || [];
-          const combined = [...remoteList];
+          // Always re-fetch freshest site-config.json to reflect real-time approval status from GitHub
+          let remoteList = siteConfig?.orders || [];
+          try {
+            const res = await fetch(`site-config.json?_t=${Date.now()}`);
+            if (res.ok) {
+              const freshData = await res.json();
+              if (freshData && Array.isArray(freshData.orders)) {
+                remoteList = freshData.orders;
+                setSiteConfig(prev => ({ ...prev, orders: freshData.orders }));
+              }
+            }
+          } catch (_) {}
+
+          // Also fetch access-keys.json to backfill grantedKey if missing on an approved order
+          let remoteKeys = [];
+          try {
+            const resKeys = await fetch(`access-keys.json?_t=${Date.now()}`);
+            if (resKeys.ok) {
+              const keysJson = await resKeys.json();
+              if (keysJson && Array.isArray(keysJson.keys)) {
+                remoteKeys = keysJson.keys;
+              }
+            }
+          } catch (_) {}
+
+          let localList = [];
+          try {
+            localList = JSON.parse(localStorage.getItem('at_customer_orders') || '[]');
+          } catch (_) {}
+
+          // Merge: remote takes precedence
+          const merged = [...remoteList];
           localList.forEach(lo => {
-            if (!combined.some(co => co.id === lo.id)) combined.unshift(lo);
+            const rIdx = merged.findIndex(ro => ro.id === lo.id);
+            if (rIdx !== -1) {
+              merged[rIdx] = { ...lo, ...merged[rIdx] };
+            } else {
+              merged.push(lo);
+            }
           });
-          list = combined;
+
+          // Backfill grantedKey for approved orders if missing
+          merged.forEach(o => {
+            if (o.status === 'approved' && !o.grantedKey && remoteKeys.length > 0) {
+              const oPhone = (o.contact || '').replace(/\D/g, '');
+              const foundKey = remoteKeys.find(k => 
+                (k.owner && oPhone && oPhone.length >= 7 && k.owner.includes(oPhone)) ||
+                (k.key && oPhone && oPhone.length >= 7 && k.key.includes(oPhone)) ||
+                (k.owner && o.name && k.owner.toLowerCase().includes(o.name.toLowerCase()))
+              );
+              if (foundKey) {
+                o.grantedKey = foundKey.key;
+              }
+            }
+          });
+
+          list = merged;
+          try {
+            localStorage.setItem('at_customer_orders', JSON.stringify(list.slice(0, 50)));
+          } catch (_) {}
         } catch (_) {}
 
-        const matched = list.filter(o => 
-          (o.id && o.id.toUpperCase().includes(q)) ||
-          (o.contact && o.contact.includes(q)) ||
-          (o.name && o.name.toUpperCase().includes(q))
-        );
+        const matched = list.filter(o => {
+          if (!o) return false;
+          const oId = (o.id || '').toUpperCase();
+          const oIdClean = oId.replace(/[^A-Z0-9]/g, '');
+          const oContact = (o.contact || '');
+          const oContactDigits = oContact.replace(/\D/g, '');
+          const oPhone = oContactDigits.startsWith('84') && oContactDigits.length >= 11 ? '0' + oContactDigits.slice(2) : oContactDigits;
+          const oMemo = (o.transferMemo || '').toUpperCase();
+          const oMemoClean = oMemo.replace(/[^A-Z0-9]/g, '');
+          const oName = (o.name || '').toUpperCase();
+          const oKey = (o.grantedKey || '').toUpperCase();
+
+          // 1. Order ID (supports #AT_771492, AT_771492, AT771492, 771492, etc.)
+          if (oId) {
+            if (oId === qUpper) return true;
+            if (oId.includes(qUpper)) return true;
+            if (qClean && (oIdClean.includes(qClean) || qClean.includes(oIdClean))) return true;
+            if (qClean && qClean.length >= 4 && oIdClean.endsWith(qClean)) return true;
+          }
+          // 2. Phone / Contact (supports 0968963751, 0968 963 751, +84...)
+          if (qPhone && qPhone.length >= 6 && oPhone.includes(qPhone)) return true;
+          if (qDigits && qDigits.length >= 4 && oContactDigits.includes(qDigits)) return true;
+          if (oContact && oContact.includes(rawQ)) return true;
+          // 3. Transfer Memo
+          if (oMemo && (oMemo.includes(qUpper) || (qClean && oMemoClean.includes(qClean)))) return true;
+          // 4. Customer Name
+          if (oName && oName.includes(qUpper)) return true;
+          // 5. Granted Key
+          if (oKey && (oKey.includes(qUpper) || (qClean && oKey.replace(/[^A-Z0-9]/g, '').includes(qClean)))) return true;
+
+          return false;
+        });
+
         setOrderLookupResult(matched);
         setOrderLookupSearched(true);
+        setOrderLookupLoading(false);
       };
 
       // Spin Lucky Wheel Function
@@ -4340,25 +4437,37 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     type="text"
                     value={orderLookupQuery}
                     onChange={(e) => setOrderLookupQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearchOrder()}
-                    placeholder="Nhập Mã đơn (VD: AT_771492) hoặc Số Điện Thoại..."
+                    onKeyDown={(e) => e.key === 'Enter' && !orderLookupLoading && handleSearchOrder()}
+                    placeholder="Nhập Mã đơn (VD: AT_771492 hoặc 771492) hoặc SĐT..."
                     className="flex-1 px-4 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-mono focus:outline-none focus:border-sky-400"
                   />
                   <button
                     onClick={handleSearchOrder}
-                    className="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-extrabold text-xs transition flex items-center gap-1.5"
+                    disabled={orderLookupLoading}
+                    className="px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-extrabold text-xs transition flex items-center gap-1.5 disabled:opacity-60"
                   >
-                    <i className="fa-solid fa-search"></i> Tra Cứu
+                    {orderLookupLoading ? (
+                      <>
+                        <i className="fa-solid fa-spinner fa-spin"></i>
+                        <span>Đang tìm...</span>
+                      </>
+                    ) : (
+                      <>
+                        <i className="fa-solid fa-search"></i>
+                        <span>Tra Cứu</span>
+                      </>
+                    )}
                   </button>
                 </div>
 
                 {/* Lookup Results */}
                 {orderLookupSearched && (
-                  <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                     {(!orderLookupResult || orderLookupResult.length === 0) ? (
                       <div className="p-6 rounded-2xl bg-slate-900/50 text-center text-slate-400 text-xs">
                         <i className="fa-solid fa-box-open text-2xl mb-2 text-slate-600 block"></i>
-                        Không tìm thấy đơn hàng nào với từ khóa: <b>{orderLookupQuery}</b>. Vui lòng kiểm tra lại số điện thoại hoặc mã đơn!
+                        Không tìm thấy đơn hàng nào với từ khóa: <b>{orderLookupQuery}</b>.<br />
+                        <span className="text-[11px] text-slate-500 mt-1 block">💡 Mẹo: Bạn có thể nhập mã số (VD: <b>771492</b>) hoặc số điện thoại đặt hàng.</span>
                       </div>
                     ) : (
                       orderLookupResult.map(ord => (
@@ -4374,7 +4483,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                                   ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                                   : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
                             }`}>
-                              {ord.status === 'approved' ? '✅ ĐÃ KÍCH HOẠT THÀNH CÔNG' : ord.status === 'rejected' ? '❌ ĐÃ TỪ CHỐI' : '⏳ ĐANG CHỜ ADMIN DUYỆT'}
+                              {ord.status === 'approved' ? '✅ ĐÃ DUYỆT & CẤP KEY' : ord.status === 'rejected' ? '❌ ĐÃ TỪ CHỐI' : '⏳ ĐANG CHỜ ADMIN DUYỆT'}
                             </span>
                           </div>
 
@@ -4382,46 +4491,94 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                             <p><b>Gói dịch vụ:</b> {ord.pkgName}</p>
                             <p><b>Số tiền:</b> <span className="font-mono text-emerald-400 font-bold">{ord.priceStr}</span></p>
                             <p><b>Khách hàng:</b> {ord.name} ({ord.contact})</p>
+                            {ord.time && <p className="text-[11px] text-slate-500"><b>Thời gian đặt:</b> {ord.time}</p>}
                           </div>
 
                           {/* If Approved, show granted Key */}
-                          {ord.status === 'approved' && ord.grantedKey && (
-                            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2 mt-2">
-                              <span className="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">
-                                🔑 ACCESS KEY VIP CỦA BẠN:
-                              </span>
-                              <div className="flex items-center justify-between gap-2">
-                                <code className="font-mono font-black text-xs text-white bg-slate-950 px-2.5 py-1.5 rounded-lg border border-white/10 select-all">
-                                  {ord.grantedKey}
-                                </code>
-                                <div className="flex gap-1.5">
-                                  <button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(ord.grantedKey);
-                                      showToast('Đã sao chép mã Key VIP!');
-                                    }}
-                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-500 text-white font-bold text-xs"
-                                  >
-                                    Copy Key
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setShowOrderLookupModal(false);
-                                      handleCheckAccessKey(ord.grantedKey);
-                                    }}
-                                    className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 font-bold text-xs"
-                                  >
-                                    ⚡ Kích Hoạt Luôn
-                                  </button>
-                                </div>
+                          {ord.status === 'approved' && (
+                            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/50 to-slate-950 border border-emerald-500/40 space-y-2.5 mt-2 shadow-lg">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] uppercase font-black text-emerald-400 flex items-center gap-1.5 tracking-wider">
+                                  <i className="fa-solid fa-key text-amber-400 animate-pulse"></i> ACCESS KEY VIP CỦA BẠN:
+                                </span>
+                                <span className="text-[9px] text-emerald-300 font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                                  Sẵn Sàng Sử Dụng
+                                </span>
                               </div>
+
+                              {ord.grantedKey ? (
+                                <div className="space-y-2">
+                                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-slate-950 p-2.5 rounded-xl border border-white/10">
+                                    <code className="font-mono font-black text-xs text-amber-300 px-2 py-1 select-all break-all text-center sm:text-left">
+                                      {ord.grantedKey}
+                                    </code>
+                                    <div className="flex items-center gap-1.5 justify-center">
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(ord.grantedKey);
+                                          showToast('Đã sao chép mã Key VIP: ' + ord.grantedKey, 'fa-check');
+                                        }}
+                                        className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition flex items-center gap-1 shadow"
+                                      >
+                                        <i className="fa-solid fa-copy"></i> Copy Key
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setShowOrderLookupModal(false);
+                                          handleCheckAccessKey(ord.grantedKey);
+                                        }}
+                                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition flex items-center gap-1 shadow"
+                                        title="Kích hoạt luôn quyền VIP trên website"
+                                      >
+                                        <i className="fa-solid fa-bolt"></i> Kích Hoạt Luôn
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <p className="text-[10px] text-slate-400 italic">
+                                    💡 <b>Hướng dẫn:</b> Bạn hãy copy mã Key trên để kích hoạt trên web, hoặc mở app Shadowrocket / Locket và điền vào theo hướng dẫn.
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="text-[11px] text-slate-300 space-y-1">
+                                  <p>Đơn hàng đã được duyệt! Đang liên kết mã Key. Nếu chưa thấy hiện mã, vui lòng liên hệ Admin qua Zalo để nhận mã ngay.</p>
+                                  <a
+                                    href={CONFIGS.adminZalo}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-sky-400 underline font-bold mt-1"
+                                  >
+                                    <i className="fa-solid fa-comment-dots"></i> Nhắn Zalo cho Admin nhận Key
+                                  </a>
+                                </div>
+                              )}
                             </div>
                           )}
 
-                          {ord.status !== 'approved' && (
-                            <p className="text-[10px] text-amber-300/80 italic">
-                              * Đơn hàng đang được Admin kiểm tra biên lai. Khi được duyệt, Key VIP sẽ tự động hiển thị tại đây.
-                            </p>
+                          {ord.status === 'pending' && (
+                            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs space-y-1">
+                              <p className="font-semibold flex items-center gap-1.5">
+                                <i className="fa-solid fa-clock text-amber-400"></i> Đang chờ Admin xác nhận biên lai chuyển khoản
+                              </p>
+                              <p className="text-[10px] text-slate-400">
+                                Sau khi Admin duyệt đơn, Access Key VIP sẽ tự động hiển thị ngay tại bảng này! Bạn có thể tra cứu lại bất cứ lúc nào.
+                              </p>
+                            </div>
+                          )}
+
+                          {ord.status === 'rejected' && (
+                            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs space-y-1">
+                              <p className="font-semibold flex items-center gap-1.5">
+                                <i className="fa-solid fa-triangle-exclamation text-rose-400"></i> Đơn hàng chưa thể duyệt do sai nội dung CK hoặc ảnh bill không khớp
+                              </p>
+                              <a
+                                href={CONFIGS.adminZalo}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] text-sky-400 underline font-bold"
+                              >
+                                Nhắn tin cho Admin để được hỗ trợ kiểm tra lại
+                              </a>
+                            </div>
                           )}
                         </div>
                       ))

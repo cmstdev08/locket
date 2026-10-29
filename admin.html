@@ -473,10 +473,55 @@
       }, [config.orders, orderFilter, orderSearch]);
 
       const handleUpdateOrderStatus = (orderId, newStatus) => {
-        const updated = (config.orders || []).map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+        let assignedKeyToToast = null;
+        let newKeysList = [...(keysData.keys || [])];
+
+        const updated = (config.orders || []).map(o => {
+          if (o.id !== orderId) return o;
+          
+          let grantedKey = o.grantedKey;
+          if (newStatus === 'approved') {
+            if (!grantedKey) {
+              const digits = (o.contact || '').replace(/\D/g, '');
+              grantedKey = (digits && digits.length >= 9) ? `Locket60s-${digits}` : generateRandomKey();
+              assignedKeyToToast = grantedKey;
+            }
+
+            // Extract username if any
+            let guessedUser = '';
+            const match = (o.note || '').match(/@([a-zA-Z0-9_.-]+)/) || (o.name || '').match(/@([a-zA-Z0-9_.-]+)/);
+            if (match) guessedUser = match[1].toLowerCase();
+
+            // Auto-register key into keysData if not exists
+            const existingIdx = newKeysList.findIndex(k => k.key.toUpperCase() === grantedKey.toUpperCase());
+            if (existingIdx === -1) {
+              newKeysList.unshift({
+                key: grantedKey,
+                owner: `${o.name || 'Khách hàng'} (${o.contact || ''})`,
+                boundUsername: guessedUser || undefined,
+                allowedFeatures: ["all"],
+                maxUses: 9999,
+                usedCount: 0,
+                maxDevices: 1,
+                usedDevices: [],
+                expiresAt: '2099-12-31'
+              });
+            }
+          }
+          return { ...o, status: newStatus, grantedKey: grantedKey || o.grantedKey };
+        });
+
         setConfig({ ...config, orders: updated });
+        if (newKeysList.length !== (keysData.keys || []).length) {
+          setKeysData({ ...keysData, keys: newKeysList });
+        }
         localStorage.setItem('at_customer_orders', JSON.stringify(updated));
-        showToast(`Đã đổi trạng thái đơn #${orderId} thành "${newStatus === 'approved' ? 'Đã duyệt' : newStatus === 'rejected' ? 'Đã hủy' : 'Chờ xác nhận'}"!`);
+
+        if (assignedKeyToToast) {
+          showToast(`Đã duyệt đơn #${orderId} & Tự động tạo Key VIP: ${assignedKeyToToast}! Hãy bấm "LƯU LÊN GITHUB" để lưu.`);
+        } else {
+          showToast(`Đã đổi trạng thái đơn #${orderId} thành "${newStatus === 'approved' ? 'Đã duyệt' : newStatus === 'rejected' ? 'Đã hủy' : 'Chờ xác nhận'}"!`);
+        }
       };
 
       const handleDeleteOrder = (orderId) => {
@@ -492,13 +537,19 @@
         const match = (order.note || '').match(/@([a-zA-Z0-9_.-]+)/) || (order.name || '').match(/@([a-zA-Z0-9_.-]+)/);
         if (match) guessedUser = match[1];
 
+        const digits = (order.contact || '').replace(/\D/g, '');
+        const defaultKey = order.grantedKey || (digits && digits.length >= 9 ? `Locket60s-${digits}` : generateRandomKey());
+
         setEditingKey({
-          key: generateRandomKey(),
+          key: defaultKey,
           owner: `${order.name} (${order.contact || ''})`,
           boundUsername: guessedUser,
           maxUses: 9999,
           expiresAt: '2099-12-31',
-          isMaster: false
+          isMaster: false,
+          maxDevices: 1,
+          usedDevices: [],
+          orderId: order.id
         });
         setShowKeyModal(true);
       };
@@ -507,6 +558,10 @@
         e.preventDefault();
         const f = e.target;
         const amt = parseInt(f.amount.value, 10) || 0;
+        const contactVal = f.custContact.value.trim();
+        const digits = contactVal.replace(/\D/g, '');
+        const autoKey = (digits && digits.length >= 9) ? `Locket60s-${digits}` : generateRandomKey();
+
         const newOrder = {
           id: 'AT_' + Math.floor(100000 + Math.random() * 900000),
           pkgName: f.pkgName.value,
@@ -514,21 +569,39 @@
           amount: amt,
           priceStr: amt.toLocaleString('vi-VN') + 'đ',
           name: f.custName.value.trim(),
-          contact: f.custContact.value.trim(),
+          contact: contactVal,
           social: f.custSocial.value.trim(),
           paymentMethod: f.payMethod.value,
           transferMemo: f.memo.value.trim() || 'AT Chuyen Khoan',
           note: f.custNote.value.trim(),
+          grantedKey: autoKey,
           billImg: null,
           time: new Date().toLocaleString('vi-VN'),
           createdAt: new Date().toISOString(),
           status: 'approved'
         };
+
+        // Also add key to keysData
+        const updatedKeys = [...(keysData.keys || [])];
+        if (!updatedKeys.some(k => k.key.toUpperCase() === autoKey.toUpperCase())) {
+          updatedKeys.unshift({
+            key: autoKey,
+            owner: `${newOrder.name} (${newOrder.contact})`,
+            allowedFeatures: ["all"],
+            maxUses: 9999,
+            usedCount: 0,
+            maxDevices: 1,
+            usedDevices: [],
+            expiresAt: '2099-12-31'
+          });
+          setKeysData({ ...keysData, keys: updatedKeys });
+        }
+
         const updated = [newOrder, ...(config.orders || [])];
         setConfig({ ...config, orders: updated });
         localStorage.setItem('at_customer_orders', JSON.stringify(updated));
         setShowManualOrderModal(false);
-        showToast('Đã thêm đơn hàng mới thành công!');
+        showToast(`Đã thêm đơn hàng & Tự động tạo Key VIP: ${autoKey}! Hãy bấm "LƯU LÊN GITHUB" để lưu.`);
       };
 
       // ========================================================
@@ -661,6 +734,8 @@
           isMaster: isMasterVal ? true : undefined,
           maxUses: maxUsesVal,
           usedCount: editingKey ? (editingKey.usedCount || 0) : 0,
+          maxDevices: editingKey?.maxDevices !== undefined ? editingKey.maxDevices : (isMasterVal ? 999 : 1),
+          usedDevices: editingKey?.usedDevices || [],
           expiresAt: expiresVal
         };
 
@@ -674,6 +749,20 @@
         }
 
         setKeysData({ ...keysData, keys: updatedList });
+
+        // Nếu Key này được tạo / sửa từ 1 đơn hàng cụ thể, tự động liên kết và duyệt đơn
+        if (editingKey && editingKey.orderId) {
+          const targetOrderId = editingKey.orderId;
+          const updatedOrders = (config.orders || []).map(o => {
+            if (o.id === targetOrderId) {
+              return { ...o, status: 'approved', grantedKey: keyVal };
+            }
+            return o;
+          });
+          setConfig(prev => ({ ...prev, orders: updatedOrders }));
+          localStorage.setItem('at_customer_orders', JSON.stringify(updatedOrders));
+        }
+
         setShowKeyModal(false);
         setEditingKey(null);
         showToast(`Đã lưu Key ${keyVal}! Hãy bấm nút "LƯU LÊN GITHUB" ở góc trên.`);
@@ -1237,6 +1326,51 @@
                             </div>
                           </div>
 
+                          {/* VIP Key Display Box */}
+                          {order.grantedKey ? (
+                            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 my-1">
+                              <div className="flex items-center gap-2">
+                                <i className="fa-solid fa-key text-amber-400"></i>
+                                <span className="text-xs">
+                                  Key VIP đã cấp: <code className="font-mono font-bold text-white bg-slate-950 px-2.5 py-0.5 rounded border border-amber-500/30 select-all">{order.grantedKey}</code>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(order.grantedKey);
+                                    showToast('Đã copy mã Key: ' + order.grantedKey);
+                                  }}
+                                  className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] transition"
+                                >
+                                  <i className="fa-solid fa-copy mr-1"></i> Copy
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickCreateKeyForOrder(order)}
+                                  className="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-slate-200 font-bold text-[11px] transition"
+                                  title="Đổi hoặc chỉnh sửa cấu hình Key"
+                                >
+                                  <i className="fa-solid fa-pen-to-square mr-1"></i> Đổi Key
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            order.status === 'approved' && (
+                              <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] flex items-center justify-between my-1">
+                                <span>⚠️ Đơn đã duyệt nhưng chưa có Key VIP. Bấm nút để cấp ngay:</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickCreateKeyForOrder(order)}
+                                  className="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 text-[10px]"
+                                >
+                                  ⚡ Cấp Key Ngay
+                                </button>
+                              </div>
+                            )
+                          )}
+
                           {/* Action Buttons for this order */}
                           <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-white/5 text-xs">
                             <div className="flex items-center gap-2">
@@ -1245,7 +1379,7 @@
                                 onClick={() => handleQuickCreateKeyForOrder(order)}
                                 className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow transition flex items-center gap-1.5"
                               >
-                                <i className="fa-solid fa-key"></i> ⚡ Cấp & Khóa Key Nhanh Cho Khách
+                                <i className="fa-solid fa-key"></i> {order.grantedKey ? '⚙️ Quản Lý Key' : '⚡ Cấp & Khóa Key Nhanh'}
                               </button>
 
                               {/* Zalo Contact */}
@@ -1266,9 +1400,9 @@
                                 <button
                                   onClick={() => handleUpdateOrderStatus(order.id, 'approved')}
                                   className="px-2.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition font-bold"
-                                  title="Đánh dấu đã duyệt"
+                                  title="Duyệt đơn và tự động cấp Key VIP"
                                 >
-                                  <i className="fa-solid fa-check mr-1"></i> Duyệt Đơn
+                                  <i className="fa-solid fa-check mr-1"></i> Duyệt & Cấp Key
                                 </button>
                               )}
                               {order.status !== 'rejected' && (
@@ -2884,7 +3018,7 @@
                 <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
                   <h3 className="font-black text-sm text-white flex items-center gap-2">
                     <i className="fa-solid fa-key text-emerald-400"></i>
-                    <span>{editingKey ? 'CHỈNH SỬA ACCESS KEY' : 'THÊM ACCESS KEY MỚI'}</span>
+                    <span>{editingKey ? (editingKey.orderId ? 'CẤP KEY CHO ĐƠN HÀNG #' + editingKey.orderId : 'CHỈNH SỬA ACCESS KEY') : 'THÊM ACCESS KEY MỚI'}</span>
                   </h3>
                   <button 
                     onClick={() => setShowKeyModal(false)}
@@ -2893,6 +3027,13 @@
                     <i className="fa-solid fa-xmark"></i>
                   </button>
                 </div>
+
+                {editingKey?.orderId && (
+                  <div className="mb-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2 font-bold">
+                    <i className="fa-solid fa-bolt text-amber-400"></i>
+                    <span>Key này sẽ được tự động gán vào đơn hàng <b>#{editingKey.orderId}</b> và hiển thị cho khách tra cứu.</span>
+                  </div>
+                )}
 
                 <form onSubmit={handleSaveKey} className="space-y-3.5">
                   <div>

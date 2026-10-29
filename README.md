@@ -193,4 +193,21 @@ git push origin master
 ```
 
 ---
+
+## 11. HỆ THỐNG TRA CỨU ĐƠN HÀNG THÔNG MINH & TỰ ĐỘNG CẤP KEY VIP
+
+Hệ thống tra cứu đơn hàng đã được tối ưu hóa toàn diện cho quy trình kinh doanh thực tế:
+1. **Tìm kiếm đa định dạng thông minh:**
+   - Tra cứu bằng Mã đơn: Chấp nhận mọi biến thể như `#AT_771492`, `AT_771492`, `AT771492`, hoặc chỉ cần gõ dãy số `771492`.
+   - Tra cứu bằng Số điện thoại: Tự động nhận diện và chuẩn hóa mọi định dạng (ví dụ `0968963751`, `0968 963 751`, `+84968963751`).
+   - Tra cứu bằng Tên khách hàng hoặc Nội dung chuyển khoản ngân hàng.
+2. **Dữ liệu thời gian thực (Real-time Fetching):**
+   - Mỗi lần bấm "Tra Cứu", hệ thống tự động kéo dữ liệu mới nhất từ GitHub Cloud (`site-config.json?_t=...`), giúp khách hàng thấy trạng thái duyệt đơn ngay lập tức mà không cần F5 trình duyệt.
+3. **Tự động cấp & Hiển thị Access Key VIP:**
+   - Khi Admin bấm **"Duyệt & Cấp Key"** trong trang Admin, hệ thống tự động sinh Access Key VIP (dạng `Locket60s-[SĐT]` hoặc ngẫu nhiên) và lưu đồng thời vào danh sách Access Keys.
+   - Ngay khi tra cứu thấy đơn đã duyệt, khách hàng sẽ nhìn thấy hộp thoại Access Key VIP với:
+     - Nút **"Copy Key"**: Sao chép mã chỉ bằng 1 chạm.
+     - Nút **"⚡ Kích Hoạt Luôn"**: Kích hoạt thẳng quyền VIP trên website ngay lập tức mà không cần nhập lại.
+
+---
 *Bản quyền hệ thống thuộc về **Boss Anh Tuấn iOS** - 2026*
