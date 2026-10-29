@@ -26,7 +26,7 @@
     "defaultGhToken": ""
   },
   "popupConfig": {
-    "enabled": false,
+    "enabled": true,
     "title": "🎉 CHÀO MỪNG ĐẾN VỚI ANH TUẤN iOS!",
     "badge": "THÔNG BÁO QUAN TRỌNG",
     "content": "Gói Locket 60s VIP vĩnh viễn đang mở bán với giá ưu đãi đặc biệt! Chúc bạn có trải nghiệm tuyệt vời.",
