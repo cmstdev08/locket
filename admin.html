@@ -247,30 +247,62 @@
         const b64 = btoa(unescape(encodeURIComponent(contentStr)));
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          // Dùng query parameter timestamp để chống cache trình duyệt mà KHÔNG vi phạm CORS của GitHub
-          const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}&_t=${Date.now()}_${Math.floor(Math.random() * 100000)}`;
           let sha = undefined;
           let remoteB64 = null;
 
-          const checkRes = await fetch(getUrl, {
-            headers: {
-              'Authorization': `token ${cleanToken}`,
-              'Accept': 'application/vnd.github.v3+json'
-            }
-          });
+          // Bước 1: Ưu tiên lấy SHA realtime trực tiếp từ Git Trees API của nhánh (tránh bộ đệm Fastly của Contents API)
+          try {
+            const treeRes = await fetch(`https://api.github.com/repos/${repo}/git/trees/${encodeURIComponent(branch)}?_t=${Date.now()}_${Math.floor(Math.random() * 100000)}`, {
+              headers: {
+                'Authorization': `token ${cleanToken}`,
+                'Accept': 'application/vnd.github.v3+json'
+              }
+            });
 
-          if (checkRes.ok) {
-            const checkData = await checkRes.json();
-            sha = checkData.sha;
-            remoteB64 = (checkData.content || '').replace(/\s/g, '');
-          } else if (checkRes.status === 401) {
-            throw new Error('GitHub Token không hợp lệ hoặc đã hết hạn (401 Bad Credentials)!');
-          } else if (checkRes.status === 404) {
-            // File hoàn toàn chưa tồn tại trên repo -> tạo file mới (không cần sha)
-            sha = undefined;
-          } else {
-            const checkErr = await checkRes.json().catch(() => ({}));
-            throw new Error(`Không lấy được thông tin file "${path}" từ GitHub (${checkRes.status}): ${checkErr.message || 'Lỗi kết nối'}`);
+            if (treeRes.ok) {
+              const treeData = await treeRes.json();
+              const fileNode = (treeData.tree || []).find(f => f.path === path);
+              if (fileNode) {
+                sha = fileNode.sha;
+              }
+            }
+          } catch (_) {}
+
+          // Bước 2: Dự phòng Contents API nếu Git Trees không trả về
+          if (!sha) {
+            const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}&_t=${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+            const checkRes = await fetch(getUrl, {
+              headers: {
+                'Authorization': `token ${cleanToken}`,
+                'Accept': 'application/vnd.github.v3+json'
+              }
+            });
+
+            if (checkRes.ok) {
+              const checkData = await checkRes.json();
+              sha = checkData.sha;
+              remoteB64 = (checkData.content || '').replace(/\s/g, '');
+            } else if (checkRes.status === 401) {
+              throw new Error('GitHub Token không hợp lệ hoặc đã hết hạn (401 Bad Credentials)!');
+            } else if (checkRes.status === 404) {
+              sha = undefined;
+            }
+          }
+
+          // Bước 3: Lấy nội dung remote từ Blob API để đối chiếu chính xác
+          if (sha && !remoteB64) {
+            try {
+              const blobRes = await fetch(`https://api.github.com/repos/${repo}/git/blobs/${sha}`, {
+                headers: {
+                  'Authorization': `token ${cleanToken}`,
+                  'Accept': 'application/vnd.github.v3+json'
+                }
+              });
+              if (blobRes.ok) {
+                const blobData = await blobRes.json();
+                remoteB64 = (blobData.content || '').replace(/\s/g, '');
+              }
+            } catch (_) {}
           }
 
           // Kiểm tra nếu nội dung trên GitHub đã trùng khớp 100%, bỏ qua commit để tránh xung đột
@@ -309,14 +341,13 @@
 
           // Xử lý xung đột 409 Conflict: Tự động chờ và lấy lại SHA mới nhất rồi thử lại
           if (res.status === 409 && attempt < maxRetries) {
-            console.warn(`[GitHub Sync] 409 Conflict ở file ${path} (lần ${attempt}/${maxRetries}). Đang lấy SHA mới và đẩy lại...`);
-            // Chờ một chút để GitHub cập nhật lại commit tree
-            await new Promise(r => setTimeout(r, 1200 * attempt));
+            console.warn(`[GitHub Sync] 409 Conflict ở file ${path} (lần ${attempt}/${maxRetries}): ${errData.message}. Đang lấy SHA mới và đẩy lại...`);
+            await new Promise(r => setTimeout(r, 1500 * attempt));
             continue;
           }
 
           if (res.status === 409) {
-            throw new Error(`Xung đột nhánh GitHub (${path}): Nhánh ${branch} đang bận hoặc có commit mới. Vui lòng bấm lưu lại sau 3 giây.`);
+            throw new Error(`Xung đột GitHub (${path}): ${errData.message || '409 Conflict'}`);
           }
 
           throw new Error(errData.message || `Lỗi HTTP ${res.status}`);
@@ -345,17 +376,24 @@
         try {
           showToast('⏳ Đang kết nối và đồng bộ lên GitHub Cloud...', 'fa-spinner fa-spin');
 
+          // BẢO MẬT & TRÁNH BỊ CHẶN: Không bao giờ đẩy GitHub Token lên repository công khai
+          // GitHub Secret Scanning sẽ chặn commit (lỗi 409) và thu hồi token nếu đẩy lên repo public
+          const configToCommit = JSON.parse(JSON.stringify(config));
+          if (configToCommit.githubConfig) {
+            configToCommit.githubConfig.defaultGhToken = "";
+          }
+
           // 2. Commit site-config.json
           const resConfig = await commitFileToGitHub(
             token, repo, branch,
             'site-config.json',
-            JSON.stringify(config, null, 2),
+            JSON.stringify(configToCommit, null, 2),
             `⚙️ Admin Cập Nhật Cấu Hình Website: ${new Date().toLocaleString('vi-VN')}`
           );
 
-          // Nếu site-config.json vừa commit mới, chờ 1 giây để GitHub branch ref cập nhật đồng bộ hoàn toàn
+          // Nếu site-config.json vừa commit mới, chờ 1.5 giây để GitHub branch ref cập nhật đồng bộ hoàn toàn
           if (resConfig && resConfig.updated) {
-            await new Promise(r => setTimeout(r, 1200));
+            await new Promise(r => setTimeout(r, 1500));
           }
 
           // 3. Commit access-keys.json
