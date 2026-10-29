@@ -148,7 +148,7 @@
   "dnsConfig": {
     "isLocked": false,
     "lockGold": true,
-    "lock60s": true,
+    "lock60s": false,
     "lockCa": true,
     "requireKey": true,
     "lockNotice": "Hồ sơ DNS này hiện đang tạm bảo trì để cập nhật chứng chỉ mới. Vui lòng thử lại sau!",
