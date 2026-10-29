@@ -70,7 +70,37 @@ Khi có đơn hàng mới hoặc khách gửi Ticket hỗ trợ, hệ thống t�
 
 ---
 
-## 4. CƠ CHẾ KHÓA RIÊNG TỪNG NÚT DNS ĐỘC LẬP
+## 4. CƠ CHẾ KHÓA RIÊNG TỪNG NÚT DNS & MODULE VIP ĐỘC LẬP
+
+Trong Tab **"Cấu Hình & Khóa DNS & Module VIP"**, Admin có toàn quyền bật/tắt khóa bảo trì riêng lẻ từng mục độc lập mà không bị khóa chung:
+
+### 1. Khóa Riêng Từng Module & Cấu Hình VIP (4 Mục):
+1. 🔒 **Khóa Cấu Hình Locket Gold** (`lockGold`): Chỉ mục Locket Gold chuyển sang trạng thái bảo trì.
+2. 🔒 **Khóa Module Locket 60s VIP** (`lock60s`): Khóa riêng nút tải Module 60s.
+3. 🔒 **Khóa Cấu Hình YouTube Premium** (`lockYoutube`): Bật/Tắt bảo trì YouTube VIP.
+4. 🔒 **Khóa Cấu Hình Spotify Premium** (`lockSpotify`): Bật/Tắt bảo trì Spotify VIP.
+
+### 2. Khóa Riêng Từng Nút Hồ Sơ DNS (3 Nút):
+1. 🔒 **Khóa DNS Locket Gold** (`lockGold`)
+2. 🔒 **Khóa DNS Locket 60s** (`lock60s`)
+3. 🔒 **Khóa Chứng Chỉ Root CA** (`lockCa`)
+4. 🛡️ **Công Tắc Khóa Tổng** (`isLocked`): Khóa toàn bộ server khi cần bảo trì gấp.
+
+---
+
+## 4.1. CHIA SẺ TÀI KHOẢN ID APPLE / ICLOUD TẢI SHADOWROCKET MIỄN PHÍ
+
+* **Hiển thị ngoài trang chủ**: Nằm ngay dưới mục "Chưa Có App ShadowRocket?".
+* **Đặc điểm**:
+  * Hiển thị tài khoản Apple ID và Mật khẩu với 2 nút **Copy 1-Click** tiện lợi.
+  * Hộp cảnh báo đỏ nổi bật: *"⚠️ LƯU Ý: Chỉ đăng nhập vào App Store! TUYỆT ĐỐI KHÔNG đăng nhập vào Cài Đặt (iCloud) của máy để tránh bị khóa máy!"*.
+* **Quản lý trong Admin** (Tab **Cấu Hình & Khóa DNS**):
+  * Công tắc Bật / Tắt hiển thị trên web.
+  * Form điền: Tiêu đề, Email Apple ID, Mật khẩu Apple ID, Ngày cập nhật và Ghi chú cảnh báo.
+
+---
+
+
 
 Trong Tab **"Cấu Hình & Khóa DNS"**, Admin có toàn quyền bật/tắt riêng lẻ 3 nút tải DNS trên trang chủ:
 1. 🔒 **Khóa Riêng Nút DNS Locket Gold** (`lockGold`): Chỉ nút tải Locket Gold bị khóa (`Khóa Gold 🔒`), các nút khác khách vẫn tải bình thường.

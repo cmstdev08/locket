@@ -109,6 +109,21 @@
         locket60sUrl: "./dns/locketgold.mobileconfig",
         rootCaUrl: "./dns/rootca.mobileconfig"
       },
+      modulesConfig: {
+        lockGold: false,
+        lock60s: false,
+        lockYoutube: true,
+        lockSpotify: true,
+        notice: "Cấu hình này đang tạm ngưng bảo trì. Vui lòng quay lại sau!"
+      },
+      icloudShareConfig: {
+        enabled: true,
+        title: "Tài Khoản ID Apple Tải ShadowRocket Miễn Phí",
+        email: "anhtuan.ios.free@icloud.com",
+        password: "Password@2026",
+        note: "Chỉ đăng nhập vào App Store! TUYỆT ĐỐI KHÔNG đăng nhập vào Cài Đặt (iCloud) của máy để tránh bị khóa máy.",
+        updatedAt: "29/10/2026"
+      },
       packages: [],
       vouchers: [],
       orders: [],
@@ -570,6 +585,14 @@
         showToast(nextVal ? `🔒 Đã KHÓA ${label}!` : `🔓 Đã MỞ KHÓA ${label}!`);
       };
 
+      const handleToggleIndividualModuleLock = (keyName, label) => {
+        const curr = config.modulesConfig || DEFAULT_CONFIG.modulesConfig;
+        const nextVal = !curr[keyName];
+        const updated = { ...curr, [keyName]: nextVal };
+        setConfig({ ...config, modulesConfig: updated });
+        showToast(nextVal ? `🔒 Đã KHÓA ${label}!` : `🔓 Đã MỞ KHÓA ${label}!`);
+      };
+
       const handleToggleDnsRequireKey = () => {
         const curr = config.dnsConfig || DEFAULT_CONFIG.dnsConfig;
         const nextReq = !curr.requireKey;
@@ -977,7 +1000,7 @@
                   { id: 'orders', label: 'Hóa Đơn & Đơn Hàng', icon: 'fa-receipt', count: pendingOrdersCount, badgeColor: 'bg-rose-500' },
                   { id: 'tickets', label: 'Vé Hỗ Trợ & Khách', icon: 'fa-headset', count: newTicketsCount, badgeColor: 'bg-sky-500' },
                   { id: 'keys', label: 'Quản Lý Access Keys', icon: 'fa-key', count: (keysData.keys || []).length },
-                  { id: 'dns', label: 'Cấu Hình & Khóa DNS', icon: 'fa-network-wired', active: config.dnsConfig?.isLocked },
+                  { id: 'dns', label: 'Cấu Hình, Khóa DNS & Module VIP', icon: 'fa-network-wired', active: config.dnsConfig?.isLocked },
                   { id: 'bank', label: 'Ngân Hàng & QR', icon: 'fa-qrcode' },
                   { id: 'packages', label: 'Gói Bán & Bảo Trì', icon: 'fa-box-archive' },
                   { id: 'vouchers', label: 'Mã Giảm Giá', icon: 'fa-ticket', count: (config.vouchers || []).length },
@@ -1416,9 +1439,9 @@
                 <div className="space-y-5">
                   <div>
                     <h2 className="text-lg font-black text-white flex items-center gap-2">
-                      <i className="fa-solid fa-network-wired text-sky-400"></i> CẤU HÌNH & KHÓA DNS TOÀN HỆ THỐNG
+                      <i className="fa-solid fa-network-wired text-sky-400"></i> CẤU HÌNH, KHÓA DNS & MODULE VIP TRANG CHỦ
                     </h2>
-                    <p className="text-xs text-slate-400">Bật/tắt chế độ khóa bảo trì DNS, cài đặt yêu cầu Key VIP và đường link tải hồ sơ cấu hình</p>
+                    <p className="text-xs text-slate-400">Khóa riêng biệt từng nút DNS, từng Module ShadowRocket và chia sẻ tài khoản ID Apple miễn phí</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -1501,6 +1524,215 @@
                           >
                             {config.dnsConfig?.lockCa ? '🔓 Bấm Để Mở Khóa CA' : '🔒 Khóa Riêng Nút CA'}
                           </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Panel 0.5: KHÓA TỪNG CẤU HÌNH & MODULE VIP (4 MỤC RIÊNG BIỆT) */}
+                    <div className="glass-card rounded-2xl p-5 border border-fuchsia-500/30 bg-fuchsia-500/5 space-y-3.5 md:col-span-2">
+                      <div className="flex items-center justify-between pb-2 border-b border-fuchsia-500/20">
+                        <h3 className="font-extrabold text-xs text-fuchsia-300 uppercase tracking-wider flex items-center gap-2">
+                          <i className="fa-solid fa-sliders text-sm"></i> Khóa Từng Cấu Hình & Module VIP (Không Khóa Hết Cùng Lúc)
+                        </h3>
+                        <span className="text-[10px] text-fuchsia-300 bg-fuchsia-400/20 px-2 py-0.5 rounded-full font-bold">
+                          Bật/Tắt riêng lẻ từng Module ShadowRocket
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        {/* 1. Locket Gold Config */}
+                        <div className="p-3.5 rounded-2xl bg-slate-900 border border-white/10 flex flex-col justify-between space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-sky-400 flex items-center gap-1">
+                                <i className="fa-solid fa-lock text-[10px]"></i> Locket Gold
+                              </span>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${config.modulesConfig?.lockGold ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                                {config.modulesConfig?.lockGold ? 'Khóa 🔒' : 'Mở 🔓'}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1.5">File locketgoldbyanhtuaan.config</p>
+                          </div>
+                          <button
+                            onClick={() => handleToggleIndividualModuleLock('lockGold', 'Cấu Hình Locket Gold')}
+                            className={`w-full py-2 rounded-xl font-black text-xs transition ${
+                              config.modulesConfig?.lockGold ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-white/10 hover:bg-white/15 text-slate-200'
+                            }`}
+                          >
+                            {config.modulesConfig?.lockGold ? '🔓 Mở Khóa Gold' : '🔒 Khóa Mục Này'}
+                          </button>
+                        </div>
+
+                        {/* 2. Module Locket 60s VIP */}
+                        <div className="p-3.5 rounded-2xl bg-slate-900 border border-white/10 flex flex-col justify-between space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-fuchsia-400 flex items-center gap-1">
+                                <i className="fa-solid fa-puzzle-piece text-[10px]"></i> Module 60s VIP
+                              </span>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${config.modulesConfig?.lock60s ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                                {config.modulesConfig?.lock60s ? 'Khóa 🔒' : 'Mở 🔓'}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1.5">File locket60s-vip.module</p>
+                          </div>
+                          <button
+                            onClick={() => handleToggleIndividualModuleLock('lock60s', 'Module Locket 60s')}
+                            className={`w-full py-2 rounded-xl font-black text-xs transition ${
+                              config.modulesConfig?.lock60s ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-white/10 hover:bg-white/15 text-slate-200'
+                            }`}
+                          >
+                            {config.modulesConfig?.lock60s ? '🔓 Mở Khóa 60s' : '🔒 Khóa Mục Này'}
+                          </button>
+                        </div>
+
+                        {/* 3. YouTube Premium */}
+                        <div className="p-3.5 rounded-2xl bg-slate-900 border border-white/10 flex flex-col justify-between space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-rose-400 flex items-center gap-1">
+                                <i className="fa-brands fa-youtube text-[10px]"></i> YouTube VIP
+                              </span>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${config.modulesConfig?.lockYoutube ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                                {config.modulesConfig?.lockYoutube ? 'Khóa 🔒' : 'Mở 🔓'}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1.5">File youtubepremium.config</p>
+                          </div>
+                          <button
+                            onClick={() => handleToggleIndividualModuleLock('lockYoutube', 'Cấu Hình YouTube Premium')}
+                            className={`w-full py-2 rounded-xl font-black text-xs transition ${
+                              config.modulesConfig?.lockYoutube ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-white/10 hover:bg-white/15 text-slate-200'
+                            }`}
+                          >
+                            {config.modulesConfig?.lockYoutube ? '🔓 Mở Khóa YouTube' : '🔒 Khóa Mục Này'}
+                          </button>
+                        </div>
+
+                        {/* 4. Spotify Premium */}
+                        <div className="p-3.5 rounded-2xl bg-slate-900 border border-white/10 flex flex-col justify-between space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-emerald-400 flex items-center gap-1">
+                                <i className="fa-brands fa-spotify text-[10px]"></i> Spotify VIP
+                              </span>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${config.modulesConfig?.lockSpotify ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                                {config.modulesConfig?.lockSpotify ? 'Khóa 🔒' : 'Mở 🔓'}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-1.5">File spotify.config</p>
+                          </div>
+                          <button
+                            onClick={() => handleToggleIndividualModuleLock('lockSpotify', 'Cấu Hình Spotify Premium')}
+                            className={`w-full py-2 rounded-xl font-black text-xs transition ${
+                              config.modulesConfig?.lockSpotify ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30' : 'bg-white/10 hover:bg-white/15 text-slate-200'
+                            }`}
+                          >
+                            {config.modulesConfig?.lockSpotify ? '🔓 Mở Khóa Spotify' : '🔒 Khóa Mục Này'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Panel: CHIA SẺ TÀI KHOẢN ID APPLE / ICLOUD TẢI SHADOWROCKET MIỄN PHÍ */}
+                    <div className="glass-card rounded-2xl p-5 border border-sky-500/30 bg-sky-500/5 space-y-4 md:col-span-2">
+                      <div className="flex items-center justify-between pb-2 border-b border-sky-500/20">
+                        <h3 className="font-extrabold text-xs text-sky-300 uppercase tracking-wider flex items-center gap-2">
+                          <i className="fa-brands fa-apple text-sm"></i> Chia Sẻ Tài Khoản ID Apple Tải ShadowRocket Miễn Phí Cho Khách
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setConfig({
+                              ...config,
+                              icloudShareConfig: {
+                                ...(config.icloudShareConfig || DEFAULT_CONFIG.icloudShareConfig),
+                                enabled: !(config.icloudShareConfig?.enabled !== false)
+                              }
+                            })}
+                            className={`px-3 py-1 rounded-xl font-black text-xs transition ${
+                              config.icloudShareConfig?.enabled !== false
+                                ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30'
+                                : 'bg-slate-800 text-slate-400 border border-white/10'
+                            }`}
+                          >
+                            {config.icloudShareConfig?.enabled !== false ? '🟢 ĐANG HIỆN TRÊN WEB' : '⚪ ĐANG ẨN'}
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-slate-400">
+                        Khung này sẽ hiển thị ở trang chủ ngay dưới mục "Chưa có App ShadowRocket". Khách chỉ cần bấm Copy tài khoản và mật khẩu để đăng nhập vào App Store tải app hoàn toàn miễn phí.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Tiêu Đề Khung Chia Sẻ:</label>
+                          <input 
+                            type="text"
+                            value={config.icloudShareConfig?.title || ''}
+                            onChange={(e) => setConfig({
+                              ...config,
+                              icloudShareConfig: { ...(config.icloudShareConfig || {}), title: e.target.value }
+                            })}
+                            placeholder="VD: Tài Khoản ID Apple Tải ShadowRocket Miễn Phí"
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Ngày Cập Nhật:</label>
+                          <input 
+                            type="text"
+                            value={config.icloudShareConfig?.updatedAt || ''}
+                            onChange={(e) => setConfig({
+                              ...config,
+                              icloudShareConfig: { ...(config.icloudShareConfig || {}), updatedAt: e.target.value }
+                            })}
+                            placeholder="VD: 29/10/2026"
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Tài Khoản ID Apple (Email):</label>
+                          <input 
+                            type="text"
+                            value={config.icloudShareConfig?.email || ''}
+                            onChange={(e) => setConfig({
+                              ...config,
+                              icloudShareConfig: { ...(config.icloudShareConfig || {}), email: e.target.value }
+                            })}
+                            placeholder="VD: anhtuan.ios.free@icloud.com"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-sky-400 text-xs font-mono font-bold focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Mật Khẩu Apple ID:</label>
+                          <input 
+                            type="text"
+                            value={config.icloudShareConfig?.password || ''}
+                            onChange={(e) => setConfig({
+                              ...config,
+                              icloudShareConfig: { ...(config.icloudShareConfig || {}), password: e.target.value }
+                            })}
+                            placeholder="VD: Password@2026"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-emerald-400 text-xs font-mono font-bold focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Ghi Chú Hướng Dẫn & Cảnh Báo Khách:</label>
+                          <textarea 
+                            rows="2"
+                            value={config.icloudShareConfig?.note || ''}
+                            onChange={(e) => setConfig({
+                              ...config,
+                              icloudShareConfig: { ...(config.icloudShareConfig || {}), note: e.target.value }
+                            })}
+                            placeholder="Chỉ đăng nhập vào App Store! TUYỆT ĐỐI KHÔNG đăng nhập vào Cài Đặt (iCloud) của máy để tránh bị khóa máy."
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-300 text-xs focus:outline-none focus:border-sky-500 leading-relaxed"
+                          ></textarea>
                         </div>
                       </div>
                     </div>

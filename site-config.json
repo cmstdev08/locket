@@ -294,5 +294,20 @@
   "socialProofConfig": {
     "enabled": true,
     "intervalSeconds": 18
+  },
+  "modulesConfig": {
+    "lockGold": false,
+    "lock60s": false,
+    "lockYoutube": true,
+    "lockSpotify": true,
+    "notice": "Cấu hình này đang tạm ngưng bảo trì. Vui lòng quay lại sau!"
+  },
+  "icloudShareConfig": {
+    "enabled": true,
+    "title": "Tài Khoản ID Apple Tải ShadowRocket Miễn Phí",
+    "email": "anhtuan.ios.free@icloud.com",
+    "password": "Password@2026",
+    "note": "Chỉ đăng nhập vào App Store! TUYỆT ĐỐI KHÔNG đăng nhập vào Cài Đặt (iCloud) của máy để tránh bị khóa máy.",
+    "updatedAt": "29/10/2026"
   }
 }
