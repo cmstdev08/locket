@@ -179,6 +179,16 @@
   ],
   "tickets": [
     {
+      "id": "TK_498231",
+      "name": "hiwdsgc",
+      "contact": "08898033333",
+      "subject": "Hỗ trợ Locket 60s",
+      "message": "dcsv",
+      "time": "22:20:39 29/10/2026",
+      "createdAt": "2026-10-29T15:20:39.964Z",
+      "status": "done"
+    },
+    {
       "id": "TK_220916",
       "name": "Admin",
       "contact": "0898376962",
@@ -263,7 +273,7 @@
     ]
   },
   "socialProofConfig": {
-    "enabled": true,
+    "enabled": false,
     "intervalSeconds": 18
   }
 }
