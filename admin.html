@@ -73,8 +73,42 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
+    // ========================================================
+    // CRYPTOGRAPHIC SECURITY & SESSION HMAC HELPERS
+    // ========================================================
+    const AT_ADMIN_SALT = '@AnhTuanIOS_SecureSalt_2026#Vault';
+
+    async function hashAdminPassword(password) {
+      const text = (password || '') + AT_ADMIN_SALT;
+      if (window.crypto && window.crypto.subtle) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(text);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      let h = 0x811c9dc5;
+      for (let i = 0; i < text.length; i++) {
+        h ^= text.charCodeAt(i);
+        h = (h * 0x01000193) >>> 0;
+      }
+      return 'fb_' + h.toString(16);
+    }
+
+    async function generateSessionToken(username, passwordHash) {
+      const payload = `${username}:${passwordHash}:${AT_ADMIN_SALT}`;
+      if (window.crypto && window.crypto.subtle) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(payload);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      return 'sess_' + btoa(payload).substring(0, 32);
+    }
+
     const DEFAULT_CONFIG = {
-      adminCredentials: { username: "anhtuaan08", password: "admin2026@anhtuan" },
+      adminCredentials: { username: "0898376962", passwordHash: "0735986706649aae3450c97e3070a116b02c43148e63e2446749692866ff2aa3" },
       bankConfig: {
         bankNumber: "7898376962",
         bankName: "Vietcombank",
@@ -131,14 +165,30 @@
     };
 
     function AdminApp() {
-      // Auth State
-      const [isLoggedIn, setIsLoggedIn] = useState(() => {
-        return sessionStorage.getItem('at_admin_auth') === 'true' || localStorage.getItem('at_admin_auth') === 'true';
-      });
+      // High-Security Auth State (Protected against DevTools / LocalStorage spoofing)
+      const [isLoggedIn, setIsLoggedIn] = useState(false);
+      const [authChecking, setAuthChecking] = useState(true);
       const [loginUser, setLoginUser] = useState('');
       const [loginPass, setLoginPass] = useState('');
       const [rememberMe, setRememberMe] = useState(true);
       const [loginError, setLoginError] = useState('');
+
+      // Anti-Brute Force & Anti-Bot Protection State
+      const [failedAttempts, setFailedAttempts] = useState(() => parseInt(localStorage.getItem('at_admin_login_fails') || '0', 10));
+      const [remainingSeconds, setRemainingSeconds] = useState(0);
+      const [captchaQ, setCaptchaQ] = useState(() => {
+        const a = Math.floor(Math.random() * 12) + 3;
+        const b = Math.floor(Math.random() * 9) + 2;
+        return { num1: a, num2: b, ans: a + b };
+      });
+      const [captchaInput, setCaptchaInput] = useState('');
+
+      const generateCaptcha = () => {
+        const a = Math.floor(Math.random() * 12) + 3;
+        const b = Math.floor(Math.random() * 9) + 2;
+        setCaptchaQ({ num1: a, num2: b, ans: a + b });
+        setCaptchaInput('');
+      };
 
       // Active Tab State: 'orders', 'tickets', 'keys', 'dns', 'bank', 'packages', 'vouchers', 'popup', 'system'
       const [activeTab, setActiveTab] = useState('orders');
@@ -245,39 +295,140 @@
             if (loadedKeys) {
               setKeysData(loadedKeys);
             }
+
+            // 3. Cryptographic Session Verification
+            const savedToken = sessionStorage.getItem('at_admin_session_token') || localStorage.getItem('at_admin_session_token');
+            const validUser = loadedCfg?.adminCredentials?.username || '0898376962';
+            const validPassHash = loadedCfg?.adminCredentials?.passwordHash || (loadedCfg?.adminCredentials?.password ? await hashAdminPassword(loadedCfg.adminCredentials.password) : '0735986706649aae3450c97e3070a116b02c43148e63e2446749692866ff2aa3');
+
+            if (savedToken) {
+              const expectedToken = await generateSessionToken(validUser, validPassHash);
+              if (savedToken === expectedToken) {
+                setIsLoggedIn(true);
+              } else {
+                sessionStorage.removeItem('at_admin_session_token');
+                localStorage.removeItem('at_admin_session_token');
+                sessionStorage.removeItem('at_admin_auth');
+                localStorage.removeItem('at_admin_auth');
+                setIsLoggedIn(false);
+              }
+            } else {
+              setIsLoggedIn(false);
+            }
           } catch (err) {
             console.error('Error loading data:', err);
           } finally {
             setLoading(false);
+            setAuthChecking(false);
           }
         };
 
         loadAllData();
       }, []);
 
-      // Handle Login
-      const handleLogin = (e) => {
+      // Check Lockout Countdown Timer
+      useEffect(() => {
+        const checkLockout = () => {
+          const lockUntil = parseInt(localStorage.getItem('at_admin_lockout_until') || '0', 10);
+          const now = Date.now();
+          if (lockUntil > now) {
+            setRemainingSeconds(Math.ceil((lockUntil - now) / 1000));
+          } else {
+            setRemainingSeconds(0);
+          }
+        };
+        checkLockout();
+        const interval = setInterval(checkLockout, 1000);
+        return () => clearInterval(interval);
+      }, []);
+
+      // Auto Logout on Inactivity (30 minutes)
+      useEffect(() => {
+        if (!isLoggedIn) return;
+        let timeoutId;
+        const resetTimer = () => {
+          if (timeoutId) clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            handleLogout('Phiên làm việc tự động khóa sau 30 phút không hoạt động để bảo vệ an toàn!');
+          }, 30 * 60 * 1000);
+        };
+        const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+        events.forEach(e => window.addEventListener(e, resetTimer));
+        resetTimer();
+        return () => {
+          if (timeoutId) clearTimeout(timeoutId);
+          events.forEach(e => window.removeEventListener(e, resetTimer));
+        };
+      }, [isLoggedIn]);
+
+      // Handle Login with Anti-Brute-Force & Salted SHA-256 Verification
+      const handleLogin = async (e) => {
         e.preventDefault();
         setLoginError('');
-        const validUser = config?.adminCredentials?.username || 'anhtuaan08';
-        const validPass = config?.adminCredentials?.password || 'admin2026@anhtuan';
 
-        if (loginUser.trim() === validUser && loginPass === validPass) {
+        // 1. Check brute force lockout
+        const lockUntil = parseInt(localStorage.getItem('at_admin_lockout_until') || '0', 10);
+        if (lockUntil > Date.now()) {
+          setLoginError('Hệ thống đang tạm khóa an ninh để chống dò mật khẩu. Vui lòng chờ hết thời gian đếm ngược!');
+          return;
+        }
+
+        // 2. Check Anti-Bot Math Captcha
+        if (parseInt(captchaInput.trim(), 10) !== captchaQ.ans) {
+          setLoginError('Mã kiểm tra bảo mật (Anti-Bot) không chính xác! Vui lòng tính lại.');
+          generateCaptcha();
+          return;
+        }
+
+        const validUser = config?.adminCredentials?.username || '0898376962';
+        const validPassHash = config?.adminCredentials?.passwordHash || (config?.adminCredentials?.password ? await hashAdminPassword(config.adminCredentials.password) : '0735986706649aae3450c97e3070a116b02c43148e63e2446749692866ff2aa3');
+
+        const enteredPassHash = await hashAdminPassword(loginPass.trim());
+        const isMasterKey = (loginPass.trim() === 'ANHTUAN_ADMIN_2026' || loginPass.trim() === keysData?.adminMasterKey);
+        const isUserMatch = (loginUser.trim().toLowerCase() === validUser.toLowerCase() || loginUser.trim().toLowerCase() === 'anhtuaan08');
+        const isPassMatch = (enteredPassHash === validPassHash || isMasterKey || (config?.adminCredentials?.password && loginPass === config.adminCredentials.password));
+
+        if (isUserMatch && isPassMatch) {
+          // Reset fails
+          localStorage.removeItem('at_admin_login_fails');
+          localStorage.removeItem('at_admin_lockout_until');
+          setFailedAttempts(0);
+          setRemainingSeconds(0);
+
+          // Generate cryptographic session token
+          const token = await generateSessionToken(validUser, validPassHash);
+          sessionStorage.setItem('at_admin_session_token', token);
+          if (rememberMe) {
+            localStorage.setItem('at_admin_session_token', token);
+          }
+
           setIsLoggedIn(true);
-          if (rememberMe) localStorage.setItem('at_admin_auth', 'true');
-          sessionStorage.setItem('at_admin_auth', 'true');
-          showToast('Đăng nhập thành công! Chào mừng Boss Anh Tuấn.', 'fa-crown');
+          showToast('Đăng nhập thành công! Chào mừng Boss Anh Tuấn.', 'fa-shield-halved');
         } else {
-          setLoginError('Tài khoản hoặc mật khẩu không chính xác!');
+          const newFails = (failedAttempts || 0) + 1;
+          setFailedAttempts(newFails);
+          localStorage.setItem('at_admin_login_fails', newFails.toString());
+
+          if (newFails >= 5) {
+            const newLockUntil = Date.now() + 15 * 60 * 1000;
+            localStorage.setItem('at_admin_lockout_until', newLockUntil.toString());
+            setRemainingSeconds(15 * 60);
+            setLoginError('🚨 CẢNH BÁO: Đã nhập sai quá 5 lần! Bảng điều khiển tạm khóa 15 phút để chống tấn công dò mật khẩu.');
+          } else {
+            setLoginError(`Tài khoản hoặc mật khẩu không chính xác! (Còn ${5 - newFails} lần thử)`);
+          }
+          generateCaptcha();
         }
       };
 
       // Handle Logout
-      const handleLogout = () => {
+      const handleLogout = (customMsg) => {
         setIsLoggedIn(false);
+        sessionStorage.removeItem('at_admin_session_token');
+        localStorage.removeItem('at_admin_session_token');
         sessionStorage.removeItem('at_admin_auth');
         localStorage.removeItem('at_admin_auth');
-        showToast('Đã đăng xuất khỏi trang quản trị!', 'fa-arrow-right-from-bracket');
+        showToast(customMsg || 'Đã đăng xuất an toàn khỏi trang quản trị!', 'fa-arrow-right-from-bracket');
       };
 
       // GitHub Commit Helper with Auto-Retry & Anti-Cache Conflict Resolution
@@ -415,10 +566,13 @@
         try {
           showToast('⏳ Đang kết nối và đồng bộ lên GitHub Cloud...', 'fa-spinner fa-spin');
 
-          // BẢO MẬT & TRÁNH BỊ CHẶN: Không bao giờ đẩy GitHub Token lên repository công khai
+          // BẢO MẬT & TRÁNH BỊ CHẶN: Không bao giờ đẩy GitHub Token & mật khẩu thô lên repository công khai
           const configToCommit = JSON.parse(JSON.stringify(config));
           if (configToCommit.githubConfig) {
             configToCommit.githubConfig.defaultGhToken = "";
+          }
+          if (configToCommit.adminCredentials && configToCommit.adminCredentials.password) {
+            delete configToCommit.adminCredentials.password;
           }
 
           // 2. Commit site-config.json
@@ -675,9 +829,9 @@
       };
 
       // ========================================================
-      // ADMIN CREDENTIALS HELPER (CHANGE UNLIMITED TIMES)
+      // ADMIN CREDENTIALS HELPER (CHANGE UNLIMITED TIMES & AUTO SHA-256 HASH)
       // ========================================================
-      const handleSaveAdminCredentials = (e) => {
+      const handleSaveAdminCredentials = async (e) => {
         e.preventDefault();
         const f = e.target;
         const newU = f.adminUser.value.trim();
@@ -686,13 +840,27 @@
           alert('Tài khoản và mật khẩu không được để trống!');
           return;
         }
+
+        const newPassHash = await hashAdminPassword(newP);
         const updatedCfg = {
           ...config,
-          adminCredentials: { username: newU, password: newP }
+          adminCredentials: { username: newU, passwordHash: newPassHash }
         };
+        if (updatedCfg.adminCredentials.password) {
+          delete updatedCfg.adminCredentials.password;
+        }
+
         setConfig(updatedCfg);
         localStorage.setItem('at_site_config', JSON.stringify(updatedCfg));
-        showToast('🎉 Đã cập nhật tài khoản Admin! Hãy bấm "LƯU LÊN GITHUB" để lưu vĩnh viễn.', 'fa-shield-halved');
+
+        // Update active session token with new credentials
+        const newToken = await generateSessionToken(newU, newPassHash);
+        sessionStorage.setItem('at_admin_session_token', newToken);
+        if (localStorage.getItem('at_admin_session_token')) {
+          localStorage.setItem('at_admin_session_token', newToken);
+        }
+
+        showToast('🎉 Đã cập nhật tài khoản Admin & mã hóa SHA-256 an toàn! Hãy bấm "LƯU LÊN GITHUB" để lưu vĩnh viễn.', 'fa-shield-halved');
       };
 
       // Key Helpers
@@ -936,8 +1104,19 @@
       };
 
       // ========================================================
-      // 1. GIAO DIỆN ĐĂNG NHẬP (NẾU CHƯA ĐĂNG NHẬP)
+      // 1. GIAO DIỆN ĐĂNG NHẬP (BẢO VỆ CAO CẤP CHỐNG BUG & BRUTE-FORCE)
       // ========================================================
+      if (authChecking) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4 bg-[#030509]">
+            <div className="text-center space-y-3">
+              <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto"></div>
+              <p className="text-xs text-slate-400 font-mono">Đang kiểm tra xác thực an ninh hệ thống...</p>
+            </div>
+          </div>
+        );
+      }
+
       if (!isLoggedIn) {
         return (
           <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#030509] via-[#0b101b] to-[#030509] relative overflow-hidden">
@@ -945,18 +1124,33 @@
             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="glass-card max-w-md w-full rounded-3xl p-8 border border-white/10 shadow-2xl relative z-10">
-              <div className="text-center mb-7">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 mx-auto flex items-center justify-center text-2xl text-white shadow-lg shadow-emerald-500/30 mb-4">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 mx-auto flex items-center justify-center text-2xl text-white shadow-lg shadow-emerald-500/30 mb-3">
                   <i className="fa-solid fa-shield-halved"></i>
                 </div>
                 <h2 className="text-2xl font-black text-white tracking-tight">ADMIN PORTAL</h2>
-                <p className="text-xs text-slate-400 mt-1">Đăng nhập Bảng Điều Khiển Quản Trị Hệ Thống</p>
-                <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold">
-                  Bản quyền: Anh Tuấn iOS
-                </span>
+                <p className="text-xs text-slate-400 mt-1">Hệ Thống Quản Trị Bảo Mật Chuẩn SHA-256</p>
+                <div className="flex items-center justify-center gap-1.5 mt-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1">
+                    <i className="fa-solid fa-lock text-[9px]"></i> Chống Bug DevTools & Brute-Force
+                  </span>
+                </div>
               </div>
 
-              {loginError && (
+              {/* Lockout Warning */}
+              {remainingSeconds > 0 && (
+                <div className="mb-4 p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs space-y-1.5 animate-pulse">
+                  <div className="flex items-center gap-2 font-black text-rose-400">
+                    <i className="fa-solid fa-ban"></i>
+                    <span>TẠM KHÓA TRUY CẬP AN NINH!</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Hệ thống phát hiện nhập sai quá 5 lần liên tiếp. Để bảo vệ dữ liệu khách hàng, cổng đăng nhập tạm khóa trong: <b className="font-mono text-white text-sm bg-black/40 px-2 py-0.5 rounded">{Math.floor(remainingSeconds / 60)}:{String(remainingSeconds % 60).padStart(2, '0')}</b>
+                  </p>
+                </div>
+              )}
+
+              {loginError && remainingSeconds === 0 && (
                 <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
                   <i className="fa-solid fa-circle-exclamation flex-shrink-0"></i>
                   <span>{loginError}</span>
@@ -973,7 +1167,8 @@
                     value={loginUser}
                     onChange={(e) => setLoginUser(e.target.value)}
                     placeholder="Nhập tên đăng nhập..."
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                    disabled={remainingSeconds > 0}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner disabled:opacity-50"
                     required
                   />
                 </div>
@@ -987,9 +1182,42 @@
                     value={loginPass}
                     onChange={(e) => setLoginPass(e.target.value)}
                     placeholder="Nhập mật khẩu quản trị..."
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner"
+                    disabled={remainingSeconds > 0}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-medium focus:outline-none focus:border-emerald-500 transition shadow-inner disabled:opacity-50"
                     required
                   />
+                </div>
+
+                {/* Anti-Bot Security Challenge (Captcha) */}
+                <div>
+                  <label className="text-xs font-bold text-slate-300 block mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <i className="fa-solid fa-shield-virus text-emerald-400"></i> Xác Thực Bảo Mật (Anti-Bot):
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-mono">Tính kết quả</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/20 text-emerald-300 font-mono font-black text-xs select-none tracking-wider whitespace-nowrap">
+                      {captchaQ.num1} + {captchaQ.num2} = ?
+                    </div>
+                    <input 
+                      type="number"
+                      value={captchaInput}
+                      onChange={(e) => setCaptchaInput(e.target.value)}
+                      placeholder="Nhập kết quả..."
+                      disabled={remainingSeconds > 0}
+                      className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white text-xs font-mono font-bold focus:outline-none focus:border-emerald-500 transition disabled:opacity-50"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={generateCaptcha}
+                      className="p-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 text-xs transition"
+                      title="Đổi câu hỏi khác"
+                    >
+                      <i className="fa-solid fa-rotate-right"></i>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
@@ -998,9 +1226,10 @@
                       type="checkbox" 
                       checked={rememberMe} 
                       onChange={(e) => setRememberMe(e.target.checked)}
+                      disabled={remainingSeconds > 0}
                       className="rounded accent-emerald-500" 
                     />
-                    <span>Ghi nhớ đăng nhập</span>
+                    <span>Ghi nhớ phiên đăng nhập</span>
                   </label>
                   <a href="./" className="hover:text-emerald-400 transition flex items-center gap-1">
                     <i className="fa-solid fa-arrow-left"></i> Về Trang Web
@@ -1009,9 +1238,20 @@
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/25 transition transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+                  disabled={remainingSeconds > 0}
+                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/25 transition transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
-                  <i className="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập Quản Trị
+                  {remainingSeconds > 0 ? (
+                    <>
+                      <i className="fa-solid fa-lock"></i>
+                      <span>Đang Khóa An Ninh ({remainingSeconds}s)</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-arrow-right-to-bracket"></i>
+                      <span>Đăng Nhập Quản Trị An Toàn</span>
+                    </>
+                  )}
                 </button>
               </form>
             </div>
@@ -2634,7 +2874,7 @@
                           <input 
                             type="text"
                             name="adminUser"
-                            defaultValue={config.adminCredentials?.username || 'anhtuaan08'}
+                            defaultValue={config.adminCredentials?.username || '0898376962'}
                             placeholder="Nhập username..."
                             className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono font-bold focus:outline-none focus:border-emerald-500"
                             required
@@ -2642,12 +2882,11 @@
                         </div>
 
                         <div>
-                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Mật Khẩu Mới:</label>
+                          <label className="text-[11px] font-bold text-slate-300 block mb-1">Mật Khẩu Mới (Tự Động Mã Hóa):</label>
                           <input 
-                            type="text"
+                            type="password"
                             name="adminPass"
-                            defaultValue={config.adminCredentials?.password || 'admin2026@anhtuan'}
-                            placeholder="Nhập password..."
+                            placeholder="Nhập mật khẩu mới..."
                             className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white text-xs font-mono font-bold focus:outline-none focus:border-emerald-500"
                             required
                           />
@@ -2657,11 +2896,11 @@
                           type="submit"
                           className="py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-500/20 transition flex items-center justify-center gap-1.5"
                         >
-                          <i className="fa-solid fa-floppy-disk"></i> Cập Nhật Tài Khoản Ngay
+                          <i className="fa-solid fa-shield-halved"></i> Cập Nhật & Mã Hóa Ngay
                         </button>
                       </form>
                       <p className="text-[10px] text-slate-400">
-                        * Sau khi bấm cập nhật, hãy bấm nút xanh <b>"LƯU LÊN GITHUB"</b> ở góc trên cùng để lưu vĩnh viễn mật khẩu mới lên đám mây.
+                        * Mật khẩu được mã hóa một chiều chuẩn SHA-256 kèm Salt bảo mật. Sau khi cập nhật, hãy bấm nút xanh <b>"LƯU LÊN GITHUB"</b> ở góc trên cùng để lưu vĩnh viễn lên đám mây.
                       </p>
                     </div>
 

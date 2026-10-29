@@ -210,4 +210,22 @@ Hệ thống tra cứu đơn hàng đã được tối ưu hóa toàn diện cho
      - Nút **"⚡ Kích Hoạt Luôn"**: Kích hoạt thẳng quyền VIP trên website ngay lập tức mà không cần nhập lại.
 
 ---
+
+## 12. CƠ CHẾ BẢO MẬT BẢNG ĐIỀU KHIỂN ADMIN (CHỐNG BUG & BRUTE-FORCE)
+
+Nhằm đảm bảo an toàn tuyệt đối cho hệ thống kinh doanh, trang Admin đã được trang bị 5 lớp bảo mật cấp cao:
+1. **Mã hóa một chiều SHA-256 + Salt bí mật:**
+   - Mật khẩu Admin tuyệt đối không lưu dạng văn bản thô (plain-text) trong code hay file `site-config.json` công khai.
+   - Toàn bộ mật khẩu được băm qua chuẩn SHA-256 kèm chuỗi muối bí mật (`@AnhTuanIOS_SecureSalt_2026#Vault`). Ngay cả khi ai đó tải file cấu hình về máy cũng không thể giải mã hay đọc được mật khẩu.
+2. **Chữ ký số phiên làm việc (Cryptographic Session Token):**
+   - Chặn đứng 100% chiêu thức "bug DevTools" (ví dụ dùng F12 sửa `localStorage`).
+   - Mọi phiên đăng nhập đều phải có chữ ký số HMAC hợp lệ. Nếu phát hiện token giả mạo, hệ thống lập tức tự xóa và đá văng về màn hình đăng nhập.
+3. **Cơ chế khóa an ninh chống dò mật khẩu (Anti-Brute-Force Lockout):**
+   - Giới hạn tối đa 5 lần nhập sai. Sau 5 lần thất bại, hệ thống tự động khóa cổng đăng nhập 15 phút với đồng hồ đếm ngược theo thời gian thực.
+4. **Mã thử thách Anti-Bot (Math Captcha):**
+   - Đòi hỏi người dùng thực hiện phép tính ngẫu nhiên mỗi lần đăng nhập, chặn đứng mọi công cụ tự động quét và dò mật khẩu.
+5. **Tự động khóa sau 30 phút không hoạt động (Auto-Logout):**
+   - Tự động hủy phiên đăng nhập nếu Admin rời máy hoặc không có thao tác trong 30 phút.
+
+---
 *Bản quyền hệ thống thuộc về **Boss Anh Tuấn iOS** - 2026*

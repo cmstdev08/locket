@@ -1,7 +1,7 @@
 {
   "adminCredentials": {
     "username": "0898376962",
-    "password": "Tuantran@310"
+    "passwordHash": "0735986706649aae3450c97e3070a116b02c43148e63e2446749692866ff2aa3"
   },
   "bankConfig": {
     "bankNumber": "7898376962",
