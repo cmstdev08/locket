@@ -17,8 +17,8 @@
     "hotline": "0898.376.962"
   },
   "telegramConfig": {
-    "telegramBotToken": "",
-    "telegramChatId": ""
+    "telegramBotToken": "9054468692:AAFcOoaVyU4Wv1_ndqH5qIXmT5wMZD-EqLo",
+    "telegramChatId": "7705653131"
   },
   "githubConfig": {
     "defaultGhRepo": "cmstdev08/locket",
