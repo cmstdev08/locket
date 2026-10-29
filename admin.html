@@ -155,6 +155,8 @@
       // Voucher Management Modal State
       const [showVoucherModal, setShowVoucherModal] = useState(false);
       const [editingVoucher, setEditingVoucher] = useState(null);
+      const [showTokenModal, setShowTokenModal] = useState(false);
+      const [tokenModalInput, setTokenModalInput] = useState('');
 
       const showToast = (text, icon = 'fa-circle-check') => {
         setToast({ show: true, text, icon });
@@ -241,20 +243,34 @@
 
       // GitHub Commit Helper
       const commitFileToGitHub = async (token, repo, branch, path, contentStr, commitMsg) => {
+        const cleanToken = (token || '').trim();
         const getUrl = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}`;
         let sha = undefined;
         try {
           const checkRes = await fetch(getUrl, {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${cleanToken}`,
               'Accept': 'application/vnd.github.v3+json'
             }
           });
           if (checkRes.ok) {
             const checkData = await checkRes.json();
             sha = checkData.sha;
+          } else if (checkRes.status === 401) {
+            throw new Error('GitHub Token không hợp lệ hoặc đã hết hạn (401 Bad Credentials)!');
+          } else if (checkRes.status === 404) {
+            const repoRes = await fetch(`https://api.github.com/repos/${repo}`, {
+              headers: { 'Authorization': `Bearer ${cleanToken}` }
+            });
+            if (!repoRes.ok) {
+              throw new Error(`Không tìm thấy Repo "${repo}" hoặc Token không có quyền truy cập!`);
+            }
           }
-        } catch (_) {}
+        } catch (eCheck) {
+          if (eCheck.message && (eCheck.message.includes('Token') || eCheck.message.includes('Repo'))) {
+            throw eCheck;
+          }
+        }
 
         const putUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
         const b64 = btoa(unescape(encodeURIComponent(contentStr)));
@@ -268,7 +284,7 @@
         const res = await fetch(putUrl, {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${cleanToken}`,
             'Content-Type': 'application/json',
             'Accept': 'application/vnd.github.v3+json'
           },
@@ -277,6 +293,8 @@
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
+          if (res.status === 401) throw new Error('GitHub Token không có quyền đẩy mã (Cần tích chọn quyền repo)');
+          if (res.status === 409) throw new Error('Xung đột commit trên GitHub! Vui lòng bấm lưu lại lần nữa');
           throw new Error(errData.message || `Lỗi HTTP ${res.status}`);
         }
         return true;
@@ -296,8 +314,8 @@
         if (config.telegramConfig.telegramChatId) localStorage.setItem('at_tele_chat_id', config.telegramConfig.telegramChatId);
 
         if (!token) {
-          showToast('Đã lưu cục bộ! Nhập GitHub Token ở tab Cấu Hình để đẩy thẳng lên GitHub Cloud.', 'fa-circle-exclamation');
           setSaving(false);
+          setShowTokenModal(true);
           return;
         }
 
@@ -1495,6 +1513,88 @@
             </div>
           )}
 
+          {/* ======================================================== */}
+          {/* MODAL: HƯỚNG DẪN & NHẬP GITHUB TOKEN ĐỂ ĐẨY CODE CLOUD */}
+          {/* ======================================================== */}
+          {showTokenModal && (
+            <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+              <div className="glass-card max-w-lg w-full rounded-3xl p-6 sm:p-7 border border-emerald-500/40 shadow-2xl relative text-left">
+                <button 
+                  onClick={() => setShowTokenModal(false)}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-400 hover:text-white flex items-center justify-center text-xs transition"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl flex-shrink-0 border border-emerald-500/30">
+                    <i className="fa-brands fa-github"></i>
+                  </div>
+                  <div>
+                    <h3 className="font-black text-sm sm:text-base text-white">CẦN GITHUB TOKEN ĐỂ LƯU CLOUD</h3>
+                    <p className="text-xs text-slate-400">Chỉ cần dán 1 lần duy nhất để website tự đẩy code lên GitHub</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-white/10 text-xs text-slate-300 space-y-2 mb-4">
+                  <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+                    <i className="fa-solid fa-circle-question"></i> Cách lấy Token GitHub trong 30 giây:
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
+                    <li>Bấm vào link: <a href="https://github.com/settings/tokens/new?scopes=repo&description=LocketAdminToken" target="_blank" rel="noopener noreferrer" className="text-sky-400 underline font-bold hover:text-sky-300">Tạo Token GitHub Ngay (Đã chọn sẵn quyền repo)</a></li>
+                    <li>Kéo xuống cuối trang bấm nút màu xanh: <b>Generate token</b>.</li>
+                    <li>Copy chuỗi mã bắt đầu bằng <code>ghp_...</code> và dán vào ô bên dưới:</li>
+                  </ol>
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const tokenVal = tokenModalInput.trim();
+                  if (!tokenVal) {
+                    alert('Vui lòng dán mã GitHub Token (bắt đầu bằng ghp_...)');
+                    return;
+                  }
+                  setConfig(prev => ({
+                    ...prev,
+                    githubConfig: { ...prev.githubConfig, defaultGhToken: tokenVal }
+                  }));
+                  localStorage.setItem('at_gh_token', tokenVal);
+                  setShowTokenModal(false);
+                  showToast('Đã lưu Token! Đang tiến hành đẩy code lên GitHub...');
+                  setTimeout(() => handleSaveAndSyncGitHub(), 300);
+                }} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Dán GitHub Personal Access Token (ghp_...):</label>
+                    <input 
+                      type="password"
+                      value={tokenModalInput}
+                      onChange={(e) => setTokenModalInput(e.target.value)}
+                      placeholder="VD: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-emerald-500/50 text-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowTokenModal(false)}
+                      className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 font-bold text-xs"
+                    >
+                      Để Sau
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-extrabold text-xs uppercase shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-1.5"
+                    >
+                      <i className="fa-solid fa-cloud-arrow-up"></i> Lưu Token & Đẩy Ngay
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {/* TOAST NOTIFICATION */}
           {toast.show && (
             <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-slate-900/95 border border-emerald-500/50 text-white text-xs font-bold shadow-2xl flex items-center gap-2.5 animate-bounce">
@@ -1511,3 +1611,4 @@
   </script>
 </body>
 </html>
+
