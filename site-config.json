@@ -142,6 +142,16 @@
       "btnText": "TẠM NGƯNG BÁN (ĐANG BẢO TRÌ)"
     }
   ],
+  "dnsConfig": {
+    "isLocked": false,
+    "requireKey": true,
+    "lockNotice": "Hệ thống DNS hiện đang tạm bảo trì để nâng cấp chứng chỉ mới. Quý khách vui lòng quay lại sau!",
+    "locketGoldUrl": "./dns/locketgold.mobileconfig",
+    "locket60sUrl": "./dns/locketgold.mobileconfig",
+    "rootCaUrl": "./dns/rootca.mobileconfig"
+  },
+  "orders": [],
+  "tickets": [],
   "vouchers": [
     {
       "code": "ANHTUAN20K",

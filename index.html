@@ -1674,6 +1674,45 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 ━━━━━━━━━━━━━━━━━━━━
 ⏰ <i>${timeStr}</i>`;
 
+        // Tạo đối tượng đơn hàng để lưu vào hệ thống quản lý Admin
+        let billDataUrl = null;
+        if (billFile) {
+          try {
+            billDataUrl = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(billFile);
+            });
+          } catch (_) {}
+        }
+
+        const newOrderRecord = {
+          id: code,
+          pkgName: selectedPackage.name,
+          pkgId: selectedPackage.id,
+          amount: finalPriceNum,
+          priceStr: formatCurrency(finalPriceNum),
+          originalPrice: selectedPackage.price,
+          voucher: voucherInfo,
+          name: orderForm.name,
+          contact: orderForm.contact,
+          social: orderForm.social || '',
+          paymentMethod: orderForm.paymentMethod === 'vietqr' ? 'Vietcombank' : 'MoMo',
+          transferMemo: transferMemo,
+          note: orderForm.note || '',
+          billImg: billDataUrl,
+          time: timeStr,
+          createdAt: new Date().toISOString(),
+          status: 'pending' // 'pending', 'approved', 'rejected'
+        };
+
+        try {
+          const list = JSON.parse(localStorage.getItem('at_customer_orders') || '[]');
+          list.unshift(newOrderRecord);
+          localStorage.setItem('at_customer_orders', JSON.stringify(list.slice(0, 50)));
+        } catch (_) {}
+
         try {
           if (billFile) {
             // Send real photo + caption via FormData
@@ -1719,6 +1758,24 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
         setContactSubmitting(true);
         const timeStr = new Date().toLocaleString('vi-VN');
         const text = `📬 <b>YÊU CẦU HỖ TRỢ / TIN NHẮN</b>\n━━━━━━━━━━━━━━\n👤 <b>Tên:</b> ${contactForm.name}\n📱 <b>Liên hệ:</b> ${contactForm.contact}\n🏷️ <b>Chủ đề:</b> ${contactForm.subject}\n💬 <b>Nội dung:</b>\n${contactForm.message}\n━━━━━━━━━━━━━━\n⏰ <i>${timeStr}</i>`;
+
+        // Lưu vé hỗ trợ vào hệ thống quản lý Admin
+        const newTicketRecord = {
+          id: 'TK_' + Math.floor(100000 + Math.random() * 900000),
+          name: contactForm.name,
+          contact: contactForm.contact,
+          subject: contactForm.subject,
+          message: contactForm.message,
+          time: timeStr,
+          createdAt: new Date().toISOString(),
+          status: 'new' // 'new', 'in_progress', 'done'
+        };
+
+        try {
+          const tList = JSON.parse(localStorage.getItem('at_customer_tickets') || '[]');
+          tList.unshift(newTicketRecord);
+          localStorage.setItem('at_customer_tickets', JSON.stringify(tList.slice(0, 50)));
+        } catch (_) {}
         
         try {
           await fetch(`https://api.telegram.org/bot${teleToken.trim() || CONFIGS.telegramBotToken}/sendMessage`, {
@@ -3133,75 +3190,106 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                 ))}
               </div>
 
-              {/* DNS DUY TRÌ LOCKET VĨNH VIỄN (MỞ KHÓA HOÀN TOÀN KHI CÓ KEY) */}
-              <div className={`glass-card rounded-3xl p-5 border relative overflow-hidden mb-6 transition ${
-                keyVerified 
-                  ? 'border-emerald-500/40 bg-emerald-500/5 shadow-lg shadow-emerald-500/10' 
-                  : 'border-white/10 bg-slate-900/40'
-              }`}>
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-3.5">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 border ${
-                      keyVerified ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-amber-400 border-amber-400/20'
-                    }`}>
-                      <i className={`fa-solid ${keyVerified ? 'fa-shield-halved' : 'fa-lock'}`}></i>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-extrabold text-base text-white">Cấu Hình DNS Duy Trì Locket Vĩnh Viễn</h4>
-                        <span className={`keep-white text-[9px] font-black px-2 py-0.5 rounded ${keyVerified ? 'bg-emerald-500' : 'bg-rose-500'}`}>
-                          {keyVerified ? 'VIP ĐÃ MỞ KHÓA' : 'CẦN ACCESS KEY'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {keyVerified 
-                          ? 'Đã mở khóa toàn bộ hồ sơ DNS chống trôi profile độc quyền. Bạn có thể cài đặt trực tiếp vào iPhone ngay!'
-                          : 'Hồ sơ DNS MobileConfig chống trôi profile độc quyền — Được mở khóa tự động khi bạn nhập Access Key VIP.'
-                        }
-                      </p>
-                    </div>
-                  </div>
+              {/* DNS DUY TRÌ LOCKET VĨNH VIỄN (CẤU HÌNH & KHÓA QUẢN TRỊ ADMIN) */}
+              {(() => {
+                const dnsCfg = siteConfig?.dnsConfig || {
+                  isLocked: false,
+                  requireKey: true,
+                  lockNotice: "Hệ thống DNS hiện đang tạm bảo trì để nâng cấp chứng chỉ mới. Quý khách vui lòng quay lại sau!",
+                  locketGoldUrl: "./dns/locketgold.mobileconfig",
+                  locket60sUrl: "./dns/locketgold.mobileconfig",
+                  rootCaUrl: "./dns/rootca.mobileconfig"
+                };
+                const canDownloadDns = !dnsCfg.isLocked && (!dnsCfg.requireKey || keyVerified);
 
-                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    {keyVerified ? (
-                      <>
-                        <a 
-                          href={CONFIGS.dnsLocketGoldUrl}
-                          className="keep-white px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
-                        >
-                          <i className="fa-solid fa-download"></i> DNS Locket Gold
-                        </a>
-                        <a 
-                          href={CONFIGS.dnsLocket60sUrl}
-                          className="keep-white px-3.5 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:opacity-90 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
-                        >
-                          <i className="fa-solid fa-download"></i> DNS Locket 60s
-                        </a>
-                        <a 
-                          href={CONFIGS.dnsRootCaUrl}
-                          className="keep-white px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-extrabold text-xs transition border border-white/15 flex items-center justify-center gap-1.5"
-                        >
-                          <i className="fa-solid fa-certificate text-amber-400"></i> Root CA
-                        </a>
-                      </>
-                    ) : (
-                      <button 
-                        onClick={() => {
-                          const el = document.getElementById('config-key-input');
-                          if (el) {
-                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            el.focus();
-                          }
-                          showToast('Dán mã Key do Anh Tuấn cấp để mở khóa cài đặt DNS!', 'fa-key');
-                        }}
-                        className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-black text-xs text-center border border-amber-400/30 shadow transition flex items-center justify-center gap-1.5"
-                      >
-                        <i className="fa-solid fa-key text-xs"></i> Nhập Key Mở Khóa DNS
-                      </button>
-                    )}
+                return (
+                  <div className={`glass-card rounded-3xl p-5 border relative overflow-hidden mb-6 transition ${
+                    dnsCfg.isLocked
+                      ? 'border-rose-500/40 bg-rose-500/5 shadow-lg shadow-rose-500/10'
+                      : (keyVerified || !dnsCfg.requireKey)
+                        ? 'border-emerald-500/40 bg-emerald-500/5 shadow-lg shadow-emerald-500/10' 
+                        : 'border-white/10 bg-slate-900/40'
+                  }`}>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0 border ${
+                          dnsCfg.isLocked
+                            ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                            : (keyVerified || !dnsCfg.requireKey)
+                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                              : 'bg-slate-800 text-amber-400 border-amber-400/20'
+                        }`}>
+                          <i className={`fa-solid ${dnsCfg.isLocked ? 'fa-lock' : (keyVerified || !dnsCfg.requireKey) ? 'fa-shield-halved' : 'fa-lock'}`}></i>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-extrabold text-base text-white">Cấu Hình DNS Duy Trì Locket Vĩnh Viễn</h4>
+                            <span className={`keep-white text-[9px] font-black px-2 py-0.5 rounded ${
+                              dnsCfg.isLocked 
+                                ? 'bg-rose-600 animate-pulse' 
+                                : (keyVerified || !dnsCfg.requireKey) ? 'bg-emerald-500' : 'bg-amber-500'
+                            }`}>
+                              {dnsCfg.isLocked ? '🔒 BẢO TRÌ DNS' : (keyVerified || !dnsCfg.requireKey) ? 'VIP ĐÃ MỞ KHÓA' : 'CẦN ACCESS KEY'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {dnsCfg.isLocked
+                              ? (dnsCfg.lockNotice || 'Hệ thống DNS hiện đang tạm bảo trì để nâng cấp chứng chỉ mới. Quý khách vui lòng quay lại sau!')
+                              : (keyVerified || !dnsCfg.requireKey)
+                                ? 'Đã mở khóa toàn bộ hồ sơ DNS chống trôi profile độc quyền. Bạn có thể cài đặt trực tiếp vào iPhone ngay!'
+                                : 'Hồ sơ DNS MobileConfig chống trôi profile độc quyền — Được mở khóa tự động khi bạn nhập Access Key VIP.'
+                            }
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                        {dnsCfg.isLocked ? (
+                          <div className="px-4 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center gap-2">
+                            <i className="fa-solid fa-triangle-exclamation"></i>
+                            <span>Tạm Khóa Tải DNS Để Bảo Trì</span>
+                          </div>
+                        ) : canDownloadDns ? (
+                          <>
+                            <a 
+                              href={dnsCfg.locketGoldUrl || CONFIGS.dnsLocketGoldUrl}
+                              className="keep-white px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
+                            >
+                              <i className="fa-solid fa-download"></i> DNS Locket Gold
+                            </a>
+                            <a 
+                              href={dnsCfg.locket60sUrl || CONFIGS.dnsLocket60sUrl}
+                              className="keep-white px-3.5 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 hover:opacity-90 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow"
+                            >
+                              <i className="fa-solid fa-download"></i> DNS Locket 60s
+                            </a>
+                            <a 
+                              href={dnsCfg.rootCaUrl || CONFIGS.dnsRootCaUrl}
+                              className="keep-white px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-extrabold text-xs transition border border-white/15 flex items-center justify-center gap-1.5"
+                            >
+                              <i className="fa-solid fa-certificate text-amber-400"></i> Root CA
+                            </a>
+                          </>
+                        ) : (
+                          <button 
+                            onClick={() => {
+                              const el = document.getElementById('config-key-input');
+                              if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                el.focus();
+                              }
+                              showToast('Dán mã Key do Anh Tuấn cấp để mở khóa cài đặt DNS!', 'fa-key');
+                            }}
+                            className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-black text-xs text-center border border-amber-400/30 shadow transition flex items-center justify-center gap-1.5"
+                          >
+                            <i className="fa-solid fa-key text-xs"></i> Nhập Key Mở Khóa DNS
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* App Download & Apple ID Sources */}
               <div className="glass-card rounded-2xl p-4 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -3486,16 +3574,6 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                       <p className="text-[11px] text-slate-400">Tạo file Module Shadowrocket cho riêng iPhone của bạn</p>
                     </div>
                   </div>
-
-                  {/* Nút cài đặt Admin kín đáo */}
-                  <button 
-                    type="button"
-                    onClick={() => setShowAdminConfig(!showAdminConfig)} 
-                    className={`p-2 rounded-xl border text-xs transition ${showAdminConfig ? 'bg-amber-400/20 border-amber-400 text-amber-400' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
-                    title="Cấu hình nâng cao (Dành cho Admin)"
-                  >
-                    <i className="fa-solid fa-gear"></i>
-                  </button>
                 </div>
 
                 {/* Preview Box */}
@@ -3606,110 +3684,9 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     </div>
                   </div>
 
-                  {/* Cài đặt nâng cao dành riêng cho Admin (Chỉ mở khi Admin bấm icon bánh răng) */}
-                  {showAdminConfig && (
-                    <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-400/40 space-y-2.5">
-                      <div className="flex items-center justify-between text-amber-300 font-bold text-[11px]">
-                        <span><i className="fa-solid fa-user-shield mr-1"></i> Tùy chọn Admin Repo GitHub</span>
-                        <span className="text-[9px] font-normal text-slate-400">Chỉ Admin cần cấu hình 1 lần</span>
-                      </div>
-                      <p className="text-[10px] text-slate-300">
-                        Cung cấp GitHub Personal Access Token (PAT) với quyền <b>repo</b> để website tự động commit và lưu file <code>anhtuaan08-expiry-check.js</code> & <code>caption-post.js</code> lên GitHub cho mọi khách hàng:
-                      </p>
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-400 block mb-1">GitHub Personal Access Token (ghp_...):</label>
-                        <div className="flex gap-2">
-                          <input 
-                            type="password"
-                            value={ghToken}
-                            onChange={(e) => setGhToken(e.target.value)}
-                            placeholder="ghp_xxxx..."
-                            className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (ghToken.trim()) {
-                                localStorage.setItem('at_gh_token', ghToken.trim());
-                                showToast('Đã lưu GitHub Token của Admin!');
-                              } else {
-                                localStorage.removeItem('at_gh_token');
-                                showToast('Đã xóa GitHub Token');
-                              }
-                            }}
-                            className="px-3 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/30 transition flex items-center gap-1"
-                          >
-                            <i className="fa-solid fa-floppy-disk"></i> Lưu
-                          </button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 block mb-1">Repo:</label>
-                          <input 
-                            type="text"
-                            value={ghRepo}
-                            onChange={(e) => setGhRepo(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 block mb-1">Branch:</label>
-                          <input 
-                            type="text"
-                            value={ghBranch}
-                            onChange={(e) => setGhBranch(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Tùy chọn Bot Telegram nhận thông báo đơn hàng & bill */}
-                      <div className="pt-2 border-t border-white/10 space-y-2">
-                        <label className="text-[10px] font-bold text-amber-300 block">
-                          <i className="fa-brands fa-telegram mr-1"></i> Telegram Bot nhận thông báo Đơn Hàng & Bill (Tùy chọn):
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <div>
-                            <span className="text-[9px] text-slate-400 block mb-0.5">Bot Token (từ @BotFather):</span>
-                            <input 
-                              type="password"
-                              value={teleToken}
-                              onChange={(e) => setTeleToken(e.target.value)}
-                              placeholder="VD: 8123456789:AAH_..."
-                              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
-                            />
-                          </div>
-                          <div>
-                            <span className="text-[9px] text-slate-400 block mb-0.5">Chat ID (từ @userinfobot):</span>
-                            <input 
-                              type="text"
-                              value={teleChatId}
-                              onChange={(e) => setTeleChatId(e.target.value)}
-                              placeholder="VD: 123456789"
-                              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-400"
-                            />
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (teleToken.trim()) localStorage.setItem('at_tele_token', teleToken.trim());
-                            else localStorage.removeItem('at_tele_token');
-                            if (teleChatId.trim()) localStorage.setItem('at_tele_chat_id', teleChatId.trim());
-                            else localStorage.removeItem('at_tele_chat_id');
-                            showToast('Đã lưu cấu hình Bot Telegram nhận đơn hàng!');
-                          }}
-                          className="w-full py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 text-xs font-bold border border-sky-500/30 transition flex items-center justify-center gap-1.5"
-                        >
-                          <i className="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình Telegram Nhận Đơn
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  {/* Cài đặt nâng cao đã được chuyển vào /admin */}
                 </div>
 
-                {/* Kết quả tạo cấu hình */}
                 {deployResult && (
                   <div className={`p-4 rounded-2xl mb-5 border ${deployResult.success ? 'bg-slate-900/90 border-slate-700/60 shadow-2xl' : 'bg-red-500/10 border-red-500/30'}`}>
                     <div className="flex items-start gap-2.5">
@@ -3734,8 +3711,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                               <span>Chưa đồng bộ lên GitHub: {deployResult.githubError}</span>
                             </div>
                             <p className="text-[10px] text-slate-300 leading-relaxed">
-                              👉 <b>Cách tự động 100%:</b> Nhấn biểu tượng <b className="text-amber-300">⚙️</b> ở góc trên bên phải popup này, dán <b>GitHub Token</b> (PAT quyền repo) của bạn vào và bấm Lưu. Sau đó web sẽ tự động commit lên GitHub cho mọi khách hàng!
-                            </p>
+                              👉 Cấu hình tự động và bảo mật được quản lý độc quyền qua Bảng Quản Trị Hệ Thống của Anh Tuấn iOS.</p>
                             
                           </div>
                         )}
