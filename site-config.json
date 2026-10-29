@@ -239,7 +239,7 @@
     "endTime": "23:59:59"
   },
   "luckyWheelConfig": {
-    "enabled": true,
+    "enabled": false,
     "title": "🎁 VÒNG QUAY MAY MẮN",
     "subtitle": "Quay là trúng voucher giảm giá hoặc Key trải nghiệm VIP!",
     "prizes": [
