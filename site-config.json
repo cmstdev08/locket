@@ -296,7 +296,7 @@
     "intervalSeconds": 18
   },
   "modulesConfig": {
-    "lockGold": false,
+    "lockGold": true,
     "lock60s": false,
     "lockYoutube": true,
     "lockSpotify": true,
