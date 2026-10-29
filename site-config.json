@@ -37,14 +37,14 @@
     {
       "id": "locket-gold-free",
       "name": "Locket Gold Basic",
-      "tag": "Cấu hình Miễn Phí",
+      "tag": "BẢO TRÌ VÔ THỜI HẠN 🔒",
       "badgeColor": "from-amber-400 to-yellow-500",
       "price": "0đ",
       "priceNum": 0,
       "originalPrice": "99.000đ",
       "isFree": true,
       "isPopular": false,
-      "isMaintenance": false,
+      "isMaintenance": true,
       "desc": "Sử dụng cấu hình ShadowRocket miễn phí, mở khóa các tính năng Gold tiêu chuẩn.",
       "features": [
         "Chụp ảnh không giới hạn với bạn bè",
@@ -143,8 +143,15 @@
     }
   ],
   "vouchers": [
-    { "code": "ANHTUAN20K", "discount": 20000, "desc": "Giảm ngay 20.000đ áp dụng cho gói 60s VIP" },
-    { "code": "VIP60S", "discount": 50000, "desc": "Giảm sốc 50.000đ cho khách hàng VIP" }
+    {
+      "code": "ANHTUAN20K",
+      "discount": 20000,
+      "desc": "Giảm ngay 20.000đ áp dụng cho gói 60s VIP"
+    },
+    {
+      "code": "VIP60S",
+      "discount": 50000,
+      "desc": "Giảm sốc 50.000đ cho khách hàng VIP"
+    }
   ]
 }
-
