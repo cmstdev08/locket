@@ -952,7 +952,7 @@
       const isUsernameLocked = useMemo(() => {
         if (!keyVerified || !verifiedKeyInfo) return false;
         const currentKey = (accessKeyInput || '').trim().toUpperCase();
-        if (verifiedKeyInfo.isMaster || currentKey === 'LOCKET60S-0934956647') return false; // Master Key & thaocute toàn quyền không bị khóa
+        if (verifiedKeyInfo.isMaster || currentKey === 'LOCKET60S-0898376962' || currentKey === 'LOCKET60S-0934956647') return false; // Boss Anh Tuấn & thaocute toàn quyền không bị khóa
         const boundFromKey = verifiedKeyInfo.boundUsername;
         const boundFromLocal = localStorage.getItem('at_bound_username_' + currentKey);
         return Boolean(boundFromKey || boundFromLocal);
@@ -1074,7 +1074,11 @@
               }
             } catch (_) {}
 
-            if (matched.isMaster || key === 'LOCKET60S-0934956647') {
+            if (key === 'LOCKET60S-0898376962' || matched.role === 'admin') {
+              matched.isMaster = true;
+              matched.isAdmin = true;
+              showToast('👑 Xin chào Boss Anh Tuấn (Admin)! Toàn bộ tính năng & quyền hạn tối thượng đã kích hoạt.');
+            } else if (matched.isMaster || key === 'LOCKET60S-0934956647') {
               matched.isMaster = true;
               showToast('Chào Vợ Yêu Anh Tuấn! Bạn có đặc quyền VIP tối thượng không giới hạn! 💖👑');
             } else if (matched.boundUsername || localStorage.getItem('at_bound_username_' + key.toUpperCase())) {
@@ -1158,8 +1162,8 @@ ${JSON.stringify(captionObj, null, 2)}
         }
         const cleanUser = rawId || 'vip';
 
-        // CHẶN BẢO MẬT: Nếu Key này đã bị khóa cứng với Username trước đó, cấm đổi sang Username khác (Ngoại trừ Master Key & thaocute)
-        if (verifiedKeyInfo && !verifiedKeyInfo.isMaster && currentKey !== 'LOCKET60S-0934956647' && boundUser) {
+        // CHẶN BẢO MẬT: Nếu Key này đã bị khóa cứng với Username trước đó, cấm đổi sang Username khác (Ngoại trừ Boss Anh Tuấn, Master Key & thaocute)
+        if (verifiedKeyInfo && !verifiedKeyInfo.isMaster && currentKey !== 'LOCKET60S-0898376962' && currentKey !== 'LOCKET60S-0934956647' && boundUser) {
           if (cleanUser.toLowerCase() !== boundUser.toLowerCase()) {
             showToast(`Key ${currentKey} đã khóa vĩnh viễn cho @${boundUser}. Không được phép dùng cho @${cleanUser}!`, 'fa-circle-xmark');
             setDeploying(false);
@@ -1167,8 +1171,8 @@ ${JSON.stringify(captionObj, null, 2)}
           }
         }
 
-        // LẦN ĐẦU KÍCH HOẠT: Khóa cứng vĩnh viễn Username này vào Key ngay lập tức! (Ngoại trừ Master Key & thaocute)
-        if (verifiedKeyInfo && !verifiedKeyInfo.isMaster && currentKey !== 'LOCKET60S-0934956647' && !boundUser) {
+        // LẦN ĐẦU KÍCH HOẠT: Khóa cứng vĩnh viễn Username này vào Key ngay lập tức! (Ngoại trừ Boss Anh Tuấn, Master Key & thaocute)
+        if (verifiedKeyInfo && !verifiedKeyInfo.isMaster && currentKey !== 'LOCKET60S-0898376962' && currentKey !== 'LOCKET60S-0934956647' && !boundUser) {
           boundUser = cleanUser;
           try {
             localStorage.setItem('at_bound_username_' + currentKey, cleanUser);
@@ -1335,8 +1339,8 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
             if (studioTab === 'caption' && captionText && text.includes('// Custom Caption by Anh Tuan iOS')) {
               text = text.replace('// Custom Caption by Anh Tuan iOS', newCaptionSnippet);
             }
-            // Thiết lập bản quyền chính chủ (Chống share file - Cách 2)
-            if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip' && cleanUser !== 'thaocute') {
+            // Thiết lập bản quyền chính chủ (Chống share file - Cách 2) - Ngoại trừ thaocute và Boss anhtuaan08
+            if (cleanUser && cleanUser !== 'user' && cleanUser !== 'vip' && cleanUser !== 'thaocute' && cleanUser !== 'anhtuaan08') {
               if (text.includes('var LICENSED_OWNER =')) {
                 text = text.replace(/var LICENSED_OWNER\s*=\s*".*?";/, `var LICENSED_OWNER = "${cleanUser}";`);
               } else {

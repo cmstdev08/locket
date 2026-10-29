@@ -14,11 +14,14 @@
     },
     {
       "key": "Locket60s-0898376962",
-      "owner": "0898376962",
+      "owner": "Anh Tuấn iOS (Boss Admin Web)",
+      "boundUsername": "anhtuaan08",
+      "role": "admin",
+      "isMaster": true,
       "allowedFeatures": ["all"],
-      "maxUses": 100,
+      "maxUses": 999999,
       "usedCount": 0,
-      "expiresAt": "2026-12-31"
+      "expiresAt": "2099-12-31"
     }
   ]
 }
