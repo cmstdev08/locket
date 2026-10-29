@@ -273,7 +273,7 @@
     ]
   },
   "socialProofConfig": {
-    "enabled": false,
+    "enabled": true,
     "intervalSeconds": 18
   }
 }
