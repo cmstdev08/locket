@@ -147,7 +147,7 @@
     "requireKey": true,
     "lockNotice": "Hệ thống DNS hiện đang tạm bảo trì để nâng cấp chứng chỉ mới. Quý khách vui lòng quay lại sau!",
     "locketGoldUrl": "./dns/locketgold.mobileconfig",
-    "locket60sUrl": "./dns/locketgold.mobileconfig",
+    "locket60sUrl": "./dns/locket60s.mobileconfig",
     "rootCaUrl": "./dns/rootca.mobileconfig"
   },
   "orders": [],
