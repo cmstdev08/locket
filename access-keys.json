@@ -3,6 +3,18 @@
   "adminMasterKey": "ANHTUAN_ADMIN_2026",
   "keys": [
     {
+      "key": "Locket60s-0393869815",
+      "owner": "Tiến Đạt (0393869815)",
+      "allowedFeatures": [
+        "all"
+      ],
+      "maxUses": 9999,
+      "usedCount": 0,
+      "maxDevices": 1,
+      "usedDevices": [],
+      "expiresAt": "2099-12-31"
+    },
+    {
       "key": "Locket60s-0335980310",
       "owner": "Admin (0335980310)",
       "allowedFeatures": [
