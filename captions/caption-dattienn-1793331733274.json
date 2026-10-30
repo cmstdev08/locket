@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:4",
+  "username": "dattienn",
+  "userKey": "Locket60s-0393869815",
+  "text": "🏎️Đẹp trai nhất locket",
+  "textColor": "#fbbf24",
+  "colors": [
+    "#22d3ee",
+    "#0ea5e9",
+    "#2563eb"
+  ],
+  "gradientName": "Ocean Cyan",
+  "gradientClass": "from-cyan-400 via-sky-500 to-blue-600",
+  "icon": "kitty",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-dattienn-expiry-check.js",
+  "userCapFilePath": "locket60s/caption-dattienn.js",
+  "sgmoduleFilePath": "modules/locket60s-dattienn.sgmodule",
+  "createdAt": "2026-10-30T03:42:14.535Z"
+}
