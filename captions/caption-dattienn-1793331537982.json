@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:2",
+  "username": "dattienn",
+  "userKey": "Locket60s-0393869815",
+  "text": "LGBT🏳️‍🌈",
+  "textColor": "#8C315F",
+  "colors": [
+    "#7dd3fc",
+    "#f472b6",
+    "#a5b4fc"
+  ],
+  "gradientName": "Cotton Candy",
+  "gradientClass": "from-sky-300 via-pink-300 to-indigo-300",
+  "icon": "kitty",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/0VJyfqCV/Thi-t-k-ch-a-c-t-n-2-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-dattienn-expiry-check.js",
+  "userCapFilePath": "locket60s/caption-dattienn.js",
+  "sgmoduleFilePath": "modules/locket60s-dattienn.sgmodule",
+  "createdAt": "2026-10-30T03:38:59.169Z"
+}
