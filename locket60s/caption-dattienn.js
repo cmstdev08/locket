@@ -29,6 +29,14 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:3",
+      text: "🏎️Đẹp trai nhất locket",
+      textColor: "#fbbf24",
+      colors: ["#22d3ee","#0ea5e9","#2563eb"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
 
 ];
