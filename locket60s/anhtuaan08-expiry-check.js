@@ -3,7 +3,7 @@
   // ===== HARD-CODED CONFIG =====
   var LICENSED_OWNER = "anhtuaan08"; // Khóa bản quyền tài khoản chính chủ (Chống share file)
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
-  var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
+  var GOLD_JOINED_AT  = "2008-10-03";               // ngày mua Gold
   var BADGE_USERNAMES = ["anhtuaan08", "anhtuan"];             // lowercase, không @
   var WIDGET_FRAME_URL = "https://i.ibb.co/0VJyfqCV/Thi-t-k-ch-a-c-t-n-2-1.png";
 
@@ -19,6 +19,14 @@
     }
 
        
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:6",
+      text: "🎧Now playing: Our Little Secret 🎶",
+      textColor: "#ffffff",
+      colors: ["#FFAFCC","#FFC8DD","#CDB4DB"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
     // Thêm caption khác ở đây:
     // { overlay_id: "caption:anhtuaan08_personal:1", text: "...", textColor: "#...", colors: ["#...","#..."], imageUrl: "https://..." }
