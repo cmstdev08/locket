@@ -1,10 +1,10 @@
 // Locket 60s by anhtuaan08
 (function(){
   // ===== HARD-CODED CONFIG =====
-  var GOLD_JOINED_AT = "2008-06-15"; // Ngày mua Gold
+  var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
   var LICENSED_OWNER = "hoangmanh"; // Khóa bản quyền tài khoản chính chủ (Chống share file)
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
-  var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
+  
   var BADGE_USERNAMES = ["anhtuaan08", "anhtuan", "hoangmanh"];             // lowercase, không @
   var WIDGET_FRAME_URL = "https://i.ibb.co/0VJyfqCV/Thi-t-k-ch-a-c-t-n-2-1.png";
 
@@ -19,8 +19,7 @@
       captionMinChars: 0                             // 0 = không pad
     }
 
-       
-        ,{
+,{
       overlay_id: "caption:anhtuaan08_personal:1",
       text: "👑Locket 60s by anhtuaan08",
       textColor: "#8C315F",

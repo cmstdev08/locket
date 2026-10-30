@@ -1520,7 +1520,10 @@ ${JSON.stringify(captionObj, null, 2)}
           // ĐẶC QUYỀN: Bộ 3 file RIÊNG BIỆT cho từng Key/User (Không dùng chung)
           let userExpFilePath = `locket60s/anhtuaan08-${cleanUser}-expiry-check.js`;
           let userCapFilePath = `locket60s/caption-${cleanUser}.js`;
-          if (cleanUser === 'thaocute') {
+          if (cleanUser === 'anhtuaan08') {
+            userExpFilePath = 'locket60s/anhtuaan08-expiry-check.js';
+            userCapFilePath = 'locket60s/caption-anhtuaan08.js';
+          } else if (cleanUser === 'thaocute') {
             userExpFilePath = 'locket60s/anhtuaan08-thaocute-expriry-check.js';
             userCapFilePath = 'locket60s/captionthaocute.js';
           }
@@ -1562,7 +1565,7 @@ ${JSON.stringify(captionObj, null, 2)}
             rawExpText = await fetchFileText('locket60s/anhtuaan08-expiry-check.js');
             if (rawExpText) {
               rawExpText = rawExpText.replace(
-                /var BADGE_USERNAMESs*=s*[.*?];/,
+                /var\s+BADGE_USERNAMES\s*=\s*\[.*?\];/,
                 `var BADGE_USERNAMES = ["${cleanUser}", "anhtuaan08"];`
               );
             }
@@ -1644,12 +1647,19 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
 
             // Tùy chỉnh ngày mua Gold độc quyền cho Key / User này (GOLD_JOINED_AT)
             const cleanJoinedDate = (goldJoinedAt || '2008-06-15').trim();
-            if (text.includes('var GOLD_JOINED_AT =')) {
-              text = text.replace(/var GOLD_JOINED_AT\s*=\s*".*?";/, `var GOLD_JOINED_AT = "${cleanJoinedDate}";`);
+            if (/var\s+GOLD_JOINED_AT\s*=/i.test(text)) {
+              let replaced = false;
+              text = text.replace(/var\s+GOLD_JOINED_AT\s*=\s*["'].*?["'];[^\r\n]*/gi, () => {
+                if (!replaced) {
+                  replaced = true;
+                  return `var GOLD_JOINED_AT  = "${cleanJoinedDate}";               // ngày mua Gold`;
+                }
+                return ''; // Xóa triệt để các khai báo trùng lặp phía sau
+              });
             } else {
               text = text.replace(
                 '// ===== HARD-CODED CONFIG =====',
-                `// ===== HARD-CODED CONFIG =====\r\n  var GOLD_JOINED_AT = "${cleanJoinedDate}"; // Ngày mua Gold`
+                `// ===== HARD-CODED CONFIG =====\r\n  var GOLD_JOINED_AT  = "${cleanJoinedDate}";               // ngày mua Gold`
               );
             }
             try {
