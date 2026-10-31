@@ -30,7 +30,9 @@
       "maxUses": 9999,
       "usedCount": 0,
       "maxDevices": 1,
-      "usedDevices": [],
+      "usedDevices": [
+        "dev_yaz6fn5_mvtrg4wy"
+      ],
       "expiresAt": "2099-12-31",
       "allowedPackages": [
         "locket-60s"
