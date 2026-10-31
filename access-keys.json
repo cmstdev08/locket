@@ -11,9 +11,7 @@
       "maxUses": 9999,
       "usedCount": 0,
       "maxDevices": 1,
-      "usedDevices": [
-        "dev_yaz6fn5_mvtrg4wy"
-      ],
+      "usedDevices": [],
       "expiresAt": "2099-12-31",
       "boundUsername": "dattienn",
       "boundAt": "2026-10-30T03:38:34.727Z",
