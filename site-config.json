@@ -272,7 +272,7 @@
     }
   ],
   "flashSaleConfig": {
-    "enabled": true,
+    "enabled": false,
     "title": "⚡ FLASH SALE ĐỘC QUYỀN TRONG NGÀY",
     "badge": "CHỈ CÒN DUY NHẤT HÔM NAY",
     "remainingSlots": 3,
@@ -333,7 +333,7 @@
     ]
   },
   "socialProofConfig": {
-    "enabled": true,
+    "enabled": false,
     "intervalSeconds": 18
   },
   "modulesConfig": {
