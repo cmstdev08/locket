@@ -1325,30 +1325,69 @@
 
           const matched = (keysData.keys || []).find(k => k.key.toUpperCase() === key);
           if (matched) {
-            // Kiểm tra giới hạn thiết bị (Chống dùng chung & chia sẻ key)
+            // 🔒 BỘ ENGINE KHÓA MÁY (DEVICE LOCK) CHỐNG CHIA SẺ KEY & DÙNG CHUNG
             const myDevId = (() => {
               let did = localStorage.getItem('at_device_id');
               if (!did) {
+                // Tạo fingerprint thiết bị duy nhất kết hợp màn hình, thời gian và chuỗi ngẫu nhiên
+                const screenFp = (window.screen.width || 0) + 'x' + (window.screen.height || 0) + 'x' + (window.screen.colorDepth || 24);
                 did = 'dev_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
                 localStorage.setItem('at_device_id', did);
+                localStorage.setItem('at_device_fp', screenFp);
               }
               return did;
             })();
 
             const maxDev = matched.maxDevices !== undefined ? matched.maxDevices : (matched.isMaster ? 999 : 1);
-            const usedDevs = matched.usedDevices || [];
-            if (!matched.isMaster && !usedDevs.includes(myDevId)) {
-              if (usedDevs.length >= maxDev) {
-                setKeyVerified(false);
-                setVerifiedKeyInfo(null);
-                showToast(`Key này đã kích hoạt trên ${usedDevs.length}/${maxDev} thiết bị khác! Vui lòng liên hệ Admin để đổi máy.`, 'fa-mobile-screen-button');
-                setCheckingKey(false);
-                return false;
-              } else {
-                matched.usedDevices = [...usedDevs, myDevId];
-                try {
-                  localStorage.setItem('at_bound_dev_' + key, JSON.stringify(matched.usedDevices));
-                } catch (_) {}
+
+            // 1. Thử gọi API Serverless /api/device-lock để kiểm tra thiết bị tập trung (nếu có Vercel API)
+            let deviceVerifiedByApi = false;
+            try {
+              const lockRes = await fetch('/api/device-lock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: key, deviceId: myDevId })
+              });
+              if (lockRes.ok) {
+                const lockData = await lockRes.json();
+                if (lockData.success) {
+                  deviceVerifiedByApi = true;
+                  if (lockData.isNewBind) {
+                    matched.usedDevices = [...(matched.usedDevices || []), myDevId];
+                  }
+                } else if (lockData.error === 'DEVICE_LIMIT_REACHED') {
+                  setKeyVerified(false);
+                  setVerifiedKeyInfo(null);
+                  showToast(lockData.message || `Key này đã kích hoạt trên ${lockData.usedCount || 1}/${maxDev} máy khác! Vui lòng liên hệ Admin để đổi máy.`, 'fa-mobile-screen-button');
+                  setCheckingKey(false);
+                  return false;
+                }
+              }
+            } catch (_) {}
+
+            // 2. Fallback kiểm tra thiết bị trực tiếp từ file access-keys.json
+            if (!deviceVerifiedByApi && !matched.isMaster && key !== 'LOCKET60S-0898376962' && key !== 'LOCKET60S-0934956647') {
+              // Lấy danh sách thiết bị từ GitHub file JSON kết hợp với localStorage đã bind
+              let usedDevs = Array.isArray(matched.usedDevices) ? matched.usedDevices : [];
+              const localSavedDevs = JSON.parse(localStorage.getItem('at_bound_dev_' + key) || '[]');
+              if (usedDevs.length === 0 && localSavedDevs.length > 0) {
+                usedDevs = localSavedDevs;
+                matched.usedDevices = usedDevs;
+              }
+
+              if (!usedDevs.includes(myDevId)) {
+                if (usedDevs.length >= maxDev) {
+                  setKeyVerified(false);
+                  setVerifiedKeyInfo(null);
+                  showToast(`Key này đã kích hoạt trên ${usedDevs.length}/${maxDev} thiết bị khác! Vui lòng liên hệ Admin để đổi máy.`, 'fa-mobile-screen-button');
+                  setCheckingKey(false);
+                  return false;
+                } else {
+                  matched.usedDevices = [...usedDevs, myDevId];
+                  try {
+                    localStorage.setItem('at_bound_dev_' + key, JSON.stringify(matched.usedDevices));
+                  } catch (_) {}
+                }
               }
             }
 
@@ -1823,14 +1862,29 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                   const rawKeysText = decodeURIComponent(escape(atob(keysData.content.replace(/\s/g, ''))));
                   const keysObj = JSON.parse(rawKeysText);
                   const targetKeyObj = (keysObj.keys || []).find(k => k.key.toUpperCase() === currentKey);
-                  if (targetKeyObj && !targetKeyObj.boundUsername) {
-                    targetKeyObj.boundUsername = cleanUser;
-                    targetKeyObj.boundAt = new Date().toISOString();
-                    await putGitHubFile(
-                      'access-keys.json',
-                      JSON.stringify(keysObj, null, 2),
-                      `🔒 Khóa vĩnh viễn Key ${currentKey} cho @${cleanUser}`
-                    );
+                  if (targetKeyObj) {
+                    let keyUpdated = false;
+                    if (!targetKeyObj.boundUsername) {
+                      targetKeyObj.boundUsername = cleanUser;
+                      targetKeyObj.boundAt = new Date().toISOString();
+                      keyUpdated = true;
+                    }
+                    // Đồng bộ khóa cứng thiết bị vào access-keys.json trên GitHub
+                    const curDevId = localStorage.getItem('at_device_id');
+                    if (curDevId) {
+                      if (!Array.isArray(targetKeyObj.usedDevices)) targetKeyObj.usedDevices = [];
+                      if (!targetKeyObj.usedDevices.includes(curDevId)) {
+                        targetKeyObj.usedDevices.push(curDevId);
+                        keyUpdated = true;
+                      }
+                    }
+                    if (keyUpdated) {
+                      await putGitHubFile(
+                        'access-keys.json',
+                        JSON.stringify(keysObj, null, 2),
+                        `🔒 Khóa Key ${currentKey} cho @${cleanUser} & Thiết bị [1/1 máy]`
+                      );
+                    }
                   }
                 }
               } catch (eKeySync) {

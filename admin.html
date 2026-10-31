@@ -57,6 +57,129 @@
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.5); }
   </style>
+
+  <!-- BỘ BẢO MẬT CHỐNG F12, DEVTOOLS, CTRL+U, CHUỘT PHẢI BẢO VỆ TRANG ADMIN -->
+  <script>
+    (function() {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+        || ('ontouchstart' in window) 
+        || (navigator.maxTouchPoints > 0);
+
+      let devtoolsDetected = false;
+      let overlayEl = null;
+
+      function createAdminSecurityOverlay() {
+        if (isMobile) return;
+        if (overlayEl || !document.body) return;
+        overlayEl = document.createElement('div');
+        overlayEl.id = 'at-admin-security-shield';
+        overlayEl.style.cssText = 'position:fixed;inset:0;z-index:999999999;background:rgba(3,5,9,0.98);backdrop-filter:blur(32px);display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center;';
+        overlayEl.innerHTML = `
+          <div style="max-width:480px;background:rgba(15,23,42,0.98);border:1px solid rgba(244,63,94,0.45);border-radius:24px;padding:32px 24px;box-shadow:0 25px 50px -12px rgba(244,63,94,0.4);">
+            <div style="width:72px;height:72px;border-radius:50%;background:rgba(244,63,94,0.15);color:#f43f5e;font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:1px solid rgba(244,63,94,0.3);">
+              🛡️
+            </div>
+            <h3 style="font-size:18px;font-weight:900;color:#fff;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">CẢNH BÁO BẢO MẬT HỆ THỐNG</h3>
+            <p style="font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:16px;">
+              Hệ thống phát hiện bạn đang cố gắng truy cập mã nguồn hoặc công cụ quản trị qua <b style="color:#f43f5e;">Developer Tools (F12 / View Source)</b>. Toàn bộ giao diện và dữ liệu đã được khóa bảo vệ lập tức.
+            </p>
+            <div style="background:rgba(244,63,94,0.1);border:1px dashed rgba(244,63,94,0.3);border-radius:14px;padding:12px;font-size:11px;color:#fecdd3;margin-bottom:20px;font-weight:bold;">
+              👉 Vui lòng ĐÓNG Developer Tools (F12) và bấm nút bên dưới để tiếp tục!
+            </div>
+            <button onclick="window.location.reload()" style="width:100%;padding:12px 20px;border-radius:12px;background:linear-gradient(135deg,#f43f5e,#ec4899);color:#fff;font-weight:800;font-size:13px;border:none;cursor:pointer;box-shadow:0 10px 15px -3px rgba(244,63,94,0.3);">
+              🔄 Tải Lại Trang
+            </button>
+          </div>
+        `;
+        document.body.appendChild(overlayEl);
+      }
+
+      function triggerAdminSecurityAlert() {
+        if (isMobile) return;
+        // Bỏ qua nếu là Admin đang đăng nhập và có bật cờ debug
+        if (localStorage.getItem('at_admin_debug') === 'true' && sessionStorage.getItem('at_admin_session_token')) return;
+        
+        if (!devtoolsDetected) {
+          devtoolsDetected = true;
+          const rootEl = document.getElementById('root');
+          if (rootEl) rootEl.style.display = 'none';
+          createAdminSecurityOverlay();
+          try { console.clear(); } catch (_) {}
+        }
+      }
+
+      // 1. Chặn phím tắt mở DevTools, View Source, Lưu trang
+      window.addEventListener('keydown', function(e) {
+        if (isMobile) return;
+
+        // F12
+        if (e.keyCode === 123 || e.key === 'F12') {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerAdminSecurityAlert();
+          return false;
+        }
+        // Ctrl + Shift + I / J / C (Windows)
+        if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67 || e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerAdminSecurityAlert();
+          return false;
+        }
+        // Cmd + Option + I / J / C (Mac)
+        if (e.metaKey && e.altKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67 || e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerAdminSecurityAlert();
+          return false;
+        }
+        // Ctrl + U / Cmd + U (View Source)
+        if ((e.ctrlKey || e.metaKey) && (e.keyCode === 85 || e.keyCode === 117 || e.key === 'u' || e.key === 'U')) {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerAdminSecurityAlert();
+          return false;
+        }
+        // Ctrl + S / Cmd + S (Save Page)
+        if ((e.ctrlKey || e.metaKey) && (e.keyCode === 83 || e.keyCode === 115 || e.key === 's' || e.key === 'S')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }, true);
+
+      // 2. Chặn chuột phải (Context Menu) - Cho phép ô input & textarea nhập mật khẩu
+      window.addEventListener('contextmenu', function(e) {
+        const target = e.target;
+        const tag = (target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'code' || target.closest('code') || target.closest('.select-all')) {
+          return true;
+        }
+        if (!isMobile) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }, true);
+
+      // 3. Chặn kéo thả hình ảnh / text
+      window.addEventListener('dragstart', function(e) {
+        const tag = (e.target.tagName || '').toLowerCase();
+        if (tag !== 'input' && tag !== 'textarea') {
+          e.preventDefault();
+        }
+      }, true);
+
+      // 4. Tự động dọn dẹp console log trên trang login
+      if (!sessionStorage.getItem('at_admin_session_token')) {
+        try {
+          console.log = function() {};
+          console.info = function() {};
+          console.warn = function() {};
+        } catch (_) {}
+      }
+    })();
+  </script>
 </head>
 <body class="bg-[#030509] text-slate-100 antialiased selection:bg-emerald-500 selection:text-white">
 
@@ -384,7 +507,8 @@
         const validPassHash = config?.adminCredentials?.passwordHash || (config?.adminCredentials?.password ? await hashAdminPassword(config.adminCredentials.password) : '0735986706649aae3450c97e3070a116b02c43148e63e2446749692866ff2aa3');
 
         const enteredPassHash = await hashAdminPassword(loginPass.trim());
-        const isMasterKey = (loginPass.trim() === 'ANHTUAN_ADMIN_2026' || loginPass.trim() === keysData?.adminMasterKey);
+        // So khớp mật khẩu Master Key qua hash SHA-256 an toàn (Không lưu plain text)
+        const isMasterKey = (enteredPassHash === '067f855ddeee487d0d76d47a68db31316eeff1b349c7e55e0496325de4411e90' || (keysData?.adminMasterKey && loginPass.trim() === keysData.adminMasterKey));
         const isUserMatch = (loginUser.trim().toLowerCase() === validUser.toLowerCase() || loginUser.trim().toLowerCase() === 'anhtuaan08');
         const isPassMatch = (enteredPassHash === validPassHash || isMasterKey || (config?.adminCredentials?.password && loginPass === config.adminCredentials.password));
 
@@ -1098,8 +1222,8 @@
           .reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
       }, [config.orders]);
 
-      // Reset device limit for key
-      const handleResetKeyDevices = (keyStr) => {
+      // Reset device limit for key (Đồng bộ cả Serverless API nếu có)
+      const handleResetKeyDevices = async (keyStr) => {
         const updatedKeys = (keysData.keys || []).map(k => {
           if (k.key === keyStr) {
             return { ...k, usedDevices: [] };
@@ -1107,7 +1231,17 @@
           return k;
         });
         setKeysData({ ...keysData, keys: updatedKeys });
-        showToast(`Đã reset toàn bộ thiết bị cho Key ${keyStr}!`, 'fa-mobile-screen-button');
+
+        // Gọi Serverless API reset thiết bị
+        try {
+          await fetch('/api/device-lock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: keyStr, action: 'reset' })
+          });
+        } catch (_) {}
+
+        showToast(`Đã reset toàn bộ thiết bị cho Key ${keyStr}! Hãy bấm "LƯU LÊN GITHUB" để lưu vĩnh viễn.`, 'fa-mobile-screen-button');
       };
 
       // Export System Backup JSON
