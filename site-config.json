@@ -26,7 +26,8 @@
   "githubConfig": {
     "defaultGhRepo": "cmstdev08/locket",
     "defaultGhBranch": "master",
-    "defaultGhToken": ""
+    "defaultGhToken": "",
+    "encryptedGhToken": "TmtGMHoyYW5zWUVWNVdoVGViRkRPS3daN3ZBWnBiSGliY2FaX3BoZw=="
   },
   "popupConfig": {
     "enabled": true,
