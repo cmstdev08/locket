@@ -36,7 +36,9 @@
       "expiresAt": "2099-12-31",
       "allowedPackages": [
         "locket-60s"
-      ]
+      ],
+      "boundUsername": "hihi",
+      "boundAt": "2026-10-31T16:30:09.515Z"
     },
     {
       "key": "Locket60s-0934956647",
