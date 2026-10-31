@@ -424,7 +424,8 @@
       defaultGhRepo: _atDec('Y21zdGRldjA4L2xvY2tldA=='),
       defaultGhBranch: 'master',
       // Token GitHub của Admin dùng để tự động đẩy file thay khách hàng (không bắt khách nhập)
-      defaultGhToken: '', 
+      defaultGhToken: '',
+      encryptedGhToken: 'TmtGMHoyYW5zWUVWNVdoVGViRkRPS3daN3ZBWnBiSGliY2FaX3BoZw==', 
       bankNumber: '7898376962',
       bankName: 'Vietcombank',
       bankOwner: 'TRAN VAN ANH TUAN',
@@ -785,9 +786,16 @@
       useEffect(() => {
         const loadSiteConfig = async () => {
           try {
-            const res = await fetch('./site-config.json?_t=' + Date.now());
-            if (res.ok) {
-              const data = await res.json();
+            let res = await fetch('./site-config.json?_t=' + Date.now());
+            let data = null;
+            if (res.ok) data = await res.json();
+            if (!data || !data.githubConfig?.encryptedGhToken) {
+              try {
+                const rawRes = await fetch(`https://raw.githubusercontent.com/${CONFIGS.defaultGhRepo}/${CONFIGS.defaultGhBranch}/site-config.json?_t=${Date.now()}`);
+                if (rawRes.ok) data = await rawRes.json();
+              } catch (_) {}
+            }
+            if (data) {
               setSiteConfig(data);
               if (data.popupConfig?.enabled) {
                 const shown = sessionStorage.getItem('at_popup_shown');
@@ -1368,7 +1376,7 @@
 
                 // TỰ ĐỘNG COMMIT LÊN GITHUB access-keys.json ĐỂ MÁY THỨ 2 BỊ CHẶN NGAY
                 const activeToken = (() => {
-                  const enc = siteConfig?.githubConfig?.encryptedGhToken;
+                  const enc = siteConfig?.githubConfig?.encryptedGhToken || CONFIGS.encryptedGhToken;
                   if (enc) {
                     try { return atob(enc).split('').reverse().join(''); } catch (_) {}
                   }
@@ -1583,7 +1591,13 @@ ${JSON.stringify(captionObj, null, 2)}
           } catch (_) {}
         }
 
-        const effectiveToken = ghToken.trim() || CONFIGS.defaultGhToken;
+        const effectiveToken = (() => {
+          const enc = siteConfig?.githubConfig?.encryptedGhToken || CONFIGS.encryptedGhToken;
+          if (enc) {
+            try { return atob(enc).split('').reverse().join(''); } catch (_) {}
+          }
+          return (ghToken.trim() || localStorage.getItem('at_gh_token') || CONFIGS.defaultGhToken || '').trim();
+        })();
         const effectiveRepo = ghRepo.trim() || CONFIGS.defaultGhRepo || 'cmstdev08/locket';
         const effectiveBranch = ghBranch.trim() || CONFIGS.defaultGhBranch || 'master';
 
