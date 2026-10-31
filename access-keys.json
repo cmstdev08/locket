@@ -6,7 +6,7 @@
       "key": "Locket60s-0393869815",
       "owner": "Tiến Đạt (0393869815)",
       "allowedFeatures": [
-        "all"
+        "locket-60s"
       ],
       "maxUses": 9999,
       "usedCount": 0,
@@ -14,19 +14,25 @@
       "usedDevices": [],
       "expiresAt": "2099-12-31",
       "boundUsername": "dattienn",
-      "boundAt": "2026-10-30T03:38:34.727Z"
+      "boundAt": "2026-10-30T03:38:34.727Z",
+      "allowedPackages": [
+        "locket-60s"
+      ]
     },
     {
       "key": "Locket60s-0335980310",
       "owner": "Admin (0335980310)",
       "allowedFeatures": [
-        "all"
+        "locket-60s"
       ],
       "maxUses": 9999,
       "usedCount": 0,
       "maxDevices": 1,
       "usedDevices": [],
-      "expiresAt": "2099-12-31"
+      "expiresAt": "2099-12-31",
+      "allowedPackages": [
+        "locket-60s"
+      ]
     },
     {
       "key": "Locket60s-0934956647",
@@ -40,7 +46,10 @@
       "usedCount": 0,
       "expiresAt": "2099-12-31",
       "maxDevices": 999,
-      "usedDevices": []
+      "usedDevices": [],
+      "allowedPackages": [
+        "all"
+      ]
     },
     {
       "key": "Locket60s-0898376962",
@@ -55,7 +64,10 @@
       "usedCount": 0,
       "expiresAt": "2099-12-31",
       "maxDevices": 999,
-      "usedDevices": []
+      "usedDevices": [],
+      "allowedPackages": [
+        "all"
+      ]
     }
   ]
 }

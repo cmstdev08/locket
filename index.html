@@ -1397,6 +1397,40 @@
         }
       };
 
+      // Phân quyền chi tiết theo từng gói dịch vụ khách mua (Locket 60s, YouTube, Spotify, All)
+      const canAccessPackage = (pkgId) => {
+        if (!keyVerified || !verifiedKeyInfo) return false;
+        if (verifiedKeyInfo.isMaster) return true;
+        const curKey = (verifiedKeyInfo.key || '').toUpperCase();
+        if (curKey === 'LOCKET60S-0898376962' || curKey === 'LOCKET60S-0934956647') return true;
+
+        const allowedPkgs = verifiedKeyInfo.allowedPackages || verifiedKeyInfo.allowedFeatures || [];
+        if (allowedPkgs.includes('all')) return true;
+
+        if (pkgId === 'locket-60s') {
+          return allowedPkgs.includes('locket-60s') || allowedPkgs.includes('locket');
+        }
+        if (pkgId === 'youtube-premium') {
+          return allowedPkgs.includes('youtube-premium') || allowedPkgs.includes('youtube');
+        }
+        if (pkgId === 'spotify-premium') {
+          return allowedPkgs.includes('spotify-premium') || allowedPkgs.includes('spotify');
+        }
+        return allowedPkgs.includes(pkgId);
+      };
+
+      const getUnlockedPackageNames = () => {
+        if (!keyVerified || !verifiedKeyInfo) return [];
+        if (verifiedKeyInfo.isMaster || (verifiedKeyInfo.allowedPackages || verifiedKeyInfo.allowedFeatures || []).includes('all')) {
+          return ['Toàn bộ dịch vụ VIP (Locket 60s, YouTube, Spotify)'];
+        }
+        const names = [];
+        if (canAccessPackage('locket-60s')) names.push('Locket 60s VIP');
+        if (canAccessPackage('youtube-premium')) names.push('YouTube Premium');
+        if (canAccessPackage('spotify-premium')) names.push('Spotify Premium');
+        return names;
+      };
+
       // Tự động kiểm tra nếu trong localStorage đã có Key
       useEffect(() => {
         if (accessKeyInput) {
@@ -1439,6 +1473,12 @@ ${JSON.stringify(captionObj, null, 2)}
             setDeploying(false);
             return;
           }
+        }
+
+        if (!canAccessPackage('locket-60s')) {
+          showToast('Key của bạn là gói khác (YouTube/Spotify). Vui lòng nâng cấp gói Locket 60s VIP để dùng tính năng này!', 'fa-circle-xmark');
+          setDeploying(false);
+          return;
         }
 
         // 1. Kiểm tra ràng buộc bảo mật: 1 Key = 1 Username vĩnh viễn (Chống share Key)
@@ -2946,6 +2986,11 @@ hostname = %APPEND% api.revenuecat.com, firebaseremoteconfig.googleapis.com, api
                       <i className="fa-solid fa-circle-info text-sky-400"></i>
                       <span>Key VIP mở khóa toàn quyền cả <b>Tạo Caption</b> và <b>Tạo Khung Viền</b>. Đặt mua <a href="#packages-section" className="text-pink-400 underline font-bold">Gói Locket 60s VIP</a> để nhận Key</span>
                     </p>
+                  ) : !canAccessPackage('locket-60s') ? (
+                    <p className="text-[11px] text-amber-300 mt-2 flex items-center gap-1.5 font-semibold">
+                      <i className="fa-solid fa-triangle-exclamation text-amber-400"></i>
+                      <span>Key hiện tại của bạn là gói khác (chưa mua <b>Gói Locket 60s VIP</b>). Vui lòng nâng cấp gói để sử dụng Studio Caption & Khung Viền!</span>
+                    </p>
                   ) : (
                     <p className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1.5 font-semibold">
                       <i className="fa-solid fa-circle-check"></i>
@@ -2986,24 +3031,32 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     </button>
                   </div>
 
-                  {/* Deploy Caption to GitHub Button (Có kiểm tra Key) */}
+                  {/* Deploy Caption to GitHub Button (Có kiểm tra Key & Quyền gói Locket 60s) */}
                   <button
                     onClick={async () => {
                       if (!keyVerified) {
                         const isValid = await verifyCustomerAccessKey();
                         if (!isValid) return;
                       }
+                      if (!canAccessPackage('locket-60s')) {
+                        showToast('Key của bạn không thuộc gói Locket 60s VIP! Vui lòng nâng cấp gói để tạo Caption & Khung Viền.', 'fa-circle-xmark');
+                        return;
+                      }
                       setShowDeployModal(true);
                     }}
                     className={`keep-white w-full py-3.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg transition hover:scale-[1.02] ${
-                      keyVerified 
+                      keyVerified && canAccessPackage('locket-60s')
                         ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 shadow-emerald-500/25' 
+                        : keyVerified
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/25'
                         : 'bg-gradient-to-r from-amber-500 to-orange-600 shadow-amber-500/25'
                     }`}
                   >
-                    <i className={`fa-solid ${keyVerified ? 'fa-rocket' : 'fa-lock'}`}></i>
-                    {keyVerified 
+                    <i className={`fa-solid ${keyVerified && canAccessPackage('locket-60s') ? 'fa-rocket' : 'fa-lock'}`}></i>
+                    {keyVerified && canAccessPackage('locket-60s')
                       ? `🚀 Kích Hoạt & Lấy File Cấu Hình ${studioTab === 'caption' ? 'Caption' : 'Khung Viền'} Cho iPhone` 
+                      : keyVerified
+                      ? `🔒 Cần Gói Locket 60s Để Tạo ${studioTab === 'caption' ? 'Caption' : 'Khung Viền'}`
                       : `🔑 Nhập Key Để Mở Khóa Tạo ${studioTab === 'caption' ? 'Caption' : 'Khung Viền'}`
                     }
                   </button>
@@ -3333,16 +3386,16 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-extrabold text-sm sm:text-base text-white">
-                          {keyVerified ? 'ĐÃ MỞ KHÓA TOÀN BỘ CẤU HÌNH VIP BẰNG KEY' : 'NHẬP KEY DO ANH TUẤN CẤP ĐỂ MỞ KHÓA TẤT CẢ'}
+                          {keyVerified ? 'KEY VIP ĐÃ ĐƯỢC KÍCH HOẠT HỢP LỆ' : 'NHẬP KEY DO ANH TUẤN CẤP ĐỂ MỞ KHÓA TÍNH NĂNG'}
                         </h4>
                         <span className={`keep-white text-[9px] font-black px-2 py-0.5 rounded-full ${keyVerified ? 'bg-emerald-500' : 'bg-amber-500'}`}>
-                          {keyVerified ? 'FULL ACCESS' : 'DÙNG CHUNG KEY'}
+                          {keyVerified ? (canAccessPackage('all') ? 'FULL ACCESS' : 'VIP THEO GÓI') : 'DÙNG CHUNG KEY'}
                         </span>
                       </div>
                       <p className="text-xs text-slate-300 mt-0.5">
                         {keyVerified 
-                          ? `Xin chào ${verifiedKeyInfo?.owner || 'VIP'}! Key của bạn đã mở khóa đầy đủ: Caption, Khung Viền, Module 60s, YouTube, Spotify & DNS Vĩnh Viễn.`
-                          : 'Key kích hoạt dùng chung cho tất cả tính năng: Dán key 1 lần sẽ mở khóa cả Caption, Khung Viền và toàn bộ các mục bị khóa bên dưới.'
+                          ? `Xin chào ${verifiedKeyInfo?.owner || 'VIP'}! Gói dịch vụ đã cấp: ${getUnlockedPackageNames().join(', ') || 'Locket 60s VIP'}.`
+                          : 'Key kích hoạt theo từng gói: Bạn mua gói nào (Locket 60s, YouTube, Spotify) sẽ mở khóa đúng tính năng của gói đó.'
                         }
                       </p>
                     </div>
@@ -3435,45 +3488,45 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                         file: 'locket60s-vip.module',
                         icon: 'fa-puzzle-piece',
                         color: 'fuchsia',
-                        isLocked: is60sM || !keyVerified,
+                        isLocked: is60sM || !canAccessPackage('locket-60s'),
                         isMaintenance: is60sM,
-                        lockNote: is60sM ? 'Cấu hình đang tạm ngưng bảo trì' : 'Dán Access Key để mở khóa tải Module',
-                        badge: is60sM ? 'BẢO TRÌ 🔒' : keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
-                        badgeColor: is60sM ? 'bg-rose-600' : keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
+                        lockNote: is60sM ? 'Cấu hình đang tạm ngưng bảo trì' : keyVerified ? 'Key của bạn chưa đăng ký gói Locket 60s VIP' : 'Dán Access Key để mở khóa tải Module',
+                        badge: is60sM ? 'BẢO TRÌ 🔒' : canAccessPackage('locket-60s') ? 'VIP ĐÃ MỞ' : keyVerified ? 'CHƯA MUA GÓI NÀY' : 'VIP KHÓA',
+                        badgeColor: is60sM ? 'bg-rose-600' : canAccessPackage('locket-60s') ? 'bg-emerald-500' : keyVerified ? 'bg-amber-500' : 'bg-rose-500',
                         btnGrad: is60sM ? 'from-slate-700 to-slate-800' : 'from-fuchsia-500 via-pink-500 to-rose-500',
-                        rawUrl: is60sM ? '' : keyVerified ? cur60sUrl : '',
-                        deepLink: is60sM ? '#' : keyVerified ? `shadowrocket://install?module=${encodeURIComponent(cur60sUrl)}` : '#',
-                        btnLabel: is60sM ? 'BẢO TRÌ VÔ THỜI HẠN' : keyVerified ? 'CÀI VÀO SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
+                        rawUrl: is60sM ? '' : canAccessPackage('locket-60s') ? cur60sUrl : '',
+                        deepLink: is60sM ? '#' : canAccessPackage('locket-60s') ? `shadowrocket://install?module=${encodeURIComponent(cur60sUrl)}` : '#',
+                        btnLabel: is60sM ? 'BẢO TRÌ VÔ THỜI HẠN' : canAccessPackage('locket-60s') ? 'CÀI VÀO SHADOWROCKET' : keyVerified ? 'BẠN CHƯA MUA GÓI LOCKET 60S' : 'NHẬP KEY ĐỂ MỞ KHÓA'
                       },
                       {
                         title: 'Youtube Premium',
                         file: 'youtubepremium.config',
                         icon: 'fa-brands fa-youtube',
                         color: 'rose',
-                        isLocked: isYtM || !keyVerified,
+                        isLocked: isYtM || !canAccessPackage('youtube-premium'),
                         isMaintenance: isYtM,
-                        lockNote: isYtM ? 'Cấu hình đang tạm ngưng bảo trì' : 'Dán Access Key để mở khóa tải Config',
-                        badge: isYtM ? 'BẢO TRÌ 🔒' : keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
-                        badgeColor: isYtM ? 'bg-rose-600' : keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
+                        lockNote: isYtM ? 'Cấu hình đang tạm ngưng bảo trì' : keyVerified ? 'Key của bạn chưa đăng ký gói YouTube Premium' : 'Dán Access Key để mở khóa tải Config',
+                        badge: isYtM ? 'BẢO TRÌ 🔒' : canAccessPackage('youtube-premium') ? 'VIP ĐÃ MỞ' : keyVerified ? 'CHƯA MUA GÓI NÀY' : 'VIP KHÓA',
+                        badgeColor: isYtM ? 'bg-rose-600' : canAccessPackage('youtube-premium') ? 'bg-emerald-500' : keyVerified ? 'bg-amber-500' : 'bg-rose-500',
                         btnGrad: isYtM ? 'from-slate-700 to-slate-800' : 'from-red-600 to-rose-600',
-                        rawUrl: isYtM ? '' : keyVerified ? curYtUrl : '',
-                        deepLink: isYtM ? '#' : keyVerified ? `shadowrocket://config/add/${curYtUrl}` : '#',
-                        btnLabel: isYtM ? 'BẢO TRÌ VÔ THỜI HẠN' : keyVerified ? 'CÀI VÀO SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
+                        rawUrl: isYtM ? '' : canAccessPackage('youtube-premium') ? curYtUrl : '',
+                        deepLink: isYtM ? '#' : canAccessPackage('youtube-premium') ? `shadowrocket://config/add/${curYtUrl}` : '#',
+                        btnLabel: isYtM ? 'BẢO TRÌ VÔ THỜI HẠN' : canAccessPackage('youtube-premium') ? 'CÀI VÀO SHADOWROCKET' : keyVerified ? 'BẠN CHƯA MUA GÓI YOUTUBE' : 'NHẬP KEY ĐỂ MỞ KHÓA'
                       },
                       {
                         title: 'Spotify Premium',
                         file: 'spotify.config',
                         icon: 'fa-brands fa-spotify',
                         color: 'emerald',
-                        isLocked: isSpM || !keyVerified,
+                        isLocked: isSpM || !canAccessPackage('spotify-premium'),
                         isMaintenance: isSpM,
-                        lockNote: isSpM ? 'Cấu hình đang tạm ngưng bảo trì' : 'Dán Access Key để mở khóa tải Config',
-                        badge: isSpM ? 'BẢO TRÌ 🔒' : keyVerified ? 'VIP ĐÃ MỞ' : 'VIP KHÓA',
-                        badgeColor: isSpM ? 'bg-rose-600' : keyVerified ? 'bg-emerald-500' : 'bg-rose-500',
+                        lockNote: isSpM ? 'Cấu hình đang tạm ngưng bảo trì' : keyVerified ? 'Key của bạn chưa đăng ký gói Spotify Premium' : 'Dán Access Key để mở khóa tải Config',
+                        badge: isSpM ? 'BẢO TRÌ 🔒' : canAccessPackage('spotify-premium') ? 'VIP ĐÃ MỞ' : keyVerified ? 'CHƯA MUA GÓI NÀY' : 'VIP KHÓA',
+                        badgeColor: isSpM ? 'bg-rose-600' : canAccessPackage('spotify-premium') ? 'bg-emerald-500' : keyVerified ? 'bg-amber-500' : 'bg-rose-500',
                         btnGrad: isSpM ? 'from-slate-700 to-slate-800' : 'from-emerald-500 to-teal-600',
-                        rawUrl: isSpM ? '' : keyVerified ? curSpUrl : '',
-                        deepLink: isSpM ? '#' : keyVerified ? `shadowrocket://config/add/${curSpUrl}` : '#',
-                        btnLabel: isSpM ? 'BẢO TRÌ VÔ THỜI HẠN' : keyVerified ? 'CÀI VÀO SHADOWROCKET' : 'NHẬP KEY ĐỂ MỞ KHÓA'
+                        rawUrl: isSpM ? '' : canAccessPackage('spotify-premium') ? curSpUrl : '',
+                        deepLink: isSpM ? '#' : canAccessPackage('spotify-premium') ? `shadowrocket://config/add/${curSpUrl}` : '#',
+                        btnLabel: isSpM ? 'BẢO TRÌ VÔ THỜI HẠN' : canAccessPackage('spotify-premium') ? 'CÀI VÀO SHADOWROCKET' : keyVerified ? 'BẠN CHƯA MUA GÓI SPOTIFY' : 'NHẬP KEY ĐỂ MỞ KHÓA'
                       }
                     ].map((cfg, idx) => (
                   <div key={idx} className={`glass-card rounded-2xl p-4 border transition relative overflow-hidden ${cfg.isLocked ? 'border-white/5 opacity-80' : 'border-sky-500/30 hover:border-sky-400/60 shadow-lg shadow-sky-500/10'}`}>
@@ -3567,7 +3620,7 @@ var WIDGET_FRAME_URL = "${customFrameUrl}";`;
                   locket60sUrl: "./dns/locketgold.mobileconfig",
                   rootCaUrl: "./dns/rootca.mobileconfig"
                 };
-                const canDownloadDns = !dnsCfg.isLocked && (!dnsCfg.requireKey || keyVerified);
+                const canDownloadDns = !dnsCfg.isLocked && (!dnsCfg.requireKey || (keyVerified && canAccessPackage('locket-60s')));
                 const isGoldLocked = dnsCfg.isLocked || dnsCfg.lockGold;
                 const is60sLocked = dnsCfg.isLocked || dnsCfg.lock60s;
                 const isCaLocked = dnsCfg.isLocked || dnsCfg.lockCa;
