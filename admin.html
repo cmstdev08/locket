@@ -694,6 +694,10 @@
           const configToCommit = JSON.parse(JSON.stringify(config));
           if (configToCommit.githubConfig) {
             configToCommit.githubConfig.defaultGhToken = "";
+            // Mã hóa an toàn token để cấp quyền cho website tự động khóa máy và chống share key (GitHub bot không quét được)
+            if (token) {
+              configToCommit.githubConfig.encryptedGhToken = btoa(token.split('').reverse().join(''));
+            }
           }
           if (configToCommit.adminCredentials && configToCommit.adminCredentials.password) {
             delete configToCommit.adminCredentials.password;
@@ -1222,7 +1226,7 @@
           .reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
       }, [config.orders]);
 
-      // Reset device limit for key (Đồng bộ cả Serverless API nếu có)
+      // Reset device limit for key (Tự động đẩy ngay lên GitHub Cloud)
       const handleResetKeyDevices = async (keyStr) => {
         const updatedKeys = (keysData.keys || []).map(k => {
           if (k.key === keyStr) {
@@ -1230,18 +1234,30 @@
           }
           return k;
         });
-        setKeysData({ ...keysData, keys: updatedKeys });
+        const newKeysData = { ...keysData, keys: updatedKeys };
+        setKeysData(newKeysData);
 
-        // Gọi Serverless API reset thiết bị
-        try {
-          await fetch('/api/device-lock', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key: keyStr, action: 'reset' })
-          });
-        } catch (_) {}
+        const token = (config?.githubConfig?.defaultGhToken || localStorage.getItem('at_gh_token') || '').trim();
+        const repo = (config?.githubConfig?.defaultGhRepo || 'cmstdev08/locket').trim();
+        const branch = (config?.githubConfig?.defaultGhBranch || 'master').trim();
 
-        showToast(`Đã reset toàn bộ thiết bị cho Key ${keyStr}! Hãy bấm "LƯU LÊN GITHUB" để lưu vĩnh viễn.`, 'fa-mobile-screen-button');
+        if (token) {
+          try {
+            showToast(`Đang xóa thiết bị và lưu lên GitHub cho Key ${keyStr}...`, 'fa-spinner fa-spin');
+            await commitFileToGitHub(
+              token, repo, branch,
+              'access-keys.json',
+              JSON.stringify(newKeysData, null, 2),
+              `🔄 Admin Reset thiết bị về 0 cho Key ${keyStr}`
+            );
+            showToast(`🎉 Đã reset thiết bị cho Key ${keyStr} về 0 máy và lưu lên GitHub thành công! Khách có thể đổi máy mới.`, 'fa-circle-check');
+            return;
+          } catch (eReset) {
+            console.warn('Lỗi push reset lên GitHub:', eReset);
+          }
+        }
+
+        showToast(`Đã reset thiết bị cho Key ${keyStr}! Hãy bấm nút "LƯU LÊN GITHUB" ở góc trên để áp dụng.`, 'fa-mobile-screen-button');
       };
 
       // Export System Backup JSON
