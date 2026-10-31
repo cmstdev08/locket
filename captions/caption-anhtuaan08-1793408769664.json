@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:7",
+  "username": "anhtuaan08",
+  "userKey": "LOCKET60S-0898376962",
+  "text": "👑Locket 60s by anhtuaan08",
+  "textColor": "#8C315F",
+  "colors": [
+    "#FFAFCC",
+    "#FFC8DD",
+    "#CDB4DB"
+  ],
+  "gradientName": "Kitty Pink",
+  "gradientClass": "from-pink-400 via-pink-300 to-purple-300",
+  "icon": "kitty",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/yBpS0qD7/Gemini-Generated-Image-20g77h20g77h20g7.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-expiry-check.js",
+  "userCapFilePath": "locket60s/caption-anhtuaan08.js",
+  "sgmoduleFilePath": "modules/locket60s-anhtuaan08.sgmodule",
+  "createdAt": "2026-10-31T01:06:11.413Z"
+}
