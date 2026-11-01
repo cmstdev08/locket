@@ -124,11 +124,11 @@
           locket_views: "enabled", long_captions: "enabled", longer_video: "enabled",
           unlimited_friends: "enabled", priority_support: "enabled", profile_badge: "enabled",
           remove_ads: "enabled", video: "enabled", custom_widget_frames: "enabled",
-          streak_recovery: "enabled"
+          streak_recovery: "enabled", ai_filters: "enabled", ai_camera_filters: "enabled", generative_ai: "enabled", ai_captions: "enabled"
         }),
         upsell_features: JSON.stringify({
           app_icon_picker: true, camera_roll: true, camera_theme: true,
-          locket_views: true, remove_ads: true, custom_widget_frames: true
+          locket_views: true, remove_ads: true, custom_widget_frames: true, ai_filters: true, ai_camera_filters: true
         }),
         paywall_presentation_config: JSON.stringify({
           uid: "paywall_testflight", onboarding: false, after_sent_moment: false,
@@ -179,8 +179,9 @@
         }),
         live_photos: JSON.stringify({ capture: true, video: true, viewing: true,
           catch_up: true, widget_looping_mode: "never" }),
+        ai_generation_enabled: "true", ai_filters_enabled: "true", ai_daily_limit: "999999", generative_filters_enabled: "true",
         camera_filter_config: JSON.stringify({
-          allows_custom_filters: true, show_filter_button: true,
+          allows_custom_filters: true, show_filter_button: true, allows_ai_filters: true, ai_filters_enabled: true, show_ai_filter_button: true, ai_quota_per_day: 999999, allow_unlimited_ai: true,
           sheet_enabled: true, open_sheet_immediately: true,
           sheet_filters: [
             { title:{en:"Goofy"}, filter_ids:["okay_wig","influencer","looks_maxxing","toothless","bye_brows"] },
