@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:18",
+  "username": "thaocute",
+  "userKey": "LOCKET60S-0934956647",
+  "text": "🌟Cậu là tia nắng ấm áp của tớ",
+  "textColor": "#38bdf8",
+  "colors": [
+    "#7c3aed",
+    "#d946ef",
+    "#ec4899"
+  ],
+  "gradientName": "Electric Violet",
+  "gradientClass": "from-violet-600 via-fuchsia-500 to-pink-500",
+  "icon": "sparkles",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-thaocute-expriry-check.js",
+  "userCapFilePath": "locket60s/captionthaocute.js",
+  "sgmoduleFilePath": "modules/locket60s-thaocute.sgmodule",
+  "createdAt": "2026-11-01T05:05:59.361Z"
+}
