@@ -70,7 +70,9 @@
       "usedCount": 0,
       "expiresAt": "2099-12-31",
       "maxDevices": 999,
-      "usedDevices": [],
+      "usedDevices": [
+        "dev_s750dzp_mvxcn0g4"
+      ],
       "allowedPackages": [
         "all"
       ]
