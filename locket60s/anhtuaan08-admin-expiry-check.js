@@ -410,6 +410,14 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:50",
+      text: "😭Cho tui về với vợ tui",
+      textColor: "#000000",
+      colors: ["#fb7185","#fbbf24","#34d399"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
   ];
 
   var url = String($request.url || "");
