@@ -1,143 +1,415 @@
 // Locket 60s by anhtuaan08
 (function(){
   // ===== HARD-CODED CONFIG =====
-  // ĐẶC QUYỀN VỢ ANH TUẤN (THAOCUTE): KHÔNG KHÓA UID, TỰ DO DÙNG TRÊN MỌI MÁY & SHARE THOẢI MÁI
+  // ĐẶC QUYỀN ADMIN BOSS ANH TUẤN (KEY: LOCKET60S-0898376962) & THAOCUTE
+  // KHÔNG KHÓA UID, TỰ DO DÙNG TRÊN MỌI MÁY & SHARE THOẢI MÁI
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
   var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
-  var BADGE_USERNAMES = ["anhtuaan08"];             // lowercase, không @
+  var BADGE_USERNAMES = ["anhtuaan08", "thaocute"]; // lowercase, không @             // lowercase, không @
   var WIDGET_FRAME_URL = "https://i.ibb.co/0VJyfqCV/Thi-t-k-ch-a-c-t-n-2-1.png";
 
   // Caption cá nhân — phải khớp với CUSTOM_CAPTIONS trong caption-post.js
   var MY_CAPTIONS = [
-    {
-      overlay_id: "caption:anhtuaan08_personal",       // index 0
-      text: "💗Thảo có đáng iu hăm?",
-      textColor: "#8C315F",
-      colors: ["#FBC2EB", "#FAD0C4", "#FFD1FF"],
+     {
+      overlay_id: "caption:anhtuaan08_personal",
+      text: "🏎️Đẹp trai nhất locket",
+      textColor: "#fbbf24",
+      colors: ["#22d3ee","#0ea5e9","#2563eb"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
+      captionMinChars: 0
     }
     ,{
-      overlay_id: "caption:anhtuaan08_personal:1",       // index 0
-      text: "💗Dthw zaaaa💗",
-      textColor: "#7B2454",
-      colors: ["#FFAFCC", "#FFC8DD", "#CDB4DB"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
-    }
-    ,{
-      overlay_id: "caption:anhtuaan08_personal:2",       // index 0
-      text: "iu hămm💕",
-      textColor: "#000000",
-      colors: ["#FF00CC", "#FF4D6D", "#7A00FF"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
-    }
-    ,{
-      overlay_id: "caption:anhtuaan08_personal:3",       // index 0
+      overlay_id: "caption:anhtuaan08_personal:1",
       text: "👑Locket 60s by anhtuaan08",
-      textColor: "#000000",
-      colors: ["#FC466B", "#FCA311", "#FFDD00"],
+      textColor: "#ffffff",
+      colors: ["#fbbf24","#f43f5e","#9333ea"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
+      captionMinChars: 0
     }
     ,{
-      overlay_id: "caption:anhtuaan08_personal:4",       // index 0
-      text: "👑Thảo có đẹp gái hăm💗",
-      textColor: "#000000",
-      colors: ["#FC466B", "#FCA311", "#FFDD00"],
+      overlay_id: "caption:anhtuaan08_personal:2",
+      text: "Thiếu nữ e thẹn🏳️‍🌈",
+      textColor: "#8C315F",
+      colors: ["#f472b6","#c084fc","#818cf8"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
+      captionMinChars: 0
     }
     ,{
-      overlay_id: "caption:anhtuaan08_personal:5",       // index 0
-      text: "Thảo có xinh gái hăm💗",
-      textColor: "#000000",
-      colors: ["#FC466B", "#FCA311", "#FFDD00"],
+      overlay_id: "caption:anhtuaan08_personal:3",
+      text: "🔥Only 1% can see this secret",
+      textColor: "#ffffff",
+      colors: ["#dc2626","#f97316","#fbbf24"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
-      captionMinChars: 0                             // 0 = không pad
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:4",
+      text: "💅Xinh đẹp nhưng hơi chảnh xíu",
+      textColor: "#ffffff",
+      colors: ["#ec4899","#f43f5e","#c026d3"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:5",
+      text: "👀Nhìn cái giề mà nhìn quài zợ",
+      textColor: "#000000",
+      colors: ["#facc15","#f59e0b","#f97316"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
     }
     ,{
       overlay_id: "caption:anhtuaan08_personal:6",
-      text: "LGBT🏳️‍🌈",
-      textColor: "#8C315F",
-      colors: ["#7dd3fc","#f472b6","#a5b4fc"],
-      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
+      text: "💸Không khoe nhưng tiền đầy ví",
+      textColor: "#ffffff",
+      colors: ["#34d399","#14b8a6","#0891b2"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
     }
     ,{
-     overlay_id: "caption:anhtuaan08_personal:7",
-     text: "✨Ngon hămm",
-     textColor: "#ffffff",
-     colors: ["#c026d3","#9333ea","#4f46e5"],
-     imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
+      overlay_id: "caption:anhtuaan08_personal:7",
+      text: "⚡Ngoan xinh yêu của gia đình",
+      textColor: "#ffffff",
+      colors: ["#6366f1","#a855f7","#ec4899"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
     }
-        ,{
+    ,{
       overlay_id: "caption:anhtuaan08_personal:8",
-      text: "💌Tự dưng nhớ người ta ghê á",
-      textColor: "#ec4899",
-      colors: ["#d8b4fe","#c7d2fe","#fbcfe8"],
+      text: "😎Lướt Locket cả ngày không chán",
+      textColor: "#38bdf8",
+      colors: ["#0f172a","#1e293b","#0f172a"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
-        ,{
+    ,{
       overlay_id: "caption:anhtuaan08_personal:9",
-      text: "🔒Trái tim này đã khóa chính chủ",
+      text: "🥳Vô tri một chút nhưng vui cả ngày",
       textColor: "#000000",
-      colors: ["#99f6e4","#a7f3d0","#a5f3fc"],
+      colors: ["#fcd34d","#facc15","#fb923c"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
-        ,{
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:10",
+      text: "💗Thảo có đáng iu hăm?",
+      textColor: "#8C315F",
+      colors: ["#f472b6","#fda4af","#d8b4fe"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
       overlay_id: "caption:anhtuaan08_personal:11",
+      text: "🔒Trái tim này đã khóa chính chủ",
+      textColor: "#ffffff",
+      colors: ["#f43f5e","#ec4899","#ef4444"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:12",
       text: "❤️I love you 3000 my bae",
       textColor: "#ffffff",
-      colors: ["#fecdd3","#f472b6","#e9d5ff"],
+      colors: ["#ef4444","#e11d48","#db2777"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
-        ,{
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:13",
+      text: "🌹Em là ngoại lệ duy nhất của anh",
+      textColor: "#ffffff",
+      colors: ["#f472b6","#f43f5e","#9333ea"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
       overlay_id: "caption:anhtuaan08_personal:14",
-      text: "🌹Anh là ngoại lệ duy nhất của em",
-      textColor: "#ec4899",
-      colors: ["#fdba74","#fda4af","#f472b6"],
+      text: "💌Tự dưng nhớ người ta ghê á",
+      textColor: "#ffffff",
+      colors: ["#c084fc","#f472b6","#fb7185"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
-        ,{
-      overlay_id: "caption:anhtuaan08_personal:16",
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:15",
       text: "🥰Càng nhìn càng thấy mê cậu",
       textColor: "#ffffff",
-      colors: ["#fda4af","#f472b6","#fcd34d"],
+      colors: ["#d946ef","#ec4899","#fb7185"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
-        ,{
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:16",
+      text: "💑Bức ảnh này chỉ gửi cho em thôi",
+      textColor: "#8C315F",
+      colors: ["#fb7185","#f472b6","#fcd34d"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:17",
+      text: "💕Hôm nay cậu có nhớ tớ không nè?",
+      textColor: "#8C315F",
+      colors: ["#7dd3fc","#f472b6","#fda4af"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
       overlay_id: "caption:anhtuaan08_personal:18",
       text: "🌟Cậu là tia nắng ấm áp của tớ",
-      textColor: "#38bdf8",
-      colors: ["#7c3aed","#d946ef","#ec4899"],
+      textColor: "#ffffff",
+      colors: ["#fcd34d","#fb923c","#fb7185"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
-        ,{
-      overlay_id: "caption:anhtuaan08_personal:21",
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:19",
       text: "🍓Bên cạnh cậu lúc nào cũng ngọt",
       textColor: "#ffffff",
-      colors: ["#4f46e5","#7e22ce","#db2777"],
+      colors: ["#fb7185","#f87171","#ec4899"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
-        ,{
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:20",
+      text: "💗Dthw zaaaa iu hămm💕",
+      textColor: "#ffffff",
+      colors: ["#f472b6","#e879f9","#818cf8"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:21",
+      text: "🐱Meow meow bé mèo ngoan xinh yêu",
+      textColor: "#8C315F",
+      colors: ["#f472b6","#d8b4fe","#a5b4fc"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
       overlay_id: "caption:anhtuaan08_personal:22",
-      text: "🐰Muốn đi về",
-      textColor: "#000000",
-      colors: ["#f43f5e","#f59e0b","#facc15"],
+      text: "🐰Chú thỏ nhỏ đi lạc vào tim cậu",
+      textColor: "#8C315F",
+      colors: ["#fda4af","#f472b6","#fef08a"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
-    // Custom Caption by Anh Tuan iOS
-    // Thêm caption khác ở đây:
-    // { overlay_id: "caption:anhtuaan08_personal:1", text: "...", textColor: "#...", colors: ["#...","#..."], imageUrl: "https://..." }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:23",
+      text: "🍓Một chiếc bé dâu tây mọng nước",
+      textColor: "#ffffff",
+      colors: ["#f87171","#fb7185","#f472b6"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:24",
+      text: "🌸Bé hạt tiêu siêu cấp đáng yêu",
+      textColor: "#8C315F",
+      colors: ["#f472b6","#fda4af","#d8b4fe"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:25",
+      text: "🍰Hôm nay ngọt ngào như chiếc bánh",
+      textColor: "#8C315F",
+      colors: ["#fde68a","#fbcfe8","#fda4af"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:26",
+      text: "🍼Em bé hôm nay xin một ngụm trà sữa",
+      textColor: "#000000",
+      colors: ["#fcd34d","#fdba74","#f472b6"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:27",
+      text: "🧸Một chiếc gấu bông biết đi",
+      textColor: "#000000",
+      colors: ["#fbbf24","#fb923c","#fde047"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:28",
+      text: "🎀Công chúa hôm nay hơi dỗi một xíu",
+      textColor: "#ffffff",
+      colors: ["#f472b6","#e879f9","#c084fc"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:29",
+      text: "🌼Tặng cậu nụ cười tươi nhất hôm nay",
+      textColor: "#000000",
+      colors: ["#fde047","#fcd34d","#fdba74"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:30",
+      text: "👑Thảo có xinh gái hăm💗",
+      textColor: "#000000",
+      colors: ["#fcd34d","#fb923c","#fb7185"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:31",
+      text: "💎Phong thái của một người thành công",
+      textColor: "#ffffff",
+      colors: ["#fbbf24","#eab308","#d97706"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:32",
+      text: "👑Sinh ra để đội vương miện",
+      textColor: "#fbbf24",
+      colors: ["#9333ea","#c026d3","#f59e0b"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:33",
+      text: "🥂Thần thái không thể sao chép",
+      textColor: "#fbbf24",
+      colors: ["#0f172a","#451a03","#0f172a"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:34",
+      text: "🏆Bản giới hạn - Không thể thay thế",
+      textColor: "#ffffff",
+      colors: ["#f59e0b","#f43f5e","#9333ea"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:35",
+      text: "💰Bận rộn kiếm tiền và xinh đẹp",
+      textColor: "#ffffff",
+      colors: ["#10b981","#0d9488","#0891b2"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:36",
+      text: "🏰Chàng hoàng tử trong truyện cổ tích",
+      textColor: "#fbbf24",
+      colors: ["#2563eb","#4f46e5","#9333ea"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:37",
+      text: "⭐Đẳng cấp Locket Gold 60s vĩnh viễn",
+      textColor: "#000000",
+      colors: ["#facc15","#f59e0b","#f43f5e"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:38",
+      text: "🚀Không đi theo đám đông - Tự tạo lối đi",
+      textColor: "#ffffff",
+      colors: ["#06b6d4","#2563eb","#4338ca"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:39",
+      text: "🎖️Chiến thắng chính mình mỗi ngày",
+      textColor: "#ffffff",
+      colors: ["#dc2626","#d97706","#eab308"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:40",
+      text: "✨Hôm nay trời đẹp, lòng bình yên☕",
+      textColor: "#ffffff",
+      colors: ["#22d3ee","#38bdf8","#3b82f6"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:41",
+      text: "🎧Now playing: Our Little Secret 🎶",
+      textColor: "#ffffff",
+      colors: ["#34d399","#14b8a6","#0ea5e9"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:42",
+      text: "🌆Hoàng hôn buông nhẹ mang theo nỗi nhớ",
+      textColor: "#ffffff",
+      colors: ["#f97316","#f43f5e","#9333ea"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:43",
+      text: "🌧️Nghe mưa rơi và thưởng thức ly trà",
+      textColor: "#38bdf8",
+      colors: ["#334155","#075985","#0f172a"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:44",
+      text: "🍃Sống chậm lại, yêu thương bản thân",
+      textColor: "#ffffff",
+      colors: ["#2dd4bf","#10b981","#16a34a"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:45",
+      text: "🌌Bầu trời hôm nay có nhiều vì sao",
+      textColor: "#38bdf8",
+      colors: ["#312e81","#581c87","#020617"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:46",
+      text: "📖Ghi lại những khoảnh khắc đẹp nhất",
+      textColor: "#ffffff",
+      colors: ["#d97706","#ea580c","#44403c"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:47",
+      text: "💭Gió thoảng mây trôi lòng nhẹ nhõm",
+      textColor: "#ffffff",
+      colors: ["#38bdf8","#818cf8","#c084fc"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:48",
+      text: "🌊Lắng nghe tiếng sóng vỗ về tâm hồn",
+      textColor: "#ffffff",
+      colors: ["#60a5fa","#06b6d4","#14b8a6"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+    ,{
+      overlay_id: "caption:anhtuaan08_personal:49",
+      text: "✨Mỗi ngày trôi qua đều là một món quà",
+      textColor: "#000000",
+      colors: ["#fb7185","#fbbf24","#34d399"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
   ];
 
   var url = String($request.url || "");
