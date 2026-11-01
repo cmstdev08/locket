@@ -497,11 +497,17 @@
           locket_views: "enabled", long_captions: "enabled", longer_video: "enabled",
           unlimited_friends: "enabled", priority_support: "enabled", profile_badge: "enabled",
           remove_ads: "enabled", video: "enabled", custom_widget_frames: "enabled",
-          streak_recovery: "enabled", ai_filters: "enabled", ai_camera_filters: "enabled", generative_ai: "enabled", ai_captions: "enabled"
+          streak_recovery: "enabled",
+          ai_filters: "enabled", ai_camera_filters: "enabled", generative_ai: "enabled",
+          ai_captions: "enabled", ai_effects: "enabled", magic_wand: "enabled",
+          ai_features: "enabled", locket_ai: "enabled", image_editor_ai: "enabled",
+          camera_filters: "enabled", filters: "enabled", ai_style_transfer: "enabled"
         }),
         upsell_features: JSON.stringify({
           app_icon_picker: true, camera_roll: true, camera_theme: true,
-          locket_views: true, remove_ads: true, custom_widget_frames: true, ai_filters: true, ai_camera_filters: true
+          locket_views: true, remove_ads: true, custom_widget_frames: true,
+          ai_filters: true, ai_camera_filters: true, ai_effects: true,
+          magic_wand: true, locket_ai: true, camera_filters: true, ai_style_transfer: true
         }),
         paywall_presentation_config: JSON.stringify({
           uid: "paywall_testflight", onboarding: false, after_sent_moment: false,
@@ -553,24 +559,41 @@
         live_photos: JSON.stringify({ capture: true, video: true, viewing: true,
           catch_up: true, widget_looping_mode: "never" }),
         ai_generation_enabled: "true", ai_filters_enabled: "true", ai_daily_limit: "999999", generative_filters_enabled: "true",
-        camera_filter_config: JSON.stringify({
-          allows_custom_filters: true, show_filter_button: true, allows_ai_filters: true, ai_filters_enabled: true, show_ai_filter_button: true, ai_quota_per_day: 999999, allow_unlimited_ai: true,
-          sheet_enabled: true, open_sheet_immediately: true,
-          sheet_filters: [
-            { title:{en:"Goofy"}, filter_ids:["okay_wig","influencer","looks_maxxing","toothless","bye_brows"] },
-            { title:{en:"Looks"}, filter_ids:["bowling_ball","blonde_bleached","beard","bob_cut","buns","tatted","mohawk","braces","bye_brows"] },
-            { title:{en:"Celebrate"}, filter_ids:["slimed","princess","disco_lights","cash_money","happy_birthday"] },
-            { title:{en:"Cute"}, filter_ids:["cutesy","sticker_face","flower_crown","love_bug"] },
-            { title:{en:"Costumes"}, filter_ids:["wedding","cowboy_cowgirl","giraffe","clown"] },
-            { title:{en:"Holidays"}, filter_ids:["easter_bunney_cutout","easter_chick_cutout","bearded","leprechaun","lucky_face","sweet_hearts","elf_cutout","santa_cutout","frosty"] }
-          ],
-          picker_filters: ["okay_wig","influencer","looks_maxxing","toothless","bye_brows",
-            "bowling_ball","blonde_bleached","beard","bob_cut","buns","tatted","mohawk",
-            "braces","slimed","princess","disco_lights","cash_money","happy_birthday",
-            "cutesy","sticker_face","flower_crown","love_bug","wedding","cowboy_cowgirl",
-            "giraffe","clown","easter_bunney_cutout","easter_chick_cutout","bearded",
-            "leprechaun","lucky_face","sweet_hearts","elf_cutout","santa_cutout","frosty"]
-        }),
+        camera_filters_enabled: "true", magic_wand_enabled: "true", ai_style_transfer_enabled: "true", photo_editor_ai_enabled: "true",
+        camera_filter_config: (function(){
+          var sCfg = {};
+          try { sCfg = JSON.parse(originalEntries.camera_filter_config || "{}"); } catch(e){}
+          var res = Object.assign({}, sCfg, {
+            allows_custom_filters: true,
+            show_filter_button: true,
+            allows_ai_filters: true,
+            ai_filters_enabled: true,
+            show_ai_filter_button: true,
+            sheet_enabled: true,
+            allow_unlimited_ai: true,
+            ai_quota_per_day: 999999
+          });
+          // Nếu server chưa có sheet_filters thì mới gán fallback
+          if (!Array.isArray(res.sheet_filters) || res.sheet_filters.length === 0) {
+            res.sheet_filters = [
+              { title:{en:"Goofy"}, filter_ids:["okay_wig","influencer","looks_maxxing","toothless","bye_brows"] },
+              { title:{en:"Looks"}, filter_ids:["bowling_ball","blonde_bleached","beard","bob_cut","buns","tatted","mohawk","braces","bye_brows"] },
+              { title:{en:"Celebrate"}, filter_ids:["slimed","princess","disco_lights","cash_money","happy_birthday"] },
+              { title:{en:"Cute"}, filter_ids:["cutesy","sticker_face","flower_crown","love_bug"] },
+              { title:{en:"Costumes"}, filter_ids:["wedding","cowboy_cowgirl","giraffe","clown"] },
+              { title:{en:"Holidays"}, filter_ids:["easter_bunney_cutout","easter_chick_cutout","bearded","leprechaun","lucky_face","sweet_hearts","elf_cutout","santa_cutout","frosty"] }
+            ];
+          }
+          if (!Array.isArray(res.picker_filters) || res.picker_filters.length === 0) {
+            res.picker_filters = ["okay_wig","influencer","looks_maxxing","toothless","bye_brows",
+              "bowling_ball","blonde_bleached","beard","bob_cut","buns","tatted","mohawk",
+              "braces","slimed","princess","disco_lights","cash_money","happy_birthday",
+              "cutesy","sticker_face","flower_crown","love_bug","wedding","cowboy_cowgirl",
+              "giraffe","clown","easter_bunney_cutout","easter_chick_cutout","bearded",
+              "leprechaun","lucky_face","sweet_hearts","elf_cutout","santa_cutout","frosty"];
+          }
+          return JSON.stringify(res);
+        })(),
         camera_roll_preview_enabled: "true", camera_roll_video_enabled: "true",
         camera_roll_video_upload_enabled: "true", internal_camera_roll_video_upload_enabled: "true",
         longer_camera_roll_videos_enabled: "true", video_sound_enabled: "true",
@@ -653,7 +676,7 @@
 
       // --- Cache / storage ---
       Object.assign(obj.entries, {
-        cdn_domain_replacements: JSON.stringify({ "firebasestorage.googleapis.com": "cdn.locketcamera.com" }),
+        // cdn_domain_replacements: Giữ nguyên domain Google Firebase Storage thật để tải asset Filter AI không bị 404
         cdn_domain_replacements_video: "true",
         storage_bucket: "gs://locket-img", storage_bucket_video: "gs://locket-video",
         image_cache_max_age_sec: "157680000", image_cache_max_size: "400000000",
@@ -748,7 +771,7 @@
         } catch(e){ return {}; }
       }
       ["feature_gates","upsell_features","camera","camera_roll","live_photos",
-       "journal_settings","qr_code_config","overlays_v2_config"].forEach(function(k){
+       "journal_settings","qr_code_config","overlays_v2_config","camera_filter_config"].forEach(function(k){
         if (Object.prototype.hasOwnProperty.call(obj.entries, k)) {
           obj.entries[k] = JSON.stringify(Object.assign(
             readConfig(originalEntries[k]), readConfig(obj.entries[k])
