@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:9",
+  "username": "thaocute",
+  "userKey": "LOCKET60S-0934956647",
+  "text": "🔒Trái tim này đã khóa chính chủ",
+  "textColor": "#000000",
+  "colors": [
+    "#99f6e4",
+    "#a7f3d0",
+    "#a5f3fc"
+  ],
+  "gradientName": "Milky Mint",
+  "gradientClass": "from-teal-200 via-emerald-200 to-cyan-200",
+  "icon": "heart",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-thaocute-expriry-check.js",
+  "userCapFilePath": "locket60s/captionthaocute.js",
+  "sgmoduleFilePath": "modules/locket60s-thaocute.sgmodule",
+  "createdAt": "2026-11-01T05:00:12.508Z"
+}
