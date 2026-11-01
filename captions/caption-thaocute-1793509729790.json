@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:22",
+  "username": "thaocute",
+  "userKey": "LOCKET60S-0934956647",
+  "text": "🐰Muốn đi về",
+  "textColor": "#000000",
+  "colors": [
+    "#f43f5e",
+    "#f59e0b",
+    "#facc15"
+  ],
+  "gradientName": "Sunset Glow",
+  "gradientClass": "from-rose-500 via-amber-500 to-yellow-400",
+  "icon": "kitty",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-thaocute-expriry-check.js",
+  "userCapFilePath": "locket60s/captionthaocute.js",
+  "sgmoduleFilePath": "modules/locket60s-thaocute.sgmodule",
+  "createdAt": "2026-11-01T05:08:50.746Z"
+}
