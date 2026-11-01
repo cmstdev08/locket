@@ -89,6 +89,14 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:14",
+      text: "🌹Anh là ngoại lệ duy nhất của em",
+      textColor: "#ec4899",
+      colors: ["#fdba74","#fda4af","#f472b6"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
 
 ];
