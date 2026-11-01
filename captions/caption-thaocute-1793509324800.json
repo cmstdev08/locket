@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:13",
+  "username": "thaocute",
+  "userKey": "LOCKET60S-0934956647",
+  "text": "🌹Anh là ngoại lệ duy nhất của em",
+  "textColor": "#ec4899",
+  "colors": [
+    "#fdba74",
+    "#fda4af",
+    "#f472b6"
+  ],
+  "gradientName": "Peach Mochi",
+  "gradientClass": "from-orange-300 via-rose-300 to-pink-300",
+  "icon": "sparkles",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-thaocute-expriry-check.js",
+  "userCapFilePath": "locket60s/captionthaocute.js",
+  "sgmoduleFilePath": "modules/locket60s-thaocute.sgmodule",
+  "createdAt": "2026-11-01T05:02:04.818Z"
+}
