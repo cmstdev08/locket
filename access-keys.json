@@ -52,9 +52,7 @@
       "usedCount": 0,
       "expiresAt": "2099-12-31",
       "maxDevices": 999,
-      "usedDevices": [
-        "dev_s750dzp_mvxcn0g4"
-      ],
+      "usedDevices": [],
       "allowedPackages": [
         "all"
       ]
@@ -62,7 +60,7 @@
     {
       "key": "Locket60s-0898376962",
       "owner": "Anh Tuấn iOS (Boss Admin Web)",
-      "boundUsername": "anhtuaan08",
+      "boundUsername": "admin",
       "role": "admin",
       "isMaster": true,
       "allowedFeatures": [
@@ -72,14 +70,10 @@
       "usedCount": 0,
       "expiresAt": "2099-12-31",
       "maxDevices": 999,
-      "usedDevices": [
-        "dev_s750dzp_mvxcn0g4",
-        "dev_yaz6fn5_mvtrg4wy"
-      ],
+      "usedDevices": [],
       "allowedPackages": [
         "all"
-      ],
-      "adminNote": "👑 File Riêng Admin Boss Anh Tuấn (locket60s-admin.sgmodule) - Full 50+ Caption VIP"
+      ]
     }
   ]
 }
