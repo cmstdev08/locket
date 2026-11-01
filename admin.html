@@ -819,6 +819,19 @@
         } else {
           showToast(`Đã đổi trạng thái đơn #${orderId} thành "${newStatus === 'approved' ? 'Đã duyệt' : newStatus === 'rejected' ? 'Đã hủy' : 'Chờ xác nhận'}"!`);
         }
+
+        // Tự động mở Zalo nếu bật công tắc
+        if (newStatus === 'approved' && autoZaloApprove) {
+          const curOrder = (config.orders || []).find(o => o.id === orderId);
+          if (curOrder && curOrder.contact) {
+            const zLink = getZaloQuickMsg({ ...curOrder, grantedKey: assignedKeyToToast || curOrder.grantedKey });
+            if (zLink) {
+              setTimeout(() => {
+                window.open(zLink, '_blank');
+              }, 400);
+            }
+          }
+        }
       };
 
       const handleDeleteOrder = (orderId) => {
@@ -1040,7 +1053,8 @@
         return (keysData.keys || []).filter(k => 
           (k.key || '').toLowerCase().includes(q) ||
           (k.owner || '').toLowerCase().includes(q) ||
-          (k.boundUsername || '').toLowerCase().includes(q)
+          (k.boundUsername || '').toLowerCase().includes(q) ||
+          (k.adminNote || '').toLowerCase().includes(q)
         );
       }, [keysData.keys, keySearch]);
 
@@ -1072,10 +1086,13 @@
           finalPkgs = checkedPkgs;
         }
 
+        const adminNoteVal = form.adminNoteVal ? form.adminNoteVal.value.trim() : (editingKey?.adminNote || '');
+
         const newKeyObj = {
           key: keyVal,
           owner: ownerVal,
           boundUsername: boundUserVal || undefined,
+          adminNote: adminNoteVal || undefined,
           allowedPackages: finalPkgs,
           allowedFeatures: finalPkgs,
           isMaster: isMasterVal ? true : undefined,
@@ -1224,6 +1241,107 @@
         return (config.orders || [])
           .filter(o => o.status === 'approved' && (o.createdAt || '').startsWith(todayStr))
           .reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+      }, [config.orders]);
+
+      // Công tắc tự động mở Zalo khi duyệt đơn
+      const [autoZaloApprove, setAutoZaloApprove] = useState(() => localStorage.getItem('at_auto_zalo') !== 'false');
+      const toggleAutoZalo = () => {
+        const next = !autoZaloApprove;
+        setAutoZaloApprove(next);
+        localStorage.setItem('at_auto_zalo', next ? 'true' : 'false');
+        showToast(next ? 'Đã BẬT tự động mở Zalo cấp Key khi duyệt đơn' : 'Đã TẮT tự động mở Zalo khi duyệt đơn');
+      };
+
+      // Tạo nội dung tin nhắn Zalo kèm Key và hướng dẫn cài đặt
+      const getZaloQuickMsg = (order) => {
+        const cleanPhone = (order.contact || '').replace(/\D/g, '');
+        if (!cleanPhone) return null;
+        const keyStr = order.grantedKey || 'Locket60s-VIP';
+        const msg = `🎉 Chào ${order.name || 'bạn'}, Anh Tuấn iOS xác nhận đơn hàng #${order.id} (${order.pkgName || 'Locket 60s VIP'}) của bạn đã được duyệt thành công!\n\n🔑 Mã Access Key VIP của bạn là: ${keyStr}\n📱 Hướng dẫn kích hoạt & cài đặt Shadowrocket 3 bước: https://cmstdev08.github.io/locket/\n\n(Bạn nhập mã Key trên vào trang chủ để tải File cấu hình riêng nhé). Cần hỗ trợ thêm bạn cứ nhắn lại mình tại Zalo này!`;
+        return `https://zalo.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+      };
+
+      // Biểu đồ Doanh Thu 7 Ngày Qua
+      const last7DaysStats = useMemo(() => {
+        const result = [];
+        const today = new Date();
+        const orders = (config.orders || []).filter(o => o.status === 'approved');
+
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(today.getDate() - i);
+          const dateStr = d.toISOString().slice(0, 10);
+          const dayName = i === 0 ? 'Hôm nay' : i === 1 ? 'Hôm qua' : `T${d.getDay() === 0 ? 'CN' : d.getDay() + 1}`;
+          const shortDate = `${d.getDate()}/${d.getMonth() + 1}`;
+
+          const dayOrders = orders.filter(o => (o.createdAt || o.time || '').startsWith(dateStr));
+          const dayTotal = dayOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+          const dayCount = dayOrders.length;
+
+          result.push({
+            dateStr,
+            dayName,
+            shortDate,
+            total: dayTotal,
+            count: dayCount
+          });
+        }
+        return result;
+      }, [config.orders]);
+
+      const maxDayRevenue = useMemo(() => {
+        const max = Math.max(...last7DaysStats.map(d => d.total), 50000);
+        return max;
+      }, [last7DaysStats]);
+
+      // Phân bổ tỷ lệ gói dịch vụ
+      const packageDistribution = useMemo(() => {
+        const approvedOrders = (config.orders || []).filter(o => o.status === 'approved');
+        const total = approvedOrders.length || 1;
+        let locketCount = 0;
+        let ytCount = 0;
+        let spotifyCount = 0;
+        let allCount = 0;
+
+        approvedOrders.forEach(o => {
+          const id = (o.pkgId || '').toLowerCase();
+          const name = (o.pkgName || '').toLowerCase();
+          if (id.includes('all') || id.includes('super') || id === 'allinone-super-vip' || name.includes('combo') || name.includes('all in one')) {
+            allCount++;
+          } else if (id.includes('youtube') || name.includes('youtube')) {
+            ytCount++;
+          } else if (id.includes('spotify') || name.includes('spotify')) {
+            spotifyCount++;
+          } else {
+            locketCount++;
+          }
+        });
+
+        return [
+          { name: 'Locket 60s', count: locketCount, percent: Math.round((locketCount / total) * 100), color: 'from-amber-400 to-yellow-500', barBg: 'bg-amber-400' },
+          { name: 'YouTube VIP', count: ytCount, percent: Math.round((ytCount / total) * 100), color: 'from-rose-500 to-red-600', barBg: 'bg-rose-500' },
+          { name: 'Spotify VIP', count: spotifyCount, percent: Math.round((spotifyCount / total) * 100), color: 'from-emerald-400 to-green-500', barBg: 'bg-emerald-400' },
+          { name: 'All-In-One', count: allCount, percent: Math.round((allCount / total) * 100), color: 'from-purple-500 to-indigo-600', barBg: 'bg-purple-500' },
+        ];
+      }, [config.orders]);
+
+      // Phân bổ phương thức thanh toán
+      const paymentDistribution = useMemo(() => {
+        const approvedOrders = (config.orders || []).filter(o => o.status === 'approved');
+        const total = approvedOrders.length || 1;
+        let vcbCount = 0;
+        let momoCount = 0;
+
+        approvedOrders.forEach(o => {
+          const method = (o.paymentMethod || o.bank || '').toLowerCase();
+          if (method.includes('momo')) momoCount++;
+          else vcbCount++;
+        });
+
+        return {
+          vcb: { count: vcbCount, percent: Math.round((vcbCount / total) * 100) },
+          momo: { count: momoCount, percent: Math.round((momoCount / total) * 100) }
+        };
       }, [config.orders]);
 
       // Reset device limit for key (Tự động đẩy ngay lên GitHub Cloud)
@@ -1635,6 +1753,151 @@
                     </div>
                   </div>
 
+                  {/* ======================================================== */}
+                  {/* BIỂU ĐỒ PHÂN TÍCH DOANH THU & SẢN PHẨM BÁN CHẠY (ANALYTICS) */}
+                  {/* ======================================================== */}
+                  <div className="glass-card rounded-2xl p-4 sm:p-5 border border-emerald-500/20 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                      <div>
+                        <h3 className="text-sm font-black text-white flex items-center gap-2">
+                          <i className="fa-solid fa-chart-column text-emerald-400"></i>
+                          <span>PHÂN TÍCH DOANH THU & HIỆU SUẤT BÁN HÀNG</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold">7 Ngày Qua</span>
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5">Biểu đồ cập nhật tự động từ các hóa đơn đã được duyệt thành công</p>
+                      </div>
+
+                      {/* Công tắc tự động mở Zalo khi duyệt đơn */}
+                      <button
+                        type="button"
+                        onClick={toggleAutoZalo}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-2 ${
+                          autoZaloApprove 
+                            ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30' 
+                            : 'bg-white/5 text-slate-400 border-white/10 hover:bg-white/10'
+                        }`}
+                        title="Bấm để bật/tắt tự động mở Zalo kèm Key khi bấm Duyệt đơn"
+                      >
+                        <i className={`fa-solid ${autoZaloApprove ? 'fa-toggle-on text-blue-400 text-sm' : 'fa-toggle-off text-slate-500 text-sm'}`}></i>
+                        <span>Auto Zalo Khi Duyệt: <b>{autoZaloApprove ? 'ĐANG BẬT' : 'TẮT'}</b></span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      {/* Biểu đồ Cột 7 Ngày */}
+                      <div className="lg:col-span-2 rounded-xl bg-slate-950/60 p-4 border border-white/5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            <i className="fa-solid fa-signal text-emerald-400"></i> Doanh thu 7 ngày gần nhất
+                          </span>
+                          <span className="text-[11px] font-mono text-emerald-400 font-bold">
+                            Cao nhất: {maxDayRevenue.toLocaleString('vi-VN')}đ
+                          </span>
+                        </div>
+
+                        {/* Bar Container */}
+                        <div className="h-44 pt-4 pb-2 flex items-end justify-between gap-2 border-b border-white/10">
+                          {last7DaysStats.map((item, idx) => {
+                            const pct = Math.min(100, Math.max(8, Math.round((item.total / maxDayRevenue) * 100)));
+                            const isToday = idx === 6;
+                            return (
+                              <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group relative">
+                                {/* Tooltip */}
+                                <div className="absolute -top-9 opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 px-2 py-1 rounded bg-slate-800 text-[10px] text-white font-mono whitespace-nowrap shadow-lg border border-white/10">
+                                  {item.shortDate}: {item.total.toLocaleString('vi-VN')}đ ({item.count} đơn)
+                                </div>
+
+                                {/* Doanh thu nhãn nhỏ trên đỉnh cột */}
+                                <span className="text-[9px] font-mono text-slate-400 mb-1 group-hover:text-emerald-300">
+                                  {item.total > 0 ? (item.total >= 1000000 ? (item.total/1000000).toFixed(1) + 'M' : Math.round(item.total/1000) + 'k') : '0đ'}
+                                </span>
+
+                                {/* Cột Bar */}
+                                <div 
+                                  style={{ height: `${pct}%` }}
+                                  className={`w-full max-w-[36px] rounded-t-lg transition-all duration-300 ${
+                                    isToday 
+                                      ? 'bg-gradient-to-t from-emerald-500 to-amber-400 shadow-lg shadow-emerald-500/20' 
+                                      : item.total > 0 
+                                        ? 'bg-gradient-to-t from-emerald-600/70 to-emerald-400 group-hover:from-emerald-500 group-hover:to-emerald-300' 
+                                        : 'bg-white/5'
+                                  }`}
+                                ></div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Day Labels */}
+                        <div className="flex justify-between gap-2 mt-2">
+                          {last7DaysStats.map((item, idx) => (
+                            <div key={idx} className="flex-1 text-center">
+                              <span className={`text-[10px] block font-bold ${idx === 6 ? 'text-amber-300 font-extrabold' : 'text-slate-400'}`}>
+                                {item.dayName}
+                              </span>
+                              <span className="text-[9px] text-slate-500 block">{item.shortDate}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Phân bổ sản phẩm & Kênh thanh toán */}
+                      <div className="space-y-3 flex flex-col justify-between">
+                        {/* Tỷ lệ sản phẩm */}
+                        <div className="rounded-xl bg-slate-950/60 p-3.5 border border-white/5 space-y-2.5">
+                          <span className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <i className="fa-solid fa-fire text-amber-400"></i> Sản Phẩm Bán Chạy
+                            </span>
+                            <span className="text-[10px] text-slate-400">Đơn đã duyệt</span>
+                          </span>
+
+                          <div className="space-y-2">
+                            {packageDistribution.map((pkg, idx) => (
+                              <div key={idx} className="space-y-1">
+                                <div className="flex justify-between text-[11px]">
+                                  <span className="text-slate-300 font-medium">{pkg.name}</span>
+                                  <span className="font-mono text-slate-400 font-bold">{pkg.count} đơn ({pkg.percent}%)</span>
+                                </div>
+                                <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                  <div 
+                                    style={{ width: `${pkg.percent}%` }}
+                                    className={`h-full rounded-full bg-gradient-to-r ${pkg.color}`}
+                                  ></div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Tỷ lệ kênh thanh toán */}
+                        <div className="rounded-xl bg-slate-950/60 p-3 border border-white/5 flex items-center justify-between gap-3 text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black">
+                              <i className="fa-solid fa-building-columns"></i>
+                            </div>
+                            <div>
+                              <div className="font-bold text-slate-200 text-[11px]">Vietcombank</div>
+                              <div className="text-[10px] text-slate-400 font-mono">{paymentDistribution.vcb.count} đơn ({paymentDistribution.vcb.percent}%)</div>
+                            </div>
+                          </div>
+
+                          <div className="h-6 w-px bg-white/10"></div>
+
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 font-black">
+                              <i className="fa-solid fa-wallet"></i>
+                            </div>
+                            <div>
+                              <div className="font-bold text-slate-200 text-[11px]">Ví MoMo</div>
+                              <div className="text-[10px] text-slate-400 font-mono">{paymentDistribution.momo.count} đơn ({paymentDistribution.momo.percent}%)</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Search and Filters */}
                   <div className="flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
@@ -1823,15 +2086,17 @@
                                 <i className="fa-solid fa-key"></i> {order.grantedKey ? '⚙️ Quản Lý Key' : '⚡ Cấp & Khóa Key Nhanh'}
                               </button>
 
-                              {/* Zalo Contact */}
+                              {/* Zalo Contact & Gửi Key 1 Chạm */}
                               {order.contact && (
                                 <a 
-                                  href={`https://zalo.me/${order.contact.replace(/\D/g, '')}`}
+                                  href={getZaloQuickMsg(order) || `https://zalo.me/${order.contact.replace(/\D/g, '')}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="px-2.5 py-1.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 transition flex items-center gap-1 font-bold text-xs"
+                                  className="px-2.5 py-1.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white shadow-md shadow-blue-500/20 transition flex items-center gap-1.5 font-extrabold text-xs"
+                                  title="Mở Zalo với tin nhắn cấp Key và link hướng dẫn cài đặt 3 bước soạn sẵn"
                                 >
-                                  <i className="fa-solid fa-comment-dots"></i> Chat Zalo
+                                  <i className="fa-solid fa-paper-plane text-[11px]"></i>
+                                  <span>💬 Nhắn Zalo Cấp Key</span>
                                 </a>
                               )}
                             </div>
@@ -2503,13 +2768,14 @@
                             <th className="py-3 px-3.5">Lượt Dùng</th>
                             <th className="py-3 px-3.5">Thiết Bị (Khóa Máy)</th>
                             <th className="py-3 px-3.5">Hạn Dùng</th>
+                            <th className="py-3 px-3.5">Ghi Chú CRM</th>
                             <th className="py-3 px-3.5 text-right">Thao Tác</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                           {filteredKeys.length === 0 ? (
                             <tr>
-                              <td colSpan="8" className="py-8 text-center text-slate-500">
+                              <td colSpan="9" className="py-8 text-center text-slate-500">
                                 Không tìm thấy Key nào phù hợp!
                               </td>
                             </tr>
@@ -2596,6 +2862,18 @@
                                 </td>
                                 <td className="py-3 px-3.5 font-mono text-slate-400">
                                   {k.expiresAt || 'Vĩnh viễn'}
+                                </td>
+                                <td className="py-3 px-3.5">
+                                  {k.adminNote ? (
+                                    <div className="max-w-[160px] truncate" title={k.adminNote}>
+                                      <span className="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 font-medium text-[11px] border border-indigo-500/25 flex items-center gap-1 w-max max-w-full">
+                                        <i className="fa-solid fa-note-sticky text-[9px] text-indigo-400 flex-shrink-0"></i>
+                                        <span className="truncate">{k.adminNote}</span>
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-slate-600 italic text-[11px]">—</span>
+                                  )}
                                 </td>
                                 <td className="py-3 px-3.5 text-right space-x-2">
                                   <button
@@ -3657,6 +3935,24 @@
                       />
                       <span className="text-xs font-bold text-amber-300">👑 Quyền Master VIP (Không bao giờ bị khóa UID thiết bị)</span>
                     </label>
+                  </div>
+
+                  {/* Sổ danh bạ & Ghi chú riêng cho khách (Mini CRM) */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <i className="fa-solid fa-note-sticky text-indigo-400"></i>
+                        <span>Sổ Danh Bạ & Ghi Chú Riêng (Mini CRM):</span>
+                      </span>
+                      <span className="text-[10px] text-indigo-400 font-mono">Chỉ Admin thấy</span>
+                    </label>
+                    <textarea 
+                      name="adminNoteVal"
+                      defaultValue={editingKey?.adminNote || ''}
+                      rows="2"
+                      placeholder="VD: Khách quen TikTok giới thiệu, Đã hứa tặng voucher 20k, Đã đổi máy 1 lần..."
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white text-xs focus:outline-none focus:border-indigo-500 placeholder-slate-600 transition"
+                    ></textarea>
                   </div>
 
                   <div className="flex gap-2 pt-2">
