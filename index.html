@@ -1811,18 +1811,24 @@ ${JSON.stringify(captionObj, null, 2)}
           // ĐẶC QUYỀN: Bộ 3 file RIÊNG BIỆT cho từng Key/User (Không dùng chung)
           let userExpFilePath = `locket60s/anhtuaan08-${cleanUser}-expiry-check.js`;
           let userCapFilePath = `locket60s/caption-${cleanUser}.js`;
-          if (cleanUser === 'anhtuaan08') {
-            userExpFilePath = 'locket60s/anhtuaan08-expiry-check.js';
-            userCapFilePath = 'locket60s/caption-anhtuaan08.js';
+          const isBossAdminKey = (currentKey || '').toUpperCase() === 'LOCKET60S-0898376962';
+
+          if (isBossAdminKey || cleanUser === 'admin' || cleanUser === 'boss') {
+            // File riêng biệt cho Admin Boss Anh Tuấn (Bảo toàn file gốc anhtuaan08 không bị ghi đè)
+            userExpFilePath = 'locket60s/anhtuaan08-admin-expiry-check.js';
+            userCapFilePath = 'locket60s/caption-admin.js';
           } else if (cleanUser === 'thaocute') {
             userExpFilePath = 'locket60s/anhtuaan08-thaocute-expriry-check.js';
             userCapFilePath = 'locket60s/captionthaocute.js';
+          } else if (cleanUser === 'anhtuaan08') {
+            userExpFilePath = 'locket60s/anhtuaan08-expiry-check.js';
+            userCapFilePath = 'locket60s/caption-anhtuaan08.js';
           }
           const userExpFileName = userExpFilePath.split('/').pop();
           const userCapFileName = userCapFilePath.split('/').pop();
 
           const sgmoduleFolder = 'modules';
-          const sgmoduleFileName = `locket60s-${cleanUser}.sgmodule`;
+          const sgmoduleFileName = isBossAdminKey ? 'locket60s-admin.sgmodule' : `locket60s-${cleanUser}.sgmodule`;
           const sgmoduleFilePath = `${sgmoduleFolder}/${sgmoduleFileName}`;
           const rawBase = `${_atDec('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29t')}/${effectiveRepo}/${effectiveBranch}`;
           const rawSgmoduleUrl = `${rawBase}/${sgmoduleFilePath}`;
