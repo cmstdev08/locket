@@ -65,6 +65,14 @@
      colors: ["#c026d3","#9333ea","#4f46e5"],
      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png"
     }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:8",
+      text: "💌Tự dưng nhớ người ta ghê á",
+      textColor: "#ec4899",
+      colors: ["#d8b4fe","#c7d2fe","#fbcfe8"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
 
 ];
