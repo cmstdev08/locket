@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:20",
+  "username": "thaocute",
+  "userKey": "LOCKET60S-0934956647",
+  "text": "🍓Bên cạnh cậu lúc nào cũng ngọt",
+  "textColor": "#ffffff",
+  "colors": [
+    "#4f46e5",
+    "#7e22ce",
+    "#db2777"
+  ],
+  "gradientName": "Tokyo Night",
+  "gradientClass": "from-indigo-600 via-purple-700 to-pink-600",
+  "icon": "heart",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-thaocute-expriry-check.js",
+  "userCapFilePath": "locket60s/captionthaocute.js",
+  "sgmoduleFilePath": "modules/locket60s-thaocute.sgmodule",
+  "createdAt": "2026-11-01T05:06:54.580Z"
+}
