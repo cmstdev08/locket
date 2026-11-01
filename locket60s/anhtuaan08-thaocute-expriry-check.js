@@ -79,6 +79,14 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:9",
+      text: "🔒Trái tim này đã khóa chính chủ",
+      textColor: "#000000",
+      colors: ["#99f6e4","#a7f3d0","#a5f3fc"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
     // Thêm caption khác ở đây:
     // { overlay_id: "caption:anhtuaan08_personal:1", text: "...", textColor: "#...", colors: ["#...","#..."], imageUrl: "https://..." }
