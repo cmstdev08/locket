@@ -121,6 +121,14 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:22",
+      text: "🐰Muốn đi về",
+      textColor: "#000000",
+      colors: ["#f43f5e","#f59e0b","#facc15"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
 
 ];
