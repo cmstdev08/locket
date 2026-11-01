@@ -103,6 +103,14 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:16",
+      text: "🥰Càng nhìn càng thấy mê cậu",
+      textColor: "#ffffff",
+      colors: ["#fda4af","#f472b6","#fcd34d"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
     // Thêm caption khác ở đây:
     // { overlay_id: "caption:anhtuaan08_personal:1", text: "...", textColor: "#...", colors: ["#...","#..."], imageUrl: "https://..." }
