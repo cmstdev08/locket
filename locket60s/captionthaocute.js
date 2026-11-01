@@ -105,6 +105,14 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:18",
+      text: "🌟Cậu là tia nắng ấm áp của tớ",
+      textColor: "#38bdf8",
+      colors: ["#7c3aed","#d946ef","#ec4899"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
 
 ];
