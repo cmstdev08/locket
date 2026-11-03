@@ -70,7 +70,9 @@
       "usedCount": 0,
       "expiresAt": "2099-12-31",
       "maxDevices": 999,
-      "usedDevices": [],
+      "usedDevices": [
+        "dev_yaz6fn5_mvtrg4wy"
+      ],
       "allowedPackages": [
         "all"
       ]
