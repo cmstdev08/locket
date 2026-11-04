@@ -129,6 +129,14 @@
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
       captionMinChars: 0
     }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:23",
+      text: "💸Không khoe nhưng tiền đầy ví",
+      textColor: "#000000",
+      colors: ["#dc2626","#f97316","#fbbf24"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
     // Custom Caption by Anh Tuan iOS
 
 ];
