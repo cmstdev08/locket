@@ -3,9 +3,9 @@
   // ===== HARD-CODED CONFIG =====
   // ĐẶC QUYỀN VỢ ANH TUẤN (THAOCUTE): KHÔNG KHÓA UID, TỰ DO DÙNG TRÊN MỌI MÁY & SHARE THOẢI MÁI
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
-  var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
+  var GOLD_JOINED_AT  = "2008-10-03";               // ngày mua Gold
   var BADGE_USERNAMES = ["anhtuaan08"];             // lowercase, không @
-  var WIDGET_FRAME_URL = "https://i.ibb.co/0VJyfqCV/Thi-t-k-ch-a-c-t-n-2-1.png";
+  var WIDGET_FRAME_URL = "https://i.ibb.co/scN4mp0/anhtu4n-widget-a58be521b0cc.png";
 
   // Caption cá nhân — phải khớp với CUSTOM_CAPTIONS trong caption-post.js
   var MY_CAPTIONS = [
