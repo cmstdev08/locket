@@ -3,6 +3,23 @@
   "adminMasterKey": "ANHTUAN_ADMIN_2026",
   "keys": [
     {
+      "key": "Locket60s-0918308208",
+      "owner": "Đoàn  Đức Hoàng",
+      "boundUsername": "dhoangf_15",
+      "adminNote": "Bạn bè",
+      "allowedPackages": [
+        "locket-60s"
+      ],
+      "allowedFeatures": [
+        "locket-60s"
+      ],
+      "maxUses": 9999,
+      "usedCount": 0,
+      "maxDevices": 1,
+      "usedDevices": [],
+      "expiresAt": "2099-12-31"
+    },
+    {
       "key": "Locket60s-0393869815",
       "owner": "Tiến Đạt (0393869815)",
       "allowedFeatures": [
