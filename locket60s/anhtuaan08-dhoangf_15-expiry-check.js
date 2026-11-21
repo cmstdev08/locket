@@ -3,7 +3,7 @@
   // ===== HARD-CODED CONFIG =====
   var LICENSED_OWNER = "dhoangf_15"; // Khóa bản quyền tài khoản chính chủ (Chống share file)
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
-  var GOLD_JOINED_AT  = "2008-11-12";               // ngày mua Gold
+  var GOLD_JOINED_AT  = "2008-12-11";               // ngày mua Gold
   var BADGE_USERNAMES = ["dhoangf_15", "anhtuaan08"];             // lowercase, không @
   var WIDGET_FRAME_URL = "https://i.ibb.co/yBpS0qD7/Gemini-Generated-Image-20g77h20g77h20g7.png";
 
@@ -38,6 +38,14 @@
         ,{
       overlay_id: "caption:anhtuaan08_personal:8",
       text: "🐱Meow meow bé mèo ngoan xinh yêu",
+      textColor: "#8C315F",
+      colors: ["#FFAFCC","#FFC8DD","#CDB4DB"],
+      imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+      captionMinChars: 0
+    }
+        ,{
+      overlay_id: "caption:anhtuaan08_personal:9",
+      text: "👑Locket 60s by anhtuaan08",
       textColor: "#8C315F",
       colors: ["#FFAFCC","#FFC8DD","#CDB4DB"],
       imageUrl: "https://i.ibb.co/RTm5P1n9/kitty-1.png",
