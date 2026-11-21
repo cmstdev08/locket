@@ -1,0 +1,23 @@
+{
+  "overlay_id": "caption:anhtuaan08_personal:8",
+  "username": "dhoangf_15",
+  "userKey": "Locket60s-0918308208",
+  "text": "🐱Meow meow bé mèo ngoan xinh yêu",
+  "textColor": "#8C315F",
+  "colors": [
+    "#FFAFCC",
+    "#FFC8DD",
+    "#CDB4DB"
+  ],
+  "gradientName": "Kitty Pink",
+  "gradientClass": "from-pink-400 via-pink-300 to-purple-300",
+  "icon": "kitty",
+  "font": "sans",
+  "widgetFrameUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "imageUrl": "https://i.ibb.co/RTm5P1n9/kitty-1.png",
+  "captionMinChars": 0,
+  "userExpFilePath": "locket60s/anhtuaan08-dhoangf_15-expiry-check.js",
+  "userCapFilePath": "locket60s/caption-dhoangf_15.js",
+  "sgmoduleFilePath": "modules/locket60s-dhoangf_15.sgmodule",
+  "createdAt": "2026-11-21T02:14:35.186Z"
+}
