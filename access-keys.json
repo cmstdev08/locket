@@ -16,7 +16,9 @@
       "maxUses": 9999,
       "usedCount": 0,
       "maxDevices": 1,
-      "usedDevices": [],
+      "usedDevices": [
+        "dev_8wr584n_mwptqfvw"
+      ],
       "expiresAt": "2099-12-31"
     },
     {
