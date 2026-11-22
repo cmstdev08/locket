@@ -5,7 +5,7 @@
   // ĐẶC QUYỀN RIÊNG DÀNH CHO ADMIN BOSS ANH TUẤN (KEY: LOCKET60S-0898376962)
   // QUYỀN MASTER KHÔNG KHÓA UID THIẾT BỊ, TỰ DO DÙNG TRÊN MỌI MÁY
   var GOLD_EXPIRES_AT = "9999-01-29T10:10:14Z";
-  var GOLD_JOINED_AT  = "2008-10-03";               // ngày mua Gold
+  var GOLD_JOINED_AT  = "2008-06-15";               // ngày mua Gold
   var BADGE_USERNAMES = ["anhtuaan08", "thaocute", "admin"]; // lowercase, không @             // lowercase, không @
   var WIDGET_FRAME_URL = "https://i.ibb.co/C5qZSSmQ/IMG-2517.png";
 
