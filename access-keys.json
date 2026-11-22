@@ -93,7 +93,8 @@
       "expiresAt": "2099-12-31",
       "maxDevices": 999,
       "usedDevices": [
-        "dev_yaz6fn5_mvtrg4wy"
+        "dev_yaz6fn5_mvtrg4wy",
+        "dev_x21wtta_mwrmiep5"
       ],
       "allowedPackages": [
         "all"
